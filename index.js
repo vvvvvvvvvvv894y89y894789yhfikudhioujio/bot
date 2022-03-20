@@ -1,158 +1,174 @@
-/**********************************************************
- * @INFO  [TABLE OF CONTENTS]
- * 1  Import_Modules
-   * 1.1 Validating script for advertisement
- * 2  CREATE_THE_DISCORD_BOT_CLIENT
- * 3  Load_Discord_Buttons_and_Discord_Menus
- * 4  Create_the_client.memer
- * 5  create_the_languages_objects
- * 6  Raise_the_Max_Listeners
- * 7  Define_the_Client_Advertisments
- * 8  LOAD_the_BOT_Functions
- * 9  Login_to_the_Bot
- * 
- *   BOT CODED BY: S409™ | https://s409.xyz
- *********************************************************/
+
+const express = require("express")
+const app = express()
+
+app.get("/", (req, res) => {
+  res.send("hello hell!")
+})
+
+app.listen(3000, () => {
+  console.log("Whatever you want to put here")
+})
 
 
-/**
- * @param {*} INFO: you can use config.token and all other sensitve api keys, with the exact same key in process.env!
-*/
+
+require("dotenv").config({ path: "src/.env" });
+
+const fs = require("fs");
+const chalk = require("chalk");
+let {
+  MessageActionRow,
+  MessageButton,
+  Discord
+} = require("discord.js")
+
+const { Client, Collection, Intents, MessageEmbed } = require("discord.js");
+const { DEFAULT_PREFIX, BOT_TOKEN, ERROR_LOGS_CHANNEL, ALEXFLIPNOTE_API_KEY, YT_COOKIE } = require("./config.json");
+const { loadCommands } = require("./handler/loadCommands");
+const { loadEvents } = require("./handler/loadEvents");
+const { loadSlashCommands } = require("./handler/loadSlashCommands")
+const { loadPlayerEvents } = require("./handler/loadPlayerEvents");
+const { DiscordTogether } = require('discord-together')
+const { Player } = require('discord-player')
+const Enmap = require("enmap")
+const Chat = require("easy-discord-chatbot");
+const db = require("quick.db")
+const Levels = require("discord-xp")
 
 
-/**********************************************************
- * @param {1} Import_Modules for this FIle
- *********************************************************/
-const Discord = require("discord.js");
-const colors = require("colors");
-const enmap = require("enmap"); 
-const fs = require("fs"); 
-const emojis = require("./botconfig/emojis.json");
-const config = require("./botconfig/config.json");
-const advertisement = require("./botconfig/advertisement.json");
-const { delay } = require("./handlers/functions");
-const Meme = require("memer-api");
-require('dotenv').config();
-
-
-/**********************************************************
- * @param {2} CREATE_THE_DISCORD_BOT_CLIENT with some default settings
- *********************************************************/
-const client = new Discord.Client({
-  fetchAllMembers: false,
-  restTimeOffset: 0,
-  failIfNotExists: false,
-  shards: "auto",
-  allowedMentions: {
-    parse: ["roles", "users"],
-    repliedUser: false,
-  },
-  partials: ['MESSAGE', 'CHANNEL', 'REACTION', 'GUILD_MEMBER', 'USER'],
-  intents: [ Discord.Intents.FLAGS.GUILDS,
-    Discord.Intents.FLAGS.GUILD_MEMBERS,
-    Discord.Intents.FLAGS.GUILD_BANS,
-    Discord.Intents.FLAGS.GUILD_EMOJIS_AND_STICKERS,
-    Discord.Intents.FLAGS.GUILD_INTEGRATIONS,
-    Discord.Intents.FLAGS.GUILD_WEBHOOKS,
-    Discord.Intents.FLAGS.GUILD_INVITES,
-    Discord.Intents.FLAGS.GUILD_VOICE_STATES,
-    Discord.Intents.FLAGS.GUILD_PRESENCES,
-    Discord.Intents.FLAGS.GUILD_MESSAGES,
-    Discord.Intents.FLAGS.GUILD_MESSAGE_REACTIONS,
-    //Discord.Intents.FLAGS.GUILD_MESSAGE_TYPING,
-    Discord.Intents.FLAGS.DIRECT_MESSAGES,
-    Discord.Intents.FLAGS.DIRECT_MESSAGE_REACTIONS,
-    //Discord.Intents.FLAGS.DIRECT_MESSAGE_TYPING
+const client = new Client({
+  allowedMentions: { parse: ["users", "roles"] },
+  intents: [
+    Intents.FLAGS.GUILDS,
+    Intents.FLAGS.GUILD_MESSAGES,
+    Intents.FLAGS.GUILD_MEMBERS,
+    Intents.FLAGS.GUILD_MESSAGE_REACTIONS,
+    Intents.FLAGS.GUILD_WEBHOOKS,
+    Intents.FLAGS.GUILD_VOICE_STATES,
+    Intents.FLAGS.GUILD_INVITES,
+    Intents.FLAGS.GUILD_BANS,
+    Intents.FLAGS.GUILD_PRESENCES,
   ],
-  presence: {
-    activities: [{name: `${config.status.text}`.replace("{prefix}", config.prefix), type: config.status.type, url: config.status.url}],
-    status: "online"
-  }
+});
+const Embeds = require("./functions/embeds/Embeds")
+const Logger = require("./functions/Logger/Logger")
+const Util = require("./functions/util/Util")
+const prefixData = require("./database/guildData/prefix")
+const alexClient = require("alexflipnote.js")
+client.images = new alexClient(ALEXFLIPNOTE_API_KEY)
+client.discordTogether = new DiscordTogether(client);
+client.commands = new Collection();
+client.slash = new Collection();
+client.aliases = new Collection();
+client.categories = fs.readdirSync("./Commands/");
+client.setMaxListeners(0);
+const Cookie = YT_COOKIE;
+client.logger = Logger;
+client.utils = Util;
+client.say = Embeds;
+client.player = new Player(client, {
+  leaveOnEnd: false,
+  leaveOnStop: false,
+  leaveOnEmpty: false,
+  leaveOnEmptyCooldown: 60000,
+  autoSelfDeaf: true,
+  initialVolume: 130,
+  ytdlDownloadOptions: {
+    requestOptions: {
+      headers: {
+        cookie: Cookie,
+      }
+    }
+  },
+})
+
+client.player.use("YOUTUBE_DL", require("@discord-player/downloader").Downloader);
+client.db = new Enmap({ name: "musicdb" });
+
+loadCommands(client);
+loadEvents(client);
+loadPlayerEvents(client);
+loadSlashCommands(client);
+
+// Error Handling
+
+process.on("uncaughtException", (err) => {
+  console.log("Uncaught Exception: " + err);
+
+  const exceptionembed = new MessageEmbed()
+    .setTitle("Uncaught Exception")
+    .setDescription(`${err}`)
+    .setColor("RED")
+  client.channels.cache.get(ERROR_LOGS_CHANNEL).send({ embeds: [exceptionembed] })
 });
 
+process.on("unhandledRejection", (reason, promise) => {
+  console.log(
+    "[FATAL] Possibly Unhandled Rejection at: Promise ",
+    promise,
+    " reason: ",
+    reason.message
+  );
+
+  const rejectionembed = new MessageEmbed()
+    .setTitle("Unhandled Promise Rejection")
+    .addField("Promise", `${promise}`)
+    .addField("Reason", `${reason.message}`)
+    .setColor("RED")
+  client.channels.cache.get(ERROR_LOGS_CHANNEL).send({ embeds: [rejectionembed] })
+});
+
+client.login(BOT_TOKEN).then(() => {
+  console.log(
+    chalk.bgBlueBright.black(
+      ` Successfully logged in as: ${client.user.username}#${client.user.discriminator} `
+    )
+  );
+});
+client.on('guildCreate', guild => {
+  const channel = guild.channels.cache.find(channel => channel.type === 'GUILD_TEXT' && channel.permissionsFor(guild.me).has('SEND_MESSAGES'))
+  let embed = new MessageEmbed()
+    .setColor('BLACK')
+    .setTitle('Connected To New Server')
+    .setURL('https://discord.gg/zp8nTQqD9h')
+    .setDescription('<a:yes:906785808940425267> Thank You For Inviting Me. My prefix is `,` Run ,help for more info about me!')
+
+    .addFields(
+      { name: 'Creator', value: 'Scarlet Potato#8590' }
+    )
+
+    .setImage('https://cdn.discordapp.com/attachments/905075947282268187/906877143173189692/Untitled_Photo.png')
+    .setTimestamp()
+    .setFooter('DECΩDERS:tm:', 'https://discord.gg/zp8nTQqD9h');
+  channel.send({ embeds: [embed] });
+})
+
+client.on('guildCreate', async guild => {
+  let owner = await client.users.fetch('862621966317912084')
+  const hey = new MessageEmbed()
+    .setTitle("New Guild!")
+    .setDescription(`<a:yes:906785808940425267> I have been added to **${guild.name}** with **${guild.memberCount}** members`)
+    .setColor("BLACK")
+
+  owner.send({ embeds: [hey] })
 
 
-/**********************************************************
- * @param {4} Create_the_client.memer property from S409™'s Api 
- *********************************************************/
-client.memer = new Meme(process.env.memer_api || config.memer_api); // GET a TOKEN HERE: https://discord.gg/Mc2FudJkgP
 
 
 
-/**********************************************************
- * @param {5} create_the_languages_objects to select via CODE
- *********************************************************/
-client.la = { }
-var langs = fs.readdirSync("./languages")
-for(const lang of langs.filter(file => file.endsWith(".json"))){
-  client.la[`${lang.split(".json").join("")}`] = require(`./languages/${lang}`)
-}
-Object.freeze(client.la)
-//function "handlemsg(txt, options? = {})" is in /handlers/functions 
 
 
+  const chat = new Chat({ name: "DECODERS" });
 
-/**********************************************************
- * @param {6} Raise_the_Max_Listeners to 0 (default 10)
- *********************************************************/
-client.setMaxListeners(0);
-require('events').defaultMaxListeners = 0;
-
-
-
-/**********************************************************
- * @param {7} Define_the_Client_Advertisments from the Config File
- *********************************************************/
-client.ad = {
-  enabled: advertisement.adenabled,
-  statusad: advertisement.statusad,
-  spacedot: advertisement.spacedot,
-  textad: advertisement.textad
-}
-
-
-
-/**********************************************************
- * @param {8} LOAD_the_BOT_Functions 
- *********************************************************/
-//those are must haves, they load the dbs, events and commands and important other stuff
-function requirehandlers(){
-  ["extraevents", "loaddb", "clientvariables", "command", "events", "erelahandler", "slashCommands"].forEach(handler => {
-    try{ require(`./handlers/${handler}`)(client); }catch (e){ console.log(e.stack ? String(e.stack).grey : String(e).grey) }
+  client.on("message", async message => {
+    const chatbot = db.get(`chatchannel_${message.guild.id}`)
+    if (message.channel.id === `${chatbot}` &&
+      !message.author.bot) {
+      let reply = await chat.chat(message.content)
+      client.channels.cache.get(chatbot).send(reply)
+    }
   });
-  ["twitterfeed", /*"twitterfeed2",*/ "livelog", "youtube", "tiktok"].forEach(handler=>{
-    try{ require(`./social_log/${handler}`)(client); }catch (e){ console.log(e.stack ? String(e.stack).grey : String(e).grey) }
-  });
-  [ "logger", "anti_nuke", "antidiscord", "antilinks","anticaps", "antispam", "blacklist", "keyword", "antimention", "autobackup",
-    
-    "apply", "ticket", "ticketevent",
-    "roster", "joinvc", "epicgamesverification", "boostlog",
-    
-    "welcome", "leave", "ghost_ping_detector", "antiselfbot",
-
-    "jointocreate", "reactionrole", "ranking", "timedmessages",
-    
-    "membercount", "autoembed", "suggest", "validcode", "dailyfact", "autonsfw",
-    "aichat", "mute", "automeme", "counter"].forEach(handler => {
-    try{ require(`./handlers/${handler}`)(client); }catch (e){ console.log(e.stack ? String(e.stack).grey : String(e).grey) }
-  });
-}requirehandlers();
-
-//24/7
-require('./server')();
-
-/**********************************************************
- * @param {9} Login_to_the_Bot
- *********************************************************/
-client.login(process.env.TOKEN);
 
 
-/**********************************************************
- * @INFO
- * Bot Coded by S409™0001 | https://https://discord.gg/hx2wg4HfQS
- * @INFO
- * Work for Zink Development | https://s409.xyz
- * @INFO
- * Please mention him / Zink Development, when using this Code!
- * @INFO
- *********************************************************/
+
+})

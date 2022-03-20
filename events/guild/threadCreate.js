@@ -1,19 +1,22 @@
-//The Module
-module.exports = async (client, thread) => {
-    try{
-        if(thread.joinable && !thread.joined){
-            await thread.join();
-        }
-    }catch (e){
-        console.log(String(e).grey)
-    }
+const { MessageEmbed } = require('discord.js');
+const channelData = require("../../database/guildData/channelupdates")
+
+module.exports = async(thread) => {
+    const data = await channelData.findOne({
+        GuildID: thread.guild.id
+    })
+
+    if (!data) return;
+
+    const embed = new MessageEmbed()
+    .setTitle('Thread Created')
+    .setDescription(`
+Name: ${thread.name}
+ID: ${thread.id}
+Created By: ${thread.guild.members.cache.get(thread.ownerId)}
+Parent Channel: ${thread.parent.name}`)
+    .setColor("GREEN")
+    .setTimestamp()
+
+    thread.guild.channels.cache.get(data.ChannelID).send({ embeds: [embed] })
 }
-/**
- * @INFO
- * Bot Coded by S409™#0001 | https://discord.gg/hx2wg4HfQS
- * @INFO
- * Work for Zink Development | https://s409.xyz
- * @INFO
- * Please mention him / Zink Development, when using this Code!
- * @INFO
- */
