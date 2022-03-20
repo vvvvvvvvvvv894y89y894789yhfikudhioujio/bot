@@ -1,33 +1,23 @@
-const discord = require("discord.js");
+const { MessageEmbed } = require('discord.js');
 
 module.exports = {
-    name: "ping",
-    aliases: ["pong"],
-    category: "Utility",
-    usage: "ping",
-    description: "Get the bot's ping!",
-    ownerOnly: false,
-    nsfwOnly: false,
-    run: async (client, message, args) => {
+    config: {
+        name: "ping",
+        description: "Displays User And Bot Latency",
+        usage: " ",
+        noalias: "No Aliases",
+        category: "info",
+        accessableby: "everyone"
+    },
+    run: async (bot, message, args) => {
 
-     let start = Date.now();
-
-     let pingEmbed = new discord.MessageEmbed()
-     .setDescription("Looks like the bot is slow.")
-     .setColor("RANDOM")
-  
-  message.channel.send({ embeds: [pingEmbed] }).then(m => {
-    
-    let end = Date.now();
-    
-    let embed = new discord.MessageEmbed()
-    .setAuthor("Ping!", message.author.avatarURL())
-    .addField("API Latency", Math.round(client.ws.ping) + "ms", true)
-    .addField("Message Latency", end - start + "ms", true)
-    .setColor("RANDOM");
-    m.edit({ embeds: [embed] }).catch(e => message.channel.send(e))
-    
-  })
-
+        message.channel.send("**Pinging...**").then(m => {
+            let ping = m.createdTimestamp - message.createdTimestamp
+            const embed = new MessageEmbed()
+                .setColor("GREEN")
+                .setDescription(`<:hourglass_flowing_sand:699128011743690794> ${ping}\n\n💓 ${Math.round(bot.ws.ping)}`)
+            message.channel.send(embed)
+            m.delete()
+        })
     }
 };

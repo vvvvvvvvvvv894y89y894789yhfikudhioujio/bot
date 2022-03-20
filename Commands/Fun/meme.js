@@ -1,18 +1,27 @@
-const Discord = module.require("discord.js");
+const { MessageEmbed } = require("discord.js");
+const randomPuppy = require("random-puppy");
 
 module.exports = {
-  name: "meme",
-  description: "Sends a random meme",
-  botPerms: ["ATTTACH_FILES"],
-  run: async (client, message, args) => {
-    var num = Math.floor(Math.random() * (500 - 1) + 1);
-    message.channel.send({
-      files: [
-        {
-          attachment: `https://ctk-api.herokuapp.com/meme/${num}`,
-          name: "meme.jpg",
-        },
-      ],
-    });
-  },
-};
+    config: {
+        name: "meme",
+        category: "fun",
+        noalias: "No Aliases",
+        usage: " ",
+        description: "Sends an epic meme",
+        accessableby: "everyone"
+    },
+    run: async (bot, message, args) => {
+
+        const subReddits = ["dankmeme", "meme", "me_irl"];
+        const random = subReddits[Math.floor(Math.random() * subReddits.length)];
+
+        const img = await randomPuppy(random);
+        const embed = new MessageEmbed()
+            .setColor("RANDOM")
+            .setImage(img)
+            .setTitle("meme!")
+            .setURL(`https://reddit.com/r/${random}`);
+
+        message.channel.send(embed);
+    }
+}

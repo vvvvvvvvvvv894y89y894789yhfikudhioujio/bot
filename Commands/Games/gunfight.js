@@ -1,98 +1,47 @@
+const { delay, randomRange, verify } = require('../../functions');
+const words = ['fire', 'draw', 'shoot', 'bang', 'pull', 'boom'];
+
 module.exports = {
-	name: 'gunfight',
-  description: "First one to shoot wins!",
-	aliases: ['gf'],
-	run: async (client, message, args) => {
-		const opponent = message.mentions.users.first();
-		const positions = {
-			three: '_ _        :levitate: :point_right:      **3**        :point_left: :levitate:',
-			two: '_ _        :levitate: :point_right:      **2**        :point_left: :levitate:',
-			one: '_ _        :levitate: :point_right:      **1**        :point_left: :levitate:',
-			go: '_ _        :levitate: :point_right:      **GO!**        :point_left: :levitate:',
-			ended1: '_ _     :levitate: :point_right:      **STOP!**        :skull_crossbones: :levitate:',
-			ended2: '_ _     :levitate: :skull_crossbones:      **STOP!**        :point_left: :levitate:',
-		};
+    config: {
+        name: 'gunfight',
+        noalias: [''],
+        category: 'games',
+        usage: '[mention | username | nickname | ID]',
+        description: 'Engage In A Gunfight Against Another User',
+        accessableby: 'everyone',
+    },
 
-		const componentsArray = [
-			{
-				type: 1,
-				components: [
-					{
-						type: 2,
-						label: 'Shoot!',
-						custom_id: 'shoot1',
-						style: 'PRIMARY',
-						disabled: true,
-					},
-					{
-						type: 2,
-						label: '\u200b',
-						custom_id: 'id lol useless',
-						style: 'SECONDARY',
-						disabled: true,
-					},
-					{
-						type: 2,
-						label: 'Shoot!',
-						custom_id: 'shoot2',
-						style: 'DANGER',
-						disabled: true,
-					},
-				],
-			},
-		];
-
-		const msg = await message.channel.send({
-			content: positions.three,
-			components: componentsArray,
-		});
-
-		function countdown() {
-			setTimeout(() => {
-				msg.edit({
-					content: positions.two,
-					components: componentsArray,
-				});
-			}, 1000);
-			setTimeout(() => {
-				msg.edit({
-					content: positions.one,
-					components: componentsArray,
-				});
-			}, 2000);
-			setTimeout(() => {
-				componentsArray[0].components[0].disabled = false;
-				componentsArray[0].components[2].disabled = false;
-				msg.edit({
-					content: positions.go,
-					components: componentsArray,
-				});
-			}, 3000);
-		}
-		countdown();
-
-		const filter = button => {
-			return button.user.id == message.author.id || button.user.id == opponent.id;
-		};
-
-		const button = await msg.awaitMessageComponent({ filter: filter, componentType: 'BUTTON', max: 1 });
-
-		componentsArray[0].components[0].disabled = true;
-		componentsArray[0].components[2].disabled = true;
-
-		if(button.customId === 'shoot1' && button.user.id == message.author.id) {
-			msg.edit({
-				content: positions.ended1,
-				components: componentsArray,
-			});
-			return button.reply({ content: `<@${message.author.id}> won!` });
-		}
-		else if(button.customId === 'shoot2' && button.user.id == opponent.id) {
-			msg.edit({
-				content: positions.ended1,
-				components: componentsArray,
-			});
-			return button.reply({ content: `<@${opponent.id}> won!` });
-		}
-	},
+    run: async (bot, message, args, ops) => {
+        if (!args[0]) return message.channel.send("**Please Enter A User To Play With!**")
+        let opponent = message.mentions.members.first() || message.guild.members.cache.get(args[0]) || message.guild.members.cache.find(r => r.user.username.toLowerCase() === args.join(' ').toLocaleLowerCase()) || message.guild.members.cache.find(r => r.displayName.toLowerCase() === args.join(' ').toLocaleLowerCase());
+        if (!opponent) return message.channel.send("**Please Enter A Valid User!**")
+        if (opponent.user.bot) return message.channel.send('**Cannot Fight Bots!**');
+        if (opponent.user.id === message.author.id) return message.channel.send('**Cannot Fight Yourself!**');
+        const current = ops.games.get(message.channel.id);
+        if (current) return message.channel.send(`**Please Wait Until The Current Game of \`${current.name}\` is Finished!**`);
+        ops.games.set(message.channel.id, { name: 'gunfight' });
+        try {
+            await message.channel.send(`**${opponent}, Do You Accept This Challenge?**`);
+            const verification = await verify(message.channel, opponent);
+            if (!verification) {
+                ops.games.delete(message.channel.id);
+                return message.channel.send(`**Looks like ${opponent} Doesnt Wants To Play!**`);
+            }
+            await message.channel.send('**Get Ready, Game Will Start At Any Moment!**');
+            await delay(randomRange(1000, 10000));
+            const word = words[Math.floor(Math.random() * words.length)];
+            await message.channel.send(`TYPE \`${word.toUpperCase()}\` NOW!`);
+            const filter = res => [opponent.user.id, message.author.id].includes(res.author.id) && res.content.toLowerCase() === word.toLocaleLowerCase();
+            const winner = await message.channel.awaitMessages(filter, {
+                max: 1,
+                time: 30000
+            });
+            ops.games.delete(message.channel.id);
+            if (!winner.size) return message.channel.send('**Nobody Won!*');
+            return message.channel.send(`**The Winner is ${winner.first().author}!**`);
+        } catch (err) {
+            ops.games.delete(message.channel.id);
+            throw err;
+        }
+    }
 };

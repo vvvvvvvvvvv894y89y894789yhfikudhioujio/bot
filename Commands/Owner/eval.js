@@ -1,34 +1,47 @@
-/**Use the command at your own risk!
- *We will not be responsible for the the negative outcomes, if anything wrong happens!*/
-const { MessageEmbed } = require("discord.js");
-const OWNER_ID = require("../../config.json").OWNER_ID;
+const { MessageEmbed } = require('discord.js')
+
 module.exports = {
-  name: "eval",
-  description: "Run a whole fuckin' code with this!",
-  botPerms: ["EMBED_LINKS"],
-  run: async (client, message, args) => {
-    //Eval Command(Not to be made public btw!)
-    if (message.author.id != OWNER_ID) {
-      return message.channel.send("Limited to the bot owner only!");
+    config: {
+        name: "eval",
+        description: "Evaluates js code",
+        accessableby: "Bot Owner",
+        category: "owner",
+        aliases: ["e"],
+        usage: 'eval <input>'
+    },
+    run: async (bot, message, args) => {
+        function clean(text) {
+            if (typeof text === "string")
+                return text
+                    .replace(/`/g, "`" + String.fromCharCode(8203))
+                    .replace(/@/g, "@" + String.fromCharCode(8203));
+            else return text;
+        }
+        let owner = '457556815345877003'
+
+        if (!owner.includes(message.author.id)) return;
+
+        try {
+            const code = args.join(" ");
+            let evaled = eval(code);
+
+            if (typeof evaled !== "string") evaled = require("util").inspect(evaled);
+
+            message.react("✅");
+            var emb = new MessageEmbed()
+                .setTitle('Result')
+                .setDescription(`\`\`\`js` + '\n' + clean(evaled) + `\n` + `\`\`\``)
+                .setFooter(bot.user.username, bot.user.displayAvatarURL({ dynamic: true }))
+                .setColor(0xd26a0e)
+            message.channel.send(emb);
+        } catch (err) {
+            message.react("⚠");
+            var emb = new MessageEmbed()
+                .setTitle('Result')
+                .setDescription(`\`\`\`js` + '\n' + clean(err) + `\n` + `\`\`\``)
+                .setFooter(bot.user.username, bot.user.displayAvatarURL({ dynamic: true }))
+                .setColor(0xd26a0e)
+            message.channel.send(emb);
+        }
     }
-    try {
-      const code = args.join(" ");
-      if (!code) {
-        return message.channel.send("What do you want to evaluate?");
-      }
-      let evaled = eval(code);
-
-      if (typeof evaled !== "string") evaled = require("util").inspect(evaled);
-
-      let embed = new MessageEmbed()
-        .setAuthor("Eval", message.author.avatarURL())
-        .addField("Input", `\`\`\`${code}\`\`\``)
-        .addField("Output", `\`\`\`${evaled}\`\`\``)
-        .setColor("GREEN");
-
-      message.channel.send({ embeds: [embed] });
-    } catch (err) {
-      message.channel.send(`\`ERROR\` \`\`\`xl\n${err}\n\`\`\``);
-    }
-  },
-};
+}
