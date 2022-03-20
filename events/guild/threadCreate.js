@@ -1,22 +1,19 @@
-const { MessageEmbed } = require('discord.js');
-const channelData = require("../../database/guildData/channelupdates")
-
-module.exports = async(thread) => {
-    const data = await channelData.findOne({
-        GuildID: thread.guild.id
-    })
-
-    if (!data) return;
-
-    const embed = new MessageEmbed()
-    .setTitle('Thread Created')
-    .setDescription(`
-Name: ${thread.name}
-ID: ${thread.id}
-Created By: ${thread.guild.members.cache.get(thread.ownerId)}
-Parent Channel: ${thread.parent.name}`)
-    .setColor("GREEN")
-    .setTimestamp()
-
-    thread.guild.channels.cache.get(data.ChannelID).send({ embeds: [embed] })
+//The Module
+module.exports = async (client, thread) => {
+    try{
+        if(thread.joinable && !thread.joined){
+            await thread.join();
+        }
+    }catch (e){
+        console.log(String(e).grey)
+    }
 }
+/**
+ * @INFO
+ * Bot Coded by Tomato#6966 | https://discord.gg/milrato
+ * @INFO
+ * Work for S409 support | https://s409.xyz
+ * @INFO
+ * Please mention him / S409 support, when using this Code!
+ * @INFO
+ */
