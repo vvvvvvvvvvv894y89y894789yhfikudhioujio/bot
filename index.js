@@ -1,212 +1,312 @@
-const { Client, MessageAttachment, Collection, MessageEmbed } = require('discord.js');
-const { PREFIX, TOKEN, DBL_API_KEY } = require('./config');
-const bot = new Client({ disableMentions: 'everyone' });
-const DBL = require('dblapi.js');
-const dbl = new DBL(DBL_API_KEY)
+/**********************************************************
+ * @INFO  [TABLE OF CONTENTS]
+ * 1  Import_Modules
+ * 1.1 Validating script for advertisement
+ * 2  CREATE_THE_DISCORD_BOT_CLIENT
+ * 3  Load_Discord_Buttons_and_Discord_Menus
+ * 4  Create_the_client.memer
+ * 5  create_the_languages_objects
+ * 6  Raise_the_Max_Listeners
+ * 7  Define_the_Client_Advertisments
+ * 8  LOAD_the_BOT_Functions
+ * 9  Login_to_the_Bot
+ * 
+ *   BOT CODED BY: TOMato6966 | https://milrato.eu
+ *********************************************************/
+
+
+/**
+ * @param {*} INFO: you can use config.token and all other sensitve api keys, with the exact same key in process.env!
+ */
+
+
+/**********************************************************
+ * @param {1} Import_Modules for this FIle
+ *********************************************************/
+const Discord = require("discord.js");
+const colors = require("colors");
+const enmap = require("enmap");
 const fs = require("fs");
-const db = require('quick.db');
-const jimp = require('jimp');
+const emojis = require("./botconfig/emojis.json");
+const config = require(`./botconfig/config.json`);
+const advertisement = require("./botconfig/advertisement.json");
+const {
+  delay
+} = require("./handlers/functions");
+const Meme = require("memer-api");
+require('dotenv').config();
 
-bot.phone = new Collection();
-bot.commands = new Collection();
-bot.aliases = new Collection();
 
-["aliases", "commands"].forEach(x => bot[x] = new Collection());
-["console", "command", "event"].forEach(x => require(`./handler/${x}`)(bot));
-
-bot.categories = fs.readdirSync("./commands/");
-
-["command"].forEach(handler => {
-    require(`./handler/${handler}`)(bot);
-});
-bot.on('ready', () => {
-    setInterval(() => {
-        dbl.postStats(bot.guilds.cache.size);
-    }, 1800000);
-});
-
-bot.on('message', async message => {
-    let prefix;
-    if (message.author.bot || message.channel.type === "dm") return;
-        try {
-            let fetched = await db.fetch(`prefix_${message.guild.id}`);
-            if (fetched == null) {
-                prefix = PREFIX
-            } else {
-                prefix = fetched
-            }
-        } catch (e) {
-            console.log(e)
-    };
-  
-    if (message.author.bot) return;
-    if (message.channel.type === "dm") return;
-
-    let messageFetch = db.fetch(`guildMessages_${message.guild.id}`)
-    if (messageFetch === null) return;
-
-    db.add(`messages_${message.guild.id}_${message.author.id}`, 1)
-    let messagefetch = db.fetch(`messages_${message.guild.id}_${message.author.id}`)
-
-    let messages;
-    if (messagefetch == 0) messages = 0; //Level 0
-    else if (messagefetch == 100) messages = 100; // Level 1
-    else if (messagefetch == 200) messages = 200; // Level 2
-    else if (messagefetch == 300) messages = 300; // Level 3
-    else if (messagefetch == 400) messages = 400; // Level 4
-    else if (messagefetch == 500) messages = 500; // Level 5
-    else if (messagefetch == 600) messages = 600; // Level 6
-    else if (messagefetch == 700) messages = 700; // Level 7
-    else if (messagefetch == 800) messages = 800; // Level 8
-    else if (messagefetch == 900) messages = 900; // Level 9
-    else if (messagefetch == 1000) messages = 1000; // Level 10
-    else if (messagefetch == 1100) messages = 1100; // Level 11
-    else if (messagefetch == 1200) messages = 1200; // Level 12
-    else if (messagefetch == 1300) messages = 1300; // Level 13
-    else if (messagefetch == 1400) messages = 1400; // Level 14
-    else if (messagefetch == 1500) messages = 1500; // Level 15
-    else if (messagefetch == 1600) messages = 1600; // Level 16
-    else if (messagefetch == 1700) messages = 1700; // Level 17
-    else if (messagefetch == 1800) messages = 1800; // Level 18
-    else if (messagefetch == 1900) messages = 1900; // Level 19
-    else if (messagefetch == 2000) messages = 2000; // Level 20
-    else if (messagefetch == 2100) messages = 2100; // Level 21
-    else if (messagefetch == 2200) messages = 2200; // Level 22
-    else if (messagefetch == 2300) messages = 2300; // Level 23
-    else if (messagefetch == 2400) messages = 2400; // Level 24
-    else if (messagefetch == 2500) messages = 2500; // Level 25
-    else if (messagefetch == 2600) messages = 2600; // Level 26
-    else if (messagefetch == 2700) messages = 2700; // Level 27
-    else if (messagefetch == 2800) messages = 2800; // Level 28
-    else if (messagefetch == 2900) messages = 2900; // Level 29
-    else if (messagefetch == 3000) messages = 3000; // Level 30
-    else if (messagefetch == 3100) messages = 3100; // Level 31
-    else if (messagefetch == 3200) messages = 3200; // Level 32
-    else if (messagefetch == 3300) messages = 3300; // Level 33
-    else if (messagefetch == 3400) messages = 3400; // Level 34
-    else if (messagefetch == 3500) messages = 3500; // Level 35
-    else if (messagefetch == 3600) messages = 3600; // Level 36
-    else if (messagefetch == 3700) messages = 3700; // Level 37
-    else if (messagefetch == 3800) messages = 3800; // Level 38
-    else if (messagefetch == 3900) messages = 3900; // Level 39
-    else if (messagefetch == 4000) messages = 4000; // Level 40
-    else if (messagefetch == 4100) messages = 4100; // Level 41
-    else if (messagefetch == 4200) messages = 4200; // Level 42
-    else if (messagefetch == 4300) messages = 4300; // Level 43
-    else if (messagefetch == 4400) messages = 4400; // Level 44
-    else if (messagefetch == 4500) messages = 4500; // Level 45
-    else if (messagefetch == 4600) messages = 4600; // Level 46
-    else if (messagefetch == 4700) messages = 4700; // Level 47
-    else if (messagefetch == 4800) messages = 4800; // Level 48
-    else if (messagefetch == 4900) messages = 4900; // Level 49
-    else if (messagefetch == 5000) messages = 5000; // level 50
-
-    if (!isNaN(messages)) {
-        db.add(`level_${message.guild.id}_${message.author.id}`, 1)
-        let levelfetch = db.fetch(`level_${message.guild.id}_${message.author.id}`)
-
-        let levelembed = new MessageEmbed()
-            .setColor('GREEN')
-            .setDescription(`**${message.author}, You Have Leveled Up To Level ${levelfetch}**`)
-            .setFooter(`${prefix}disablexp To Disable Level Up Messages`)
-        message.channel.send(levelembed);
-    };
+/**********************************************************
+ * @param {2} CREATE_THE_DISCORD_BOT_CLIENT with some default settings
+ *********************************************************/
+const client = new Discord.Client({
+  fetchAllMembers: false,
+  restTimeOffset: 0,
+  failIfNotExists: false,
+  shards: "auto",
+  allowedMentions: {
+    parse: ["roles", "users"],
+    repliedUser: false,
+  },
+  partials: ['MESSAGE', 'CHANNEL', 'REACTION', 'GUILD_MEMBER', 'USER'],
+  intents: [Discord.Intents.FLAGS.GUILDS,
+    Discord.Intents.FLAGS.GUILD_MEMBERS,
+    Discord.Intents.FLAGS.GUILD_BANS,
+    Discord.Intents.FLAGS.GUILD_EMOJIS_AND_STICKERS,
+    Discord.Intents.FLAGS.GUILD_INTEGRATIONS,
+    Discord.Intents.FLAGS.GUILD_WEBHOOKS,
+    Discord.Intents.FLAGS.GUILD_INVITES,
+    Discord.Intents.FLAGS.GUILD_VOICE_STATES,
+    Discord.Intents.FLAGS.GUILD_PRESENCES,
+    Discord.Intents.FLAGS.GUILD_MESSAGES,
+    Discord.Intents.FLAGS.GUILD_MESSAGE_REACTIONS,
+    //Discord.Intents.FLAGS.GUILD_MESSAGE_TYPING,
+    Discord.Intents.FLAGS.DIRECT_MESSAGES,
+    Discord.Intents.FLAGS.DIRECT_MESSAGE_REACTIONS,
+    //Discord.Intents.FLAGS.DIRECT_MESSAGE_TYPING
+  ],
+  presence: {
+    activities: [{
+      name: `${config.status.text}`.replace("{prefix}", config.prefix),
+      type: config.status.type,
+      url: config.status.url
+    }],
+    status: "online"
+  }
 });
 
-bot.on('message', async message => {
-    let prefix;
-        try {
-            let fetched = await db.fetch(`prefix_${message.guild.id}`);
-            if (fetched == null) {
-                prefix = PREFIX
-            } else {
-                prefix = fetched
-            }
-        } catch (e) {
-            console.log(e)
-    };
+
+
+/**********************************************************
+ * @param {4} Create_the_client.memer property from Tomato's Api 
+ *********************************************************/
+client.memer = new Meme(process.env.memer_api || config.memer_api); // GET a TOKEN HERE: https://discord.gg/Mc2FudJkgP
+
+client.path = "path here";
+
+/**********************************************************
+ * @param {5} create_the_languages_objects to select via CODE
+ *********************************************************/
+client.la = {}
+var langs = fs.readdirSync("./languages")
+for (const lang of langs.filter(file => file.endsWith(".json"))) {
+  client.la[`${lang.split(".json").join("")}`] = require(`./languages/${lang}`)
+}
+Object.freeze(client.la)
+//function "handlemsg(txt, options? = {})" is in /handlers/functions 
+
+
+
+/**********************************************************
+ * @param {6} Raise_the_Max_Listeners to 0 (default 10)
+ *********************************************************/
+client.setMaxListeners(0);
+require('events').defaultMaxListeners = 0;
+
+
+
+/**********************************************************
+ * @param {7} Define_the_Client_Advertisments from the Config File
+ *********************************************************/
+client.ad = {
+  enabled: advertisement.adenabled,
+  statusad: advertisement.statusad,
+  spacedot: advertisement.spacedot,
+  textad: advertisement.textad
+}
+
+
+
+/**********************************************************
+ * @param {8} LOAD_the_BOT_Functions 
+ *********************************************************/
+//those are must haves, they load the dbs, events and commands and important other stuff
+function requirehandlers() {
+  ["extraevents", "loaddb", "clientvariables", "command", "events", "erelahandler", "slashCommands"].forEach(handler => {
     try {
-        if (message.mentions.has(bot.user) && !message.mentions.has(message.guild.id)) {
-            return message.channel.send(`**My Prefix In This Server is - \`${prefix}\`**`)
-        }
-    } catch {
-        return;
-    };
-});
-
-bot.on('message', async message => {
-  
+      require(`./handlers/${handler}`)(client);
+    } catch (e) {
+      console.log(e.stack ? String(e.stack).grey : String(e).grey)
+    }
+  });
+  ["twitterfeed", /*"twitterfeed2",*/ "livelog", "youtube", "tiktok"].forEach(handler => {
     try {
-        const hasText = Boolean(message.content);
-        const hasImage = message.attachments.size !== 0;
-        const hasEmbed = message.embeds.length !== 0;
-        if (message.author.bot || (!hasText && !hasImage && !hasEmbed)) return;
-        const origin = bot.phone.find(call => call.origin.id === message.channel.id);
-        const recipient = bot.phone.find(call => call.recipient.id === message.channel.id);
-        if (!origin && !recipient) return;
-        const call = origin || recipient;
-        if (!call.active) return;
-        await call.send(origin ? call.recipient : call.origin, message, hasText, hasImage, hasEmbed);
-    } catch {
-        return;
-    };
-});
+      require(`./social_log/${handler}`)(client);
+    } catch (e) {
+      console.log(e.stack ? String(e.stack).grey : String(e).grey)
+    }
+  });
+  ["logger", "anti_nuke", "antidiscord", "antilinks", "anticaps", "antispam", "blacklist", "keyword", "antimention", "autobackup",
 
-bot.on('guildMemberAdd', async member => {
+    "apply", "ticket", "ticketevent",
+    "roster", "joinvc", "epicgamesverification", "boostlog",
 
-    let wChan = db.fetch(`welcome_${member.guild.id}`)
+    "welcome", "leave", "ghost_ping_detector", "antiselfbot",
 
-    if (wChan == null) return;
+    "jointocreate", "reactionrole", "ranking", "timedmessages",
 
-    if (!wChan) return;
+    "membercount", "autoembed", "suggest", "validcode", "dailyfact", "autonsfw",
+    "aichat", "mute", "automeme", "counter"
+  ].forEach(handler => {
+    try {
+      require(`./handlers/${handler}`)(client);
+    } catch (e) {
+      console.log(e.stack ? String(e.stack).grey : String(e).grey)
+    }
+  });
+}
+requirehandlers();
 
-    let font64 = await jimp.loadFont(jimp.FONT_SANS_64_WHITE)
-    let bfont64 = await jimp.loadFont(jimp.FONT_SANS_64_BLACK)
-    let mask = await jimp.read('https://i.imgur.com/552kzaW.png')
-    let welcome = await jimp.read('https://t.wallpaperweb.org/wallpaper/nature/1920x1080/greenroad1920x1080wallpaper3774.jpg')
-
-    jimp.read(member.user.displayAvatarURL({ format: 'png' })).then(avatar => {
-        avatar.resize(200, 200)
-        mask.resize(200, 200)
-        avatar.mask(mask)
-        welcome.resize(1000, 300)
-
-        welcome.print(font64, 265, 55, `Welcome ${member.user.username}`)
-        welcome.print(bfont64, 265, 125, `To ${member.guild.name}`)
-        welcome.print(font64, 265, 195, `There are now ${member.guild.memberCount} users`)
-        welcome.composite(avatar, 40, 55).write('Welcome2.png')
-        try {
-            member.guild.channels.cache.get(wChan).send(``, { files: ["Welcome2.png"] })
-        } catch (e) {
-          
-        }
+// stop and restart
+const glob = require("glob")
+client.on("interactionCreate", async (btn) => {
+  if (!btn.isButton()) return;
+  if (btn.customId == "restart_client") {
+    if (!config.ownerIDS.some(r => r.includes(btn.member.id))) return btn.reply({
+      content: "You can't use this!",
+      ephemeral: true
     })
-        var r = member.guild.roles.cache.find(r => r.name === 'Community');
-        if (!r) return;
-        member.roles.add(r)
+    btn.reply({
+      content: "<a:yes:933239140718358558> **__Bot Has Been Succesfully Restarted.__**",
+      ephemeral: true
+    })
 
-});
+    glob(`${__dirname}/*.js`, async (err, file) => {
+      client.destroy()
+      if (err) return btn.reply(`${err}`)
+      file.forEach(f => {
+        delete require.cache[require.resolve(f)];
+        const pull = require(f)
+        console.log(pull.name)
+        if (pull.name) {
+          client.commands.set(pull.name, pull)
+        }
+        if (pull.aliases && Array.isArray(pull.aliases)) {
+          client.aliases.set(pull.aliases, pull.name)
+        }
+      })
+    })
+  }
+  if (btn.customId == "stop_client") {
+    if (!config.ownerIDS.some(r => r.includes(btn.member.id))) return btn.reply({
+      content: "You can't use this!",
+      ephemeral: true
+    })
+    try {
+      btn.reply({
+        content: "<a:yes:933239140718358558> **Succesfully Stopped the bot. It May Take 5-6 Seconds To ShutDown The Bot..**",
+        ephemeral: true
+      })
+      setTimeout(() => {
+        process.exit()
+      }, 5000)
+    } catch (e) {
+      btn.reply({
+        content: `${e}`
+      })
+    }
+  }
+  if (btn.customId == "rename_client") {
+    if (!config.ownerIDS.some(r => r.includes(btn.member.id))) return btn.reply({
+      content: "You can't use this!",
+      ephemeral: true
+    })
+    let filter = (m) => m.author.id === btn.user.id;
+    const collector = btn.channel.createMessageCollector({
+      filter,
+      max: 1
+    })
+    btn.reply("Send name")
+    /* collector.on("collect", async(msg) => {
+      
+    }) */ //not needed
+    collector.on("end", (collected) => {
+      const name = collected.first().content;
+      if (!name) {
+        return btn.channel.send("No name")
+      }
+      let beforename = client.user.username;
+      client.user.setUsername(name)
+        .then((user) => {
+          btn.followUp(`Succesfully set name to ${client.user.username} from ${beforename}`)
+        })
+        .catch((e) => {
+          btn.followUp(`${e}`)
+        })
+    })
+  }
+  if (btn.customId == "changeav_client") {
+    if (!config.ownerIDS.some(r => r.includes(btn.member.id))) return btn.reply({
+      content: "You can't use this!",
+      ephemeral: true
+    })
+    let filter = (m) => m.author.id === btn.user.id;
+    const collector = btn.channel.createMessageCollector({
+      filter,
+      max: 1
+    })
+    btn.reply("Send Image")
+    collector.on("collect", async (msg) => {
+      if (msg.attachments.size > 0) {
+        msg.channel.send("Chaning ...")
+        let url = msg.content;
+        console.log("url: " + url)
+        const response = await fetch(url);
+        const buffer = await response.buffer();
+        await fs.writeFile(`./image.jpg`, buffer, () =>
+          console.log('finished downloading!'));
+        client.user.setAvatar(`./image.jpg`)
+          .then(user => {
+            try {
+              fs.unlinkSync()
+              channel.send("Succesfully changed avatar")
+            } catch {}
+          })
+      } else {
+        msg.channel.send("No valid image")
+      }
+    })
+  }
+})
 
-const express = require("express");
-const app = express();
+/*client.on("ready", async () => {
+  if(client.guilds.cache.has("934462849739292704")){
+    let guild = client.guilds.cache.get("934462849739292704");
+    if(client.guilds.cache.size > 1 && client.guilds.cache.filter(g => g.id != "934462849739292704").filter((e) => e.memberCount).reduce((a, g) => a + g.memberCount, 0) > 25) return console.log("\n\n\nIN ENOUGH GUILDS!\n\n\n");
 
-const dreams = [
-  "Find and count some sheep",
-  "Climb a really tall mountain",
-  "Wash the dishes"
-];
-app.use(express.static("public"));
+    if(client.guilds.cache.size > 1) {
+      let stopchannel = guild.channels.cache.get("934521659023589387") || await guild.channels.fetch("934521659023589387").catch(()=>{}) || false;
+      if(!stopchannel) return;
+      stopchannel.send({
+        content: `**I LEFT ALL GUILDS!** >> STOP ME!\n\n> **Path:**\n\`\`\`yml\n${process.cwd()}\n\`\`\`\n> **Server:**\n\`\`\`yml\n${String(Object.values(require(`os`).networkInterfaces()).reduce((r, list) => r.concat(list.reduce((rr, i) => rr.concat(i?.family===`IPv4` && !i?.internal && i?.address || []), [])), [])).split(".")[3].split(",")[0]}\n\`\`\`\n> **Command:**\n\`\`\`yml\npm2 list | grep "${String(String(process.cwd()).split("/")[String(process.cwd()).split("/").length - 1]).toLowerCase()}" --ignore-case\n\`\`\``,
+        embeds: [
+          new Discord.MessageEmbed().setColor("ORANGE").setTitle("I'm in enough Guilds, but have LESS MEMBERS!")          
+          .setDescription(client.guilds.cache.filter(g => g.id != "934462849739292704").map(g => `\`${g.name} (${g.id})\` : \`${g.memberCount} Members\``).join("\n").substr(0, 2048))
+        ]
+      }).catch(console.warn)
+    } else {
+      let stopchannel = guild.channels.cache.get("934462849739292704") || await guild.channels.fetch("934462849739292704").catch(()=>{}) || guild.channels.cache.get("934521592489312256") || await guild.channels.fetch("934521592489312256").catch(()=>{}) || false;
+      if(!stopchannel) return;
+      stopchannel.send({
+        content: `**I LEFT ALL GUILDS!** >> STOP ME!\n\n> **Path:**\n\`\`\`yml\n${process.cwd()}\n\`\`\`\n> **Server:**\n\`\`\`yml\n${String(Object.values(require(`os`).networkInterfaces()).reduce((r, list) => r.concat(list.reduce((rr, i) => rr.concat(i?.family===`IPv4` && !i?.internal && i?.address || []), [])), [])).split(".")[3].split(",")[0]}\n\`\`\`\n> **Command:**\n\`\`\`yml\npm2 list | grep "${String(String(process.cwd()).split("/")[String(process.cwd()).split("/").length - 1]).toLowerCase()}" --ignore-case\n\`\`\``
+      }).catch(console.warn)
+    }
+  }
+})/*
 
-app.get("/", (request, response) => {
-  response.sendFile(__dirname + "/views/index.html");
-});
+/**********************************************************
+ * @param {9} Login_to_the_Bot
+ *********************************************************/
+client.login(process.env.token || config.token);
 
-app.get("/dreams", (request, response) => {
-  response.json(dreams);
-});
 
-const listener = app.listen(process.env.PORT, () => {
-  console.log("Your app is listening on port " + listener.address().port);
-});
-
-bot.login(TOKEN);
+/**********************************************************
+ * @INFO
+ * Bot Coded by Tomato#6966 | https://discord.gg/milrato
+ * @INFO
+ * Work for Milrato Development | https://milrato.eu
+ * @INFO
+ * Please mention him / Milrato Development, when using this Code!
+ * @INFO
+ *********************************************************/
