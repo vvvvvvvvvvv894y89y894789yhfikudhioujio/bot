@@ -1,7 +1,7 @@
 const { MessageEmbed } = require(`discord.js`);
-const config = require(`${process.cwd()}/botconfig/config.json`);
-var ee = require(`${process.cwd()}/botconfig/embed.json`);
-const emoji = require(`${process.cwd()}/botconfig/emojis.json`);
+const config = require(`../../botconfig/config.json`);
+var ee = require(`../../botconfig/embed.json`);
+const emoji = require(`../../botconfig/emojis.json`);
 module.exports = {
   name: `reset`,
   aliases: [`hardreset`],
@@ -9,28 +9,26 @@ module.exports = {
   description: `Resets / Deletes all of the Setups as well as the prefix!`,
   usage: `reset`,
   memberpermissions: [`ADMINISTRATOR`],
-  type: "bot",
   run: async (client, message, args, cmduser, text, prefix) => {
-    
-    let es = client.settings.get(message.guild.id, "embed");let ls = client.settings.get(message.guild.id, "language")
+    let es = client.settings.get(message.guild.id, "embed")
     try{
       
       //if not enough permissions aka not the guild owner, return error
-      if (message.member.guild.ownerId !== message.author.id)
-        return message.reply({embeds : [new MessageEmbed()
+      if (message.member.guild.owner.id !== message.author.id)
+        return message.channel.send(new MessageEmbed()
           .setColor(es.wrongcolor)
-          .setFooter(client.getFooter(es))
-          .setTitle(eval(client.la[ls]["cmds"]["settings"]["reset"]["variable1"]))
-        ]});
+          .setFooter(es.footertext, es.footericon)
+          .setTitle(`<:cross:899255798142750770>  You don\'t have permission for this Command! *Only the Server-Owner*`)
+        );
       //ask for second yes
-      let themsg = message.reply({embeds : [new MessageEmbed()
-        .setColor(es.color).setThumbnail(es.thumb ? es.footericon && (es.footericon.includes("http://") || es.footericon.includes("https://")) ? es.footericon : client.user.displayAvatarURL() : null)
-        .setFooter(client.getFooter(es))
-        .setTitle(eval(client.la[ls]["cmds"]["settings"]["reset"]["variable2"]))
-        .setDescription(eval(client.la[ls]["cmds"]["settings"]["reset"]["variable3"]))
-      ]}).then((msg) => {
+      let themsg = message.channel.send(new MessageEmbed()
+        .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+        .setFooter(es.footertext, es.footericon)
+        .setTitle(`Do you really want to reset all SETTINGS?`)
+        .setDescription(`*Reply with:* **__\`yes\`__**`)
+      ).then((msg) => {
         //wait for answer of the right user
-        msg.channel.awaitMessages({filter: m => m.author.id === message.author.id,
+        msg.channel.awaitMessages(m => m.author.id === message.author.id, {
           max: 1,
           time: 30 * 1000,
           errors: ['time']
@@ -56,40 +54,31 @@ module.exports = {
                 botchannel: [],
             });
             //send the success message
-            return message.reply({embeds : [new MessageEmbed()
-              .setColor(es.color).setThumbnail(es.thumb ? es.footericon && (es.footericon.includes("http://") || es.footericon.includes("https://")) ? es.footericon : client.user.displayAvatarURL() : null)
-              .setFooter(client.getFooter(es))
-              .setTitle(eval(client.la[ls]["cmds"]["settings"]["reset"]["variable4"]))
-              .setDescription(eval(client.la[ls]["cmds"]["settings"]["reset"]["variable5"]))
-            ]});
+            return message.channel.send(new MessageEmbed()
+              .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+              .setFooter(es.footertext, es.footericon)
+              .setTitle(`<:tick:899255869185855529> Resetted everything!`)
+              .setDescription(`Prefix is now again: \`${config.prefix}\`\nNo more DJ ROLES, No more Setup, No more Bot Channels`)
+            );
           }
           //if an error happens, reply
         }).catch(e => {
-          console.log(String(e.stack).grey.yellow)
-          return message.reply({embeds :[new MessageEmbed()
+          console.log(String(e.stack).yellow)
+          return message.channel.send(new MessageEmbed()
             .setColor(es.wrongcolor)
-            .setFooter(client.getFooter(es))
-            .setTitle(eval(client.la[ls]["cmds"]["settings"]["reset"]["variable6"]))
-          ]});
+            .setFooter(es.footertext, es.footericon)
+            .setTitle(`<:cross:899255798142750770>  CANCELLED CAUSE NOT THE RIGHT WORD / TIME RAN OUT!`)
+          );
         })
       });
     } catch (e) {
-        console.log(String(e.stack).grey.bgRed)
-        return message.reply({embeds :[new MessageEmbed()
+        console.log(String(e.stack).bgRed)
+        return message.channel.send(new MessageEmbed()
             .setColor(es.wrongcolor)
-						.setFooter(client.getFooter(es))
-            .setTitle(client.la[ls].common.erroroccur)
-            .setDescription(eval(client.la[ls]["cmds"]["settings"]["reset"]["variable7"]))
-        ]});
+						.setFooter(es.footertext, es.footericon)
+            .setTitle(`<:cross:899255798142750770>  An error occurred`)
+            .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``)
+        );
     }
   }
 };
-/**
-  * @INFO
-  * Bot Coded by Tomato#6966 | https://discord.gg/milrato
-  * @INFO
-  * Work for S409 support | https://s409.xyz
-  * @INFO
-  * Please mention him / S409 support, when using this Code!
-  * @INFO
-*/

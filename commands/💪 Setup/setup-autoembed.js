@@ -2,15 +2,14 @@ var {
   MessageEmbed
 } = require(`discord.js`);
 var Discord = require(`discord.js`);
-var config = require(`${process.cwd()}/botconfig/config.json`);
-var ee = require(`${process.cwd()}/botconfig/embed.json`);
-var emoji = require(`${process.cwd()}/botconfig/emojis.json`);
+var config = require(`../../botconfig/config.json`);
+var ee = require(`../../botconfig/embed.json`);
+var emoji = require(`../../botconfig/emojis.json`);
 var {
   databasing,
   edit_msg,
   send_roster
-} = require(`${process.cwd()}/handlers/functions`);
-const { MessageButton, MessageActionRow, MessageSelectMenu } = require('discord.js')
+} = require(`../../handlers/functions`);
 module.exports = {
   name: "setup-autoembed",
   category: "💪 Setup",
@@ -19,270 +18,230 @@ module.exports = {
   usage: "setup-autoembed  --> Follow the Steps",
   description: "Define a Channel where every message is replaced with an EMBED or disable this feature",
   memberpermissions: ["ADMINISTRATOR"],
-  type: "system",
   run: async (client, message, args, cmduser, text, prefix) => {
-    
-    let es = client.settings.get(message.guild.id, "embed");let ls = client.settings.get(message.guild.id, "language")
+    var es = client.settings.get(message.guild.id, "embed")
     try {
-      let NumberEmojiIds = getNumberEmojis().map(emoji => emoji?.replace(">", "").split(":")[2])
-      first_layer()
-      async function first_layer(){
-        let menuoptions = [{
-            value: "Add a Channel",
-            description: `Add a auto sending Embed Setup Channel`,
-            emoji: NumberEmojiIds[1]
-          },
-          {
-            value: "Remove a Channel",
-            description: `Remove a Channel from the Setup`,
-            emoji: NumberEmojiIds[2]
-          },
-          {
-            value: "Show all Channels",
-            description: `Show all setup Channels!`,
-            emoji: "📑"
-          },
-          {
-            value: "Cancel",
-            description: `Cancel and stop the Auto-Nsfw-Setup!`,
-            emoji: "862306766338523166"
-          }
-        ]
-        //define the selection
-        let Selection = new MessageSelectMenu()
-          .setCustomId('MenuSelection') 
-          .setMaxValues(1) //OPTIONAL, this is how many values you can have at each selection
-          .setMinValues(1) //OPTIONAL , this is how many values you need to have at each selection
-          .setPlaceholder('Click me to setup the Automated Embed System!') 
-          .addOptions(
-          menuoptions.map(option => {
-            let Obj = {
-              label: option.label ? option.label.substr(0, 50) : option.value.substr(0, 50),
-              value: option.value.substr(0, 50),
-              description: option.description.substr(0, 50),
-            }
-          if(option.emoji) Obj.emoji = option.emoji;
-          return Obj;
-         }))
-        
-        //define the embed
-        let MenuEmbed = new Discord.MessageEmbed()
-        .setColor(es.color)
-        .setAuthor('Auto Embed Setup', 'https://cdn.discordapp.com/emojis/850829013438300221.png?size=96', 'https://discord.gg/milrato')
-        .setDescription(eval(client.la[ls]["cmds"]["setup"]["setup-ticket"]["variable2"]))
-        let used1 = false;
-        //send the menu msg
-        let menumsg = await message.reply({embeds: [MenuEmbed], components: [new MessageActionRow().addComponents(Selection)]})
+      var adminroles = client.settings.get(message.guild.id, "adminroles")
+      var timeouterror = false;
+      var filter = (reaction, user) => {
+        return user.id === message.author.id;
+      };
+      var temptype = ""
+      var tempmsg;
 
-        //Create the collector
-        const collector = menumsg.createMessageComponentCollector({ 
-          filter: i => i?.isSelectMenu() && i?.message.author.id == client.user.id && i?.user,
-          time: 90000
-        })
-        //Menu Collections
-        collector.on('collect', menu => {
-          if (menu?.user.id === cmduser.id) {
-            collector.stop();
-            let menuoptiondata = menuoptions.find(v=>v.value == menu?.values[0])
-            if(menu?.values[0] == "Cancel") return menu?.reply(eval(client.la[ls]["cmds"]["setup"]["setup-ticket"]["variable3"]))
-            menu?.deferUpdate();
-            used1 = true;
-            handle_the_picks(menu?.values[0], menuoptiondata)
-          }
-          else menu?.reply({content: `<:no:833101993668771842> You are not allowed to do that! Only: <@${cmduser.id}>`, ephemeral: true});
-        });
-        //Once the Collections ended edit the menu message
-        collector.on('end', collected => {
-          menumsg.edit({embeds: [menumsg.embeds[0].setDescription(`~~${menumsg.embeds[0].description}~~`)], components: [], content: `${collected && collected.first() && collected.first().values ? `<a:yes:833101995723194437> **Selected: \`${collected ? collected.first().values[0] : "Nothing"}\`**` : "❌ **NOTHING SELECTED - CANCELLED**" }`})
-        });
+      tempmsg = await message.channel.send(new Discord.MessageEmbed()
+        .setTitle("What do you want to do?")
+        .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+        .setDescription(`1️⃣ **== Add** a Channel for Auto Embeds\n\n2️⃣ **== Remove** a Channel for Auto Embeds\n\n3️⃣ **== Show** the Channels for Auto Embeds\n\n📑 **== Show Settings**\n\n\n\n*React with the Right Emoji according to the Right action*`).setFooter(es.footertext, es.footericon)
+      )
+      try {
+        tempmsg.react("1️⃣")
+        tempmsg.react("2️⃣")
+        tempmsg.react("3️⃣")
+        tempmsg.react("📑")
+      } catch (e) {
+        return message.reply(new Discord.MessageEmbed()
+          .setTitle("<:cross:899255798142750770>  ERROR | Missing Permissions to add Reactions")
+          .setColor(es.wrongcolor)
+          .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``.substr(0, 2000))
+          .setFooter(es.footertext, es.footericon)
+        );
       }
-      async function handle_the_picks(optionhandletype, menuoptiondata) {
-        switch (optionhandletype){
-          case "Add a Channel": {
-            let tempmsg = await message.reply({embeds: [new Discord.MessageEmbed()
-              .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-autoembed"]["variable5"]))
-              .setColor(es.color)
-              .setDescription(eval(client.la[ls]["cmds"]["setup"]["setup-autoembed"]["variable6"]))
-              .setFooter(client.getFooter(es))]
-            })
-            await tempmsg.channel.awaitMessages({filter: m => m.author.id === message.author.id,
-                max: 1,
-                time: 90000,
-                errors: ["time"]
-              })
-              .then(collected => {
-                var message = collected.first();
-                var channel = message.mentions.channels.filter(ch=>ch.guild.id==message.guild.id).first() || message.guild.channels.cache.get(message.content.trim().split(" ")[0]);
-                if (channel) {
-                  try {
-                    var a = client.settings.get(message.guild.id, "autoembed")
-                    if(!Array.isArray(a)){
-                      client.settings.set(message.guild.id, Array(a), "autoembed");
-                      a = client.settings.get(message.guild.id, "autoembed")
-                    }
-                    if(a.includes(channel.id))
-                    return message.reply({embeds: [new Discord.MessageEmbed()
-                      .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-autoembed"]["variable7"]))
-                      .setDescription(eval(client.la[ls]["cmds"]["setup"]["setup-autoembed"]["variable8"]))
-                      .setColor(es.color)
-                      .setFooter(client.getFooter(es))
-                    ]});
-                    client.settings.push(message.guild.id, channel.id, "autoembed")
-                    return message.reply({embeds: [new Discord.MessageEmbed()
-                      .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-autoembed"]["variable9"]))
-                      .setColor(es.color)
-                      .setFooter(client.getFooter(es))
-                    ]});
-                  } catch (e) {
-                    return message.reply({embeds: [new Discord.MessageEmbed()
-                      .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-autoembed"]["variable10"]))
-                      .setColor(es.wrongcolor)
-                      .setDescription(eval(client.la[ls]["cmds"]["setup"]["setup-autoembed"]["variable11"]))
-                      .setFooter(client.getFooter(es))
-                    ]});
-                  }
-                } else {
-                  return message.reply( "you didn't ping a valid Channel")
-                }
-              })
-              .catch(e => {
-                console.log(e.stack ? String(e.stack).grey : String(e).grey)
-                return message.reply({embeds: [new Discord.MessageEmbed()
-                  .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-autoembed"]["variable12"]))
-                  .setColor(es.wrongcolor)
-                  .setDescription(`Cancelled the Operation!`.substr(0, 2000))
-                  .setFooter(client.getFooter(es))
-                ]});
-              })
-              
-    
-          }break;
-          case "Remove a Channel": {
-            let tempmsg = await message.reply({embeds: [new Discord.MessageEmbed()
-              .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-autoembed"]["variable13"]))
-              .setColor(es.color)
-              .setDescription(eval(client.la[ls]["cmds"]["setup"]["setup-autoembed"]["variable14"]))
-              .setFooter(client.getFooter(es))]
-            })
-            await tempmsg.channel.awaitMessages({filter: m => m.author.id === message.author.id,
-                max: 1,
-                time: 90000,
-                errors: ["time"]
-              })
-              .then(collected => {
-                var message = collected.first();
-                var channel = message.mentions.channels.filter(ch=>ch.guild.id==message.guild.id).first() || message.guild.channels.cache.get(message.content.trim().split(" ")[0]);
-                if (channel) {
-                  try {
-                    var a = client.settings.get(message.guild.id, "autoembed")
-                    if(!Array.isArray(a)){
-                      client.settings.set(message.guild.id, Array(a), "autoembed");
-                      a = client.settings.get(message.guild.id, "autoembed")
-                    }
-                    if(!a.includes(channel.id))
-                    return message.reply({embeds: [new Discord.MessageEmbed()
-                      .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-autoembed"]["variable15"]))
-                      .setDescription(eval(client.la[ls]["cmds"]["setup"]["setup-autoembed"]["variable16"]))
-                      .setColor(es.color)
-                      .setFooter(client.getFooter(es))
-                    ]});
-                    client.settings.remove(message.guild.id, channel.id, "autoembed")
-                    return message.reply({embeds: [new Discord.MessageEmbed()
-                      .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-autoembed"]["variable17"]))
-                      .setColor(es.color)
-                      .setFooter(client.getFooter(es))
-                    ]});
-                  } catch (e) {
-                    return message.reply({embeds: [new Discord.MessageEmbed()
-                      .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-autoembed"]["variable18"]))
-                      .setColor(es.wrongcolor)
-                      .setDescription(eval(client.la[ls]["cmds"]["setup"]["setup-autoembed"]["variable19"]))
-                      .setFooter(client.getFooter(es))
-                    ]});
-                  }
-                } else {
-                  return message.reply( "you didn't ping a valid Channel")
-                }
-              })
-              .catch(e => {
-                console.log(e.stack ? String(e.stack).grey : String(e).grey)
-                return message.reply({embeds: [new Discord.MessageEmbed()
-                  .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-autoembed"]["variable12"]))
-                  .setColor(es.wrongcolor)
-                  .setDescription(`Cancelled the Operation!`.substr(0, 2000))
-                  .setFooter(client.getFooter(es))
-                ]});
-              })
-          }break;
-          case "Show all Channels": {
-            var a = client.settings.get(message.guild.id, "autoembed")
-            if(!Array.isArray(a)){
-              client.settings.set(message.guild.id, Array(a), "autoembed");
-            }
-            //remove invalid ids
-            for(const id of a){
-              if(!message.guild.channels.cache.get(id)){
-                client.settings.remove(message.guild.id, id, "autoembed")
-              }
-            }
-            a = client.settings.get(message.guild.id, "autoembed")
+      await tempmsg.awaitReactions(filter, {
+          max: 1,
+          time: 90000,
+          errors: ["time"]
+        })
+        .then(collected => {
+          var reaction = collected.first()
+          reaction.users.remove(message.author.id)
+          if (reaction.emoji.name === "1️⃣") temptype = "add"
+          else if (reaction.emoji.name === "2️⃣") temptype = "remove"
+          else if (reaction.emoji.name === "3️⃣") temptype = "show"
+          else if (reaction.emoji.name === "📑") temptype = "thesettings"
+          else throw "You reacted with a wrong emoji"
 
-            message.reply({embeds: [new Discord.MessageEmbed()
-              .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-autoembed"]["variable23"]))
-              .setColor(es.color)
-              .setDescription(eval(client.la[ls]["cmds"]["setup"]["setup-autoembed"]["variable24"]))
-              .setFooter(client.getFooter(es))]
-            })
-          }break;
+        })
+        .catch(e => {
+          timeouterror = e;
+        })
+      if (timeouterror)
+        return message.reply(new Discord.MessageEmbed()
+          .setTitle("<:cross:899255798142750770>  ERROR | Your Time ran out")
+          .setColor(es.wrongcolor)
+          .setDescription(`Cancelled the Operation!`.substr(0, 2000))
+          .setFooter(es.footertext, es.footericon)
+        );
+
+
+      if (temptype == "add") {
+
+        tempmsg = await tempmsg.edit({embed: new Discord.MessageEmbed()
+          .setTitle("Which Channel do you wanna add?")
+          .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+          .setDescription(`Please Ping the Channel now!`)
+          .setFooter(es.footertext, es.footericon)
+        })
+        await tempmsg.channel.awaitMessages(m => m.author.id === message.author.id, {
+            max: 1,
+            time: 90000,
+            errors: ["time"]
+          })
+          .then(collected => {
+            var message = collected.first();
+            var channel = message.mentions.channels.filter(ch=>ch.guild.id==message.guild.id).first();
+            if (channel) {
+              try {
+                var a = client.settings.get(message.guild.id, "autoembed")
+                if(!Array.isArray(a)){
+                  client.settings.set(message.guild.id, Array(a), "autoembed");
+                  a = client.settings.get(message.guild.id, "autoembed")
+                }
+                if(a.includes(channel.id))
+                return message.reply(new Discord.MessageEmbed()
+                  .setTitle(`<:cross:899255798142750770>  The Channel is already defined as an Auto Embed Channel`)
+                  .setDescription(`You can retry the Command: \`${prefix}setup-autoembed\` to remove the Channel from the LIST!`)
+                  .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+                  .setFooter(es.footertext, es.footericon)
+                );
+                client.settings.push(message.guild.id, channel.id, "autoembed")
+                return message.reply(new Discord.MessageEmbed()
+                  .setTitle(`<:tick:899255869185855529> I will now replace every message in \`${channel.name}\` too!`)
+                  .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+                  .setFooter(es.footertext, es.footericon)
+                );
+              } catch (e) {
+                return message.reply(new Discord.MessageEmbed()
+                  .setTitle("<:cross:899255798142750770>  ERROR | Something went wrong, please contact: `S409™#9685`")
+                  .setColor(es.wrongcolor)
+                  .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``)
+                  .setFooter(es.footertext, es.footericon)
+                );
+              }
+            } else {
+              throw "you didn't ping a valid Channel"
+            }
+          })
+          .catch(e => {
+            timeouterror = e;
+          })
+        if (timeouterror)
+          return message.reply(new Discord.MessageEmbed()
+            .setTitle("<:cross:899255798142750770>  ERROR | Your Time ran out")
+            .setColor(es.wrongcolor)
+            .setDescription(`Cancelled the Operation!`.substr(0, 2000))
+            .setFooter(es.footertext, es.footericon)
+          );
+
+      } else if (temptype == "remove") {
+        tempmsg = await tempmsg.edit({embed: new Discord.MessageEmbed()
+          .setTitle("Which Channel do you wanna add?")
+          .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+          .setDescription(`Please Ping the Channel now!`)
+          .setFooter(es.footertext, es.footericon)
+        })
+        await tempmsg.channel.awaitMessages(m => m.author.id === message.author.id, {
+            max: 1,
+            time: 90000,
+            errors: ["time"]
+          })
+          .then(collected => {
+            var message = collected.first();
+            var channel = message.mentions.channels.filter(ch=>ch.guild.id==message.guild.id).first();
+            if (channel) {
+              try {
+                var a = client.settings.get(message.guild.id, "autoembed")
+                if(!Array.isArray(a)){
+                  client.settings.set(message.guild.id, Array(a), "autoembed");
+                  a = client.settings.get(message.guild.id, "autoembed")
+                }
+                if(!a.includes(channel.id))
+                return message.reply(new Discord.MessageEmbed()
+                  .setTitle(`<:cross:899255798142750770>  The Channel is not defined as an Auto Embed Channel yet`)
+                  .setDescription(`You can retry the Command: \`${prefix}setup-autoembed\` to add the Channel to the LIST!`)
+                  .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+                  .setFooter(es.footertext, es.footericon)
+                );
+                client.settings.remove(message.guild.id, channel.id, "autoembed")
+                return message.reply(new Discord.MessageEmbed()
+                  .setTitle(`<:tick:899255869185855529> I will now no longer replace the messages in \`${channel.name}\`!`)
+                  .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+                  .setFooter(es.footertext, es.footericon)
+                );
+              } catch (e) {
+                return message.reply(new Discord.MessageEmbed()
+                  .setTitle("<:cross:899255798142750770>  ERROR | Something went wrong, please contact: `S409™#9685`")
+                  .setColor(es.wrongcolor)
+                  .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``)
+                  .setFooter(es.footertext, es.footericon)
+                );
+              }
+            } else {
+              throw "you didn't ping a valid Channel"
+            }
+          })
+          .catch(e => {
+            timeouterror = e;
+          })
+        if (timeouterror)
+          return message.reply(new Discord.MessageEmbed()
+            .setTitle("<:cross:899255798142750770>  ERROR | Your Time ran out")
+            .setColor(es.wrongcolor)
+            .setDescription(`Cancelled the Operation!`.substr(0, 2000))
+            .setFooter(es.footertext, es.footericon)
+          );
+      } else if (temptype == "show") {
+        var a = client.settings.get(message.guild.id, "autoembed")
+        if(!Array.isArray(a)){
+          client.settings.set(message.guild.id, Array(a), "autoembed");
+          a = client.settings.get(message.guild.id, "autoembed")
         }
+        tempmsg = await tempmsg.edit({embed: new Discord.MessageEmbed()
+          .setTitle("I am replacing the messages in those Channels:")
+          .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+          .setDescription(`${a.map(ch=>`<#${ch}>`).join(" | ")}`.substr(0, 2048))
+          .setFooter(es.footertext, es.footericon)
+        })
+        
+        
+       } else if ( temptype == "thesettings") {
+          var a = client.settings.get(message.guild.id, "autoembed")
+          if(!Array.isArray(a)){
+            client.settings.set(message.guild.id, Array(a), "autoembed");
+            a = client.settings.get(message.guild.id, "autoembed")
+          }
+          tempmsg = await tempmsg.edit({embed: new Discord.MessageEmbed()
+            .setTitle("📑 Settings of the Auto Embed-Message Replacement System")
+            .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+            .setDescription(`**Channels where Messages will be replaced:**\n${a.map(ch=>`<#${ch}>`).join(" | ")}`.substr(0, 2048))
+            .setFooter(es.footertext, es.footericon)
+          })
+          
+          
+        } else {
+        return message.reply(new Discord.MessageEmbed()
+          .setTitle("<:cross:899255798142750770>  ERROR | PLEASE CONTACT `S409™#9685`")
+          .setColor(es.wrongcolor)
+          .setFooter(es.footertext, es.footericon)
+        );
       }
 
     } catch (e) {
-      console.log(String(e.stack).grey.bgRed)
-      return message.reply({embeds: [new MessageEmbed()
-        .setColor(es.wrongcolor).setFooter(client.getFooter(es))
-        .setTitle(client.la[ls].common.erroroccur)
-        .setDescription(eval(client.la[ls]["cmds"]["setup"]["setup-autoembed"]["variable26"]))
-      ]});
+      console.log(String(e.stack).bgRed)
+      return message.channel.send(new MessageEmbed()
+        .setColor(es.wrongcolor).setFooter(es.footertext, es.footericon)
+        .setTitle(`<:cross:899255798142750770>  Something went Wrong`)
+        .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``)
+      );
     }
   },
 };
-function getNumberEmojis() {
-  return [
-    "<:Number_0:843943149915078696>",
-    "<:Number_1:843943149902626846>",
-    "<:Number_2:843943149868023808>",
-    "<:Number_3:843943149914554388>",
-    "<:Number_4:843943149919535154>",
-    "<:Number_5:843943149759889439>",
-    "<:Number_6:843943150468857876>",
-    "<:Number_7:843943150179713024>",
-    "<:Number_8:843943150360068137>",
-    "<:Number_9:843943150443036672>",
-    "<:Number_10:843943150594031626>",
-    "<:Number_11:893173642022748230>",
-    "<:Number_12:893173642165383218>",
-    "<:Number_13:893173642274410496>",
-    "<:Number_14:893173642198921296>",
-    "<:Number_15:893173642182139914>",
-    "<:Number_16:893173642530271342>",
-    "<:Number_17:893173642538647612>",
-    "<:Number_18:893173642307977258>",
-    "<:Number_19:893173642588991488>",
-    "<:Number_20:893173642307977266>",
-    "<:Number_21:893173642274430977>",
-    "<:Number_22:893173642702250045>",
-    "<:Number_23:893173642454773782>",
-    "<:Number_24:893173642744201226>",
-    "<:Number_25:893173642727424020>"
-  ]
-}
 /**
  * @INFO
- * Bot Coded by Tomato#6966 | https://discord.gg/milrato
+ * Bot Coded by S409™#9685 | https://github.com/S409™#9685/discord-js-lavalink-Music-Bot-erela-js
  * @INFO
- * Work for S409 support | https://s409.xyz
+ * Work for s409 Development | https://s409.xyz
  * @INFO
- * Please mention him / S409 support, when using this Code!
+ * Please mention Him / s409 Development, when using this Code!
  * @INFO
  */

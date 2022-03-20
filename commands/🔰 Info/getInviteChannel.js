@@ -1,65 +1,30 @@
 const {
-  MessageEmbed, Permissions
+  MessageEmbed
 } = require("discord.js");
-const config = require(`${process.cwd()}/botconfig/config.json`);
-var ee = require(`${process.cwd()}/botconfig/embed.json`);
-const emoji = require(`${process.cwd()}/botconfig/emojis.json`);
-const { MessageButton } = require('discord.js')
-const { handlemsg } = require(`${process.cwd()}/handlers/functions`)
+const config = require("../../botconfig/config.json");
+var ee = require("../../botconfig/embed.json");
+const emoji = require(`../../botconfig/emojis.json`);
+const { MessageButton } = require('discord-buttons')
 module.exports = {
   name: "getinvitechannel",
   category: "🔰 Info",
   usage: "getinvitechannel",
   description: "Gives you an Invite link for an Channel",
-  type: "server",
   run: async (client, message, args, cmduser, text, prefix) => {
-    
-    let es = client.settings.get(message.guild.id, "embed");let ls = client.settings.get(message.guild.id, "language")
+    let es = client.settings.get(message.guild.id, "embed")
     try {
-      let Channel = message.mentions.channels.first() || message.guild.channels.cache.get(args[0]) || message.channel;
-      if(!Channel) 
-      return message.reply(handlemsg(client.la[ls].cmds.info.getinvitechannel.error)) 
-      if(!Channel.permissionsFor(Channel.guild.me).has(Permissions.FLAGS.CREATE_INSTANT_INVITE)){
-        return `:x: **I am missing the CREATE_INSTANT_INVITE PERMISSION for \`${Channel.name}\`**`
-      }
-      await Channel.createInvite().then(invite => {
-        if(invite.error){
-          let e = invite.error;
-          console.log(String(e.stack).grey.bgRed)
-          return message.reply({embeds: [new MessageEmbed()
-            .setColor(es.wrongcolor)
-            .setFooter(client.getFooter(es))
-            .setTitle(client.la[ls].common.erroroccur)
-            .setDescription(eval(client.la[ls]["cmds"]["info"]["color"]["variable2"]))
-          ]});
-        }
-        message.reply(`https://discord.gg/${invite.code}`);
-      }).catch(e=>{
-        console.log(String(e.stack).grey.bgRed)
-        return message.reply({embeds: [new MessageEmbed()
-          .setColor(es.wrongcolor)
-          .setFooter(client.getFooter(es))
-          .setTitle(client.la[ls].common.erroroccur)
-          .setDescription(eval(client.la[ls]["cmds"]["info"]["color"]["variable2"]))
-        ]});
-      })
+      let Channel = message.mentions.channels.first()
+      if(!Channel) Channel = await client.channels.fetch(args[0])
+      if(!Channel) return message.reply("You didn't provided a Channel")
+      let msg = await client.getInvite(Channel.id)
+      message.channel.send(msg);
     } catch (e) {
-      console.log(String(e.stack).grey.bgRed)
-      return message.reply({embeds: [new MessageEmbed()
-        .setColor(es.wrongcolor)
-        .setFooter(client.getFooter(es))
-        .setTitle(client.la[ls].common.erroroccur)
-        .setDescription(eval(client.la[ls]["cmds"]["info"]["color"]["variable2"]))
-      ]});
+      console.log(String(e.stack).bgRed)
+      return message.channel.send(new MessageEmbed()
+        .setColor(es.wrongcolor).setFooter(es.footertext, es.footericon)
+        .setTitle(`An error occurred`)
+        .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``)
+      );
     }
   }
 }
-/**
- * @INFO
- * Bot Coded by Tomato#6966 | https://discord.gg/milrato
- * @INFO
- * Work for S409 support | https://s409.xyz
- * @INFO
- * Please mention him / S409 support, when using this Code!
- * @INFO
- */

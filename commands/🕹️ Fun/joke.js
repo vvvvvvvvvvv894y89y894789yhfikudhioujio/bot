@@ -1,28 +1,25 @@
-const Discord = require("discord.js");
-const {MessageEmbed, MessageAttachment} = require("discord.js");
-const config = require(`${process.cwd()}/botconfig/config.json`);
-const canvacord = require("canvacord");
-var ee = require(`${process.cwd()}/botconfig/embed.json`);
-const request = require("request");
-const emoji = require(`${process.cwd()}/botconfig/emojis.json`);
+const {
+  MessageEmbed
+} = require("discord.js");
+const config = require("../../botconfig/config.json");
+var ee = require("../../botconfig/embed.json");
+const emoji = require(`../../botconfig/emojis.json`);
 const got = require("got");
 const path = require("path");
 module.exports = {
   name: path.parse(__filename).name,
   category: "🕹️ Fun",
-  usage: `${path.parse(__filename).name} [@User]`,
-  type: "user",
+  useage: `${path.parse(__filename).name}[@User]`,
   description: "*Image cmd in the style:* " + path.parse(__filename).name,
   run: async (client, message, args, cmduser, text, prefix) => {
-    
-    let es = client.settings.get(message.guild.id, "embed");let ls = client.settings.get(message.guild.id, "language")
+    let es = client.settings.get(message.guild.id, "embed")
         if(!client.settings.get(message.guild.id, "FUN")){
-          return message.reply({embeds : [new MessageEmbed()
+          return message.channel.send(new MessageEmbed()
             .setColor(es.wrongcolor)
-            .setFooter(client.getFooter(es))
-            .setTitle(client.la[ls].common.disabled.title)
-            .setDescription(require(`${process.cwd()}/handlers/functions`).handlemsg(client.la[ls].common.disabled.description, {prefix: prefix}))
-          ]});
+            .setFooter(es.footertext, es.footericon)
+            .setTitle(`<:cross:899255798142750770>  THIS COMMAND IS CURRENTLY DISABLED`)
+            .setDescription(`An Admin can enable it with: \`${prefix}setup-commands\``)
+          );
         }
     try {
       got("https://www.reddit.com/r/jokes/random/.json")
@@ -32,31 +29,31 @@ module.exports = {
           var joke = content[0].data.children[0].data.selftext;
           let jokeembed = new MessageEmbed()
           .setDescription(joke)
-          .setColor(es.color)
-          .setFooter(client.getFooter(es))
+          .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+          .setFooter(es.footertext, es.footericon)
           .setTitle(title)
-          .setAuthor('Joke')
+          .setAuthor(`${client.user.username}|Joke`)
           .setTimestamp();
-          return message.reply({embeds : [jokeembed]});
+          return message.channel.send(jokeembed);
         })
-        .catch(() => {});
+        .catch((e) => console.log(String(e.stack).red));
     } catch (e) {
-      console.log(String(e.stack).grey.bgRed)
-      return message.reply({embeds : [new MessageEmbed()
+      console.log(String(e.stack).bgRed)
+      return message.channel.send(new MessageEmbed()
         .setColor(es.wrongcolor)
-        .setFooter(client.getFooter(es))
-        .setTitle(client.la[ls].common.erroroccur)
-        .setDescription(eval(client.la[ls]["cmds"]["fun"]["joke"]["variable2"]))
-      ]});
+        .setFooter(es.footertext, es.footericon)
+        .setTitle(`<:cross:899255798142750770>  An error occurred`)
+        .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``)
+      );
     }
   },
 };
 /**
  * @INFO
- * Bot Coded by Tomato#6966 | https://discord.gg/milrato
+ * Bot Coded by S409™#9685 | https://github.com/S409™#9685/discord-js-lavalink-Music-Bot-erela-js
  * @INFO
- * Work for S409 support | https://s409.xyz
+ * Work for s409 Development | https://s409.xyz
  * @INFO
- * Please mention him / S409 support, when using this Code!
+ * Please mention Him / s409 Development, when using this Code!
  * @INFO
  */

@@ -1,93 +1,65 @@
+const Discord = require(`discord.js`);
 const {
-  MessageEmbed,
-  MessageButton,
-  MessageActionRow
-} = require("discord.js");
-const emoji = require(`${process.cwd()}/botconfig/emojis.json`);
-const { handlemsg } = require(`${process.cwd()}/handlers/functions`);
-    module.exports = {
+  MessageEmbed
+} = require(`discord.js`);
+const config = require(`../../botconfig/config.json`);
+var ee = require(`../../botconfig/embed.json`);
+const emoji = require(`../../botconfig/emojis.json`);const {
+  format,
+  delay,
+  edit_request_message_track_info,
+  arrayMove
+} = require("../../handlers/functions")
+module.exports = {
   name: `stop`,
   category: `🎶 Music`,
-  aliases: [`leave`, "dis", "disconnect", "votestop", "voteleave", "votedis", "votedisconnect", "vstop", "vleave", "vdis", "vdisconnect"],
+  aliases: [`leave`, "dis", "disconnect"],
   description: `Stops current track and leaves the channel`,
   usage: `stop`,
-  parameters: {
-    "type": "music",
-    "activeplayer": true,
-    "check_dj": true,
-    "previoussong": false
-  },
-  type: "song",
+  parameters: {"type":"music", "activeplayer": true, "previoussong": false},
   run: async (client, message, args, cmduser, text, prefix, player) => {
-    
-    let es = client.settings.get(message.guild.id, "embed");let ls = client.settings.get(message.guild.id, "language")
-    if (!client.settings.get(message.guild.id, "MUSIC")) {
-      return message.reply({embeds : [new MessageEmbed()
-        .setColor(es.wrongcolor)
-        .setFooter(client.getFooter(es))
-        .setTitle(client.la[ls].common.disabled.title)
-        .setDescription(handlemsg(client.la[ls].common.disabled.description, {prefix: prefix}))
-      ]});
-    }
-    try {
+    let es = client.settings.get(message.guild.id, "embed")
+        if(!client.settings.get(message.guild.id, "MUSIC")){
+          return message.channel.send(new MessageEmbed()
+            .setColor(es.wrongcolor)
+            .setFooter(es.footertext, es.footericon)
+            .setTitle(`<:cross:899255798142750770>  THIS COMMAND IS CURRENTLY DISABLED`)
+            .setDescription(`An Admin can enable it with: \`${prefix}setup-commands\``)
+          );
+        }
+    try{
       //if there is no current track error
-      if (!player) {
-        if (message.guild.me.voice.channel) {
-          message.guild.me.voice.disconnect()
-          return message.reply({embeds : [new MessageEmbed()
-            .setTitle(eval(client.la[ls]["cmds"]["music"]["stop"]["variable1"]))
-            .setColor(es.color)
-
-          ]});
-        } else {
-          return message.reply({embeds : [new MessageEmbed()
-            .setColor(es.wrongcolor)
-            .setTitle(eval(client.la[ls]["cmds"]["music"]["stop"]["variable2"]))
-          ]});
-        }
-        return
-      }
-
-      if (player.queue && !player.queue.current) {
-        if (message.guild.me.voice.channel) {
-          try {
-            message.guild.me.voice.disconnect();
-          } catch {}
-          try {
-            player.destroy();
-          } catch {}
-          return message.react("⏹️").catch((e) => {})
-        } else {
-          return message.reply({embeds : [new MessageEmbed()
-            .setColor(es.wrongcolor)
-            .setTitle(eval(client.la[ls]["cmds"]["music"]["stop"]["variable3"]))
-          ]});
-        }
-        return
-      }
-      //stop playing
-      try {
-        player.destroy();
-      } catch {}
-      //React with the emoji
-      return message.react(emoji?.react.stop).catch((e) => {})
-    } catch (e) {
-      console.log(String(e.stack).dim.bgRed)
-      return message.reply({embeds : [new MessageEmbed()
+      if (!player)
+      return message.channel.send(new MessageEmbed()
+        .setFooter(es.footertext, es.footericon)
         .setColor(es.wrongcolor)
-
-        .setTitle(client.la[ls].common.erroroccur)
-        .setDescription(eval(client.la[ls]["cmds"]["music"]["stop"]["variable4"]))
-      ]});
+        .setTitle(`<:cross:899255798142750770>  No song is currently playing in this guild.`)
+      );
+      if (player.queue && !player.queue.current)
+        return message.channel.send(new MessageEmbed()
+          .setFooter(es.footertext, es.footericon)
+          .setColor(es.wrongcolor)
+          .setTitle(`<:cross:899255798142750770>  No song is currently playing in this guild.`)
+        );
+        
+      //stop playing
+      player.destroy();
+      //send success message
+      return message.channel.send(new MessageEmbed()
+        .setTitle(`<:tick:899255869185855529> ${emoji.msg.stop} Stopped and left your Channel`)
+        .addField("Thank you for using our service!",`Come join our [support server](https://discord.gg/NfAbJB7ft9) to get information about updates, issues and for discussions about bot features!`)
+        .setImage("https://cdn.discordapp.com/attachments/875692237751742474/880633325235085363/standard_1.gif")
+        .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+        .setFooter(es.footertext, es.footericon)
+      );
+    } catch (e) {
+      console.log(String(e.stack).bgRed)
+      return message.channel.send(new MessageEmbed()
+          .setColor(es.wrongcolor)
+          .setFooter(es.footertext, es.footericon)
+          .setTitle(`<:cross:899255798142750770>  An error occurred`)
+          .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``)
+      );
     }
   }
 };
-/**
- * @INFO
- * Bot Coded by Tomato#6966 | https://github?.com/Tomato6966/discord-js-lavalink-Music-Bot-erela-js
- * @INFO
- * Work for S409 support | https://s409.xyz
- * @INFO
- * Please mention Him / S409 support, when using this Code!
- * @INFO
- */

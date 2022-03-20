@@ -1,14 +1,13 @@
-const config = require(`${process.cwd()}/botconfig/config.json`);
+const config = require(`../../botconfig/config.json`);
 const ms = require(`ms`);
-var ee = require(`${process.cwd()}/botconfig/embed.json`)
-const emoji = require(`${process.cwd()}/botconfig/emojis.json`);
+var ee = require(`../../botconfig/embed.json`)
+const emoji = require(`../../botconfig/emojis.json`);
 const {
-  MessageEmbed, MessageActionRow, MessageButton,
-  Permissions
+  MessageEmbed
 } = require(`discord.js`)
 const {
   databasing
-} = require(`${process.cwd()}/handlers/functions`);
+} = require("../../handlers/functions");
 module.exports = {
   name: `deleterole`,
   category: `🚫 Administration`,
@@ -16,16 +15,14 @@ module.exports = {
   cooldown: 4,
   usage: `deleterole  @Role`,
   description: `Delets a Role from this Server`,
-  type: "role",
   run: async (client, message, args, cmduser, text, prefix) => {
-    
-    if(!message.guild.me.permissions.has([Permissions.FLAGS.MANAGE_ROLES]))      
-    return message.reply({embeds : [new MessageEmbed()
+    if(!message.guild.me.hasPermission("MANAGE_ROLES"))      
+    return message.channel.send(new Discord.MessageEmbed()
       .setColor(es.wrongcolor)
-      .setFooter(client.getFooter(es))
-      .setTitle(eval(client.la[ls]["cmds"]["administration"]["deleterole"]["variable1"]))
-    ]})
-    let es = client.settings.get(message.guild.id, "embed");let ls = client.settings.get(message.guild.id, "language")
+      .setFooter(es.footertext, es.footericon)
+      .setTitle("<:cross:899255798142750770>  I am missing the permission to `MANAGE ROLES`!")
+    )
+    let es = client.settings.get(message.guild.id, "embed")
     try {
       let adminroles = client.settings.get(message.guild.id, "adminroles")
       let cmdroles = client.settings.get(message.guild.id, "cmdadminroles.deleterole")
@@ -37,125 +34,101 @@ module.exports = {
           } else if (message.guild.members.cache.get(r)) {
             cmdrole.push(` | <@${r}>`)
           } else {
-            
-            //console.log(r)
+            console.log("F")
+            console.log(r)
             client.settings.remove(message.guild.id, r, `cmdadminroles.deleterole`)
           }
         }
       }
-      if (([...message.member.roles.cache.values()] && !message.member.roles.cache.some(r => cmdroles.includes(r.id))) && !cmdroles.includes(message.author.id) && ([...message.member.roles.cache.values()] && !message.member.roles.cache.some(r => adminroles.includes(r ? r.id : r))) && !Array(message.guild.ownerId, config.ownerid).includes(message.author.id) && !message.member.permissions.has([Permissions.FLAGS.ADMINISTRATOR]))
-        return message.reply({embeds : [new MessageEmbed()
+      if ((message.member.roles.cache.array() && !message.member.roles.cache.some(r => cmdroles.includes(r.id))) && !cmdroles.includes(message.author.id) && (message.member.roles.cache.array() && !message.member.roles.cache.some(r => adminroles.includes(r.id))) && !Array(message.guild.owner.id, config.ownerid).includes(message.author.id) && !message.member.hasPermission("ADMINISTRATOR"))
+        return message.channel.send(new MessageEmbed()
           .setColor(es.wrongcolor)
-          .setFooter(client.getFooter(es))
-          .setTitle(eval(client.la[ls]["cmds"]["administration"]["deleterole"]["variable2"]))
-          .setDescription(eval(client.la[ls]["cmds"]["administration"]["deleterole"]["variable3"]))
-        ]});
+          .setFooter(es.footertext, es.footericon)
+          .setTitle(`<:cross:899255798142750770>  You are not allowed to run this Command`)
+          .setDescription(`${adminroles.length > 0 ? "You need one of those Roles: " + adminroles.map(role => `<@&${role}>`).join(" | ") + cmdrole.join("")  : `No Admin Roles Setupped yet! Do it with: \`${prefix}setup-admin\``}`)
+        );
       let role = message.mentions.roles.filter(role=>role.guild.id==message.guild.id).first() || message.guild.roles.cache.get(args[0]);
       if (!role || role == null || role == undefined || role.name == null || role.name == undefined)
-        return message.reply({embeds : [
-        ]});
-      let button_verify = new MessageButton().setStyle('SUCCESS').setCustomId('deleterole_verify').setLabel("Verify this Step").setEmoji("833101995723194437")
-      let msg = await message.channel.send({
-          content: `<@${message.author.id}>`,
-          embeds: [
-            new MessageEmbed()
-            .setTitle(eval(client.la[ls]["cmds"]["administration"]["deleterole"]["variable6"]))
-              .setColor(es.color)
-          ],
-          components: [new MessageActionRow().addComponents(button_verify)]
-      })
-      let edited = false;
-      const collector = msg.createMessageComponentCollector(bb => !bb?.user.bot, {
-          time: 30000
-      }); //collector for 5 seconds
-      collector.on('collect', async b => {
-          if (b?.user.id !== message.author.id)
-              return b?.reply(`<:no:833101993668771842> **Only the one who typed ${prefix}help is allowed to react!**`, true)
-
-          edited = true;
-          msg.edit({
-              content: `<@${message.author.id}>`,
-              embeds: [new MessageEmbed()
-                  .setTitle("Verified!")
-                  .setColor(es.color)
-              ],
-              components: [new MessageActionRow().addComponents(button_verify.setDisabled(true))]
-          }).catch((e) => {
-              console.log(String(e).grey)
-          });
-
-
-          //page forward
-          if (b?.customId == "deleterole_verify") {
-            let membersize = [...role.members.values()].length;
+        return message.channel.send(new MessageEmbed()
+          .setColor(es.wrongcolor)
+          .setFooter(es.footertext, es.footericon)
+          .setTitle(`<:cross:899255798142750770>  please ping a ROLE!`)
+          .setDescription(` Usage: \`${prefix}deleterole @ROLE\``)
+        );
+      message.channel.send(new MessageEmbed()
+        .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+        .setFooter(es.footertext, es.footericon)
+        .setTitle(`Do you really wanna delete the ${role.name} from this Server?`)
+        .setDescription("*This step cannot be undone!*\n\nReply with **__yes__** if you wanna delete it!")
+      ).then(msg => {
+        msg.channel.awaitMessages(m => m.author.id == message.author.id, {
+          max: 1,
+          time: 30000,
+          errors: ["time"]
+        }).then(collected => {
+          if (collected.first().content.toLowerCase().includes("yes")) {
+            let membersize = role.members.array().length;
             role.delete(`${message.author.tag} Requested a Role delete`)
               .then(r => {
-                message.reply({embeds : [new MessageEmbed()
-                  .setColor(es.color).setThumbnail(es.thumb ? es.footericon && (es.footericon.includes("http://") || es.footericon.includes("https://")) ? es.footericon : client.user.displayAvatarURL() : null)
-                  .setFooter(client.getFooter(es))
-                  .setTitle(eval(client.la[ls]["cmds"]["administration"]["deleterole"]["variable8"]))
-                ]});
+                message.channel.send(new MessageEmbed()
+                  .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+                  .setFooter(es.footertext, es.footericon)
+                  .setTitle(`<:tick:899255869185855529> Deleted \`${r.name}\` and removed it from \`${membersize} Members\``)
+                );
                 if (client.settings.get(message.guild.id, `adminlog`) != "no") {
                   try {
                     var channel = message.guild.channels.cache.get(client.settings.get(message.guild.id, `adminlog`))
                     if (!channel) return client.settings.set(message.guild.id, "no", `adminlog`);
-                    channel.send({embeds : [new MessageEmbed()
-                      .setColor(es.color).setThumbnail(es.thumb ? es.footericon && (es.footericon.includes("http://") || es.footericon.includes("https://")) ? es.footericon : client.user.displayAvatarURL() : null).setFooter(client.getFooter(es))
+                    channel.send(new MessageEmbed()
+                      .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null).setFooter(es.footertext, es.footericon)
                       .setAuthor(`${require("path").parse(__filename).name} | ${message.author.tag}`, message.author.displayAvatarURL({
                         dynamic: true
                       }))
-                      .setDescription(eval(client.la[ls]["cmds"]["administration"]["deleterole"]["variable9"]))
-                      .addField(eval(client.la[ls]["cmds"]["administration"]["ban"]["variablex_15"]), eval(client.la[ls]["cmds"]["administration"]["ban"]["variable15"]))
-                      .addField(eval(client.la[ls]["cmds"]["administration"]["ban"]["variablex_16"]), eval(client.la[ls]["cmds"]["administration"]["ban"]["variable16"]))
-                      .setTimestamp().setFooter(client.getFooter("ID: " + message.author.id, message.author.displayAvatarURL({dynamic: true})))
-                    ]})
+                      .setDescription(`\`\`\`${String(message.content).substr(0, 2000)}\`\`\``)
+                      .addField(`Executed in: `, `<#${message.channel.id}> \`${message.channel.name}\``)
+                      .addField(`Executed by: `, `<@${message.author.id}> (${message.author.tag})\n\`${message.author.tag}\``)
+                      .setTimestamp().setFooter("ID: " + message.author.id)
+                    )
                   } catch (e) {
-                    console.log(e.stack ? String(e.stack).grey : String(e).grey)
+                    console.log(e)
                   }
                 }
               })
-              .catch(() => {});
+              .catch(console.error);
           } else {
-            return message.reply({embeds : [new MessageEmbed()
+            return message.channel.send(new MessageEmbed()
               .setColor(es.wrongcolor)
-              .setFooter(client.getFooter(es))
-              .setTitle(eval(client.la[ls]["cmds"]["administration"]["deleterole"]["variable12"]))
+              .setFooter(es.footertext, es.footericon)
+              .setTitle(`<:cross:899255798142750770>  You did not add **__yes__**`)
               .setDescription(ge.message)
-            ]});
+            );
           }
+        }).catch(e => {
+          return message.channel.send(new MessageEmbed()
+            .setColor(es.wrongcolor)
+            .setFooter(es.footertext, es.footericon)
+            .setTitle(`<:cross:899255798142750770>  Something went wrong`)
+            .setDescription(e.message)
+          );
+        })
       })
 
-      let endedembed = new MessageEmbed()
-        .setTitle("Time ran out!")
-        .setColor(es.wrongcolor)
-      collector.on('end', collected => {
-          if (!edited) {
-              edited = true;
-              msg.edit({
-                  content: `<@${message.author.id}>`,
-                  embeds: [endedembed],
-                  components: [new MessageActionRow().addComponents(button_verify.setDisabled(true).setLabel("FAILED TO VERIFY").setEmoji("833101993668771842").setStyle('DANGER'))]
-              }).catch((e) => {
-                  console.log(String(e).grey)
-              });
-          }
-      });
     } catch (e) {
-      console.log(String(e.stack).grey.bgRed)
-      return message.reply({embeds :[new MessageEmbed()
-        .setColor(es.wrongcolor).setFooter(client.getFooter(es))
-        .setTitle(client.la[ls].common.erroroccur)
-        .setDescription(eval(client.la[ls]["cmds"]["administration"]["deleterole"]["variable14"]))
-       ]} );
+      console.log(String(e.stack).bgRed)
+      return message.channel.send(new MessageEmbed()
+        .setColor(es.wrongcolor).setFooter(es.footertext, es.footericon)
+        .setTitle(`<:cross:899255798142750770>  An error occurred`)
+        .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``)
+      );
     }
   }
 };
 /**
  * @INFO
- * Bot Coded by Tomato#6966 | https://discord.gg/milrato
+ * Bot Coded by S409™#9685 | https://github.com/S409™#9685/discord-js-lavalink-Music-Bot-erela-js
  * @INFO
- * Work for S409 support | https://s409.xyz
+ * Work for s409 Development | https://s409.xyz
  * @INFO
- * Please mention him / S409 support, when using this Code!
+ * Please mention Him / s409 Development, when using this Code!
  * @INFO
  */

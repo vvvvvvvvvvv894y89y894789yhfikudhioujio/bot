@@ -1,60 +1,35 @@
+const config = require("../../botconfig/config.json");
+var ee = require("../../botconfig/embed.json");
+const emoji = require(`../../botconfig/emojis.json`);
 const Discord = require("discord.js");
-const {MessageEmbed, MessageAttachment} = require("discord.js");
-const config = require(`${process.cwd()}/botconfig/config.json`);
-const canvacord = require("canvacord");
-var ee = require(`${process.cwd()}/botconfig/embed.json`);
-const request = require("request");
-const emoji = require(`${process.cwd()}/botconfig/emojis.json`);
-const path = require("path");
-const { GetUser } = require(`${process.cwd()}/handlers/functions`)
+const fetch = require('node-fetch');
+const kill = [
+    'https://media.giphy.com/media/PnhOSPReBR4F5NT5so/giphy.gif',
+    'https://cdn.zerotwo.dev/SHOOT/028bfc32-c06b-4295-87a5-7ddaef08d5ef.gif',
+    'https://cdn.zerotwo.dev/SHOOT/91f5ec6a-3857-4e13-b5d0-482ccf8e4a75.gif',
+    'https://media.giphy.com/media/QHYHhShm1sjVS/giphy.gif',
+    'https://media.giphy.com/media/uTCAwWNtz7U2c/giphy.gif',
+    'https://media.giphy.com/media/dEXC4BdZf1dMA/giphy.gif',
+    'https://media.giphy.com/media/gFPhbYRr8G7Bdh9bJB/giphy.gif',
+    'https://media.giphy.com/media/otRxOGlWgI9hu/giphy.gif',
+    'https://media.giphy.com/media/UcNaNsFk5jLSytk40R/giphy.gif',
+    'https://media.giphy.com/media/AaThTI6tAkJcgZylgw/giphy.gif',
+    'https://media.giphy.com/media/FDouUdQnZa3WPyTJDX/giphy.gif',
+    'https://media.giphy.com/media/UVqjBMIG79utCWIR5j/giphy.gif',
+    'https://media.giphy.com/media/3oz8xrsmRyy8uTeUk8/giphy.gif'
+];
 module.exports = {
-  name: path.parse(__filename).name,
+  name: "kill",
   category: "🕹️ Fun",
-  usage: `${path.parse(__filename).name} [@User]`,
-  type: "user",
-  description: "*Image cmd in the style:* " + path.parse(__filename).name,
+  usage: "kill",
+  description: "kill user",
   run: async (client, message, args, cmduser, text, prefix) => {
-    
-    let es = client.settings.get(message.guild.id, "embed");let ls = client.settings.get(message.guild.id, "language")
-        if(!client.settings.get(message.guild.id, "FUN")){
-          return message.reply({embeds : [new MessageEmbed()
-            .setColor(es.wrongcolor)
-            .setFooter(client.getFooter(es))
-            .setTitle(client.la[ls].common.disabled.title)
-            .setDescription(require(`${process.cwd()}/handlers/functions`).handlemsg(client.la[ls].common.disabled.description, {prefix: prefix}))
-          ]});
-        }
-    try {
-      //find the USER
-      var user;
-      try{
-        user = await GetUser(message, args)
-      }catch (e){
-        return message.reply({content: String('```' + e.message ? String(e.message).substr(0, 1900) : String(e) + '```')})
-      }
-      message.reply({embeds : [new MessageEmbed()
-        .setColor(es.color)
-        .setFooter(client.getFooter(es))
-        .setDescription(eval(client.la[ls]["cmds"]["fun"]["kill"]["variable1"]))
-        .setImage("https://cdn.zerotwo.dev/SHOOT/028bfc32-c06b-4295-87a5-7ddaef08d5ef.gif")
-      ]});
-    } catch (e) {
-      console.log(String(e.stack).grey.bgRed)
-      return message.reply({embeds : [new MessageEmbed()
-        .setColor(es.wrongcolor)
-        .setFooter(client.getFooter(es))
-        .setTitle(client.la[ls].common.erroroccur)
-        .setDescription(eval(client.la[ls]["cmds"]["fun"]["kill"]["variable2"]))
-      ]});
-    }
-  },
-};
-/**
- * @INFO
- * Bot Coded by Tomato#6966 | https://discord.gg/milrato
- * @INFO
- * Work for S409 support | https://s409.xyz
- * @INFO
- * Please mention him / S409 support, when using this Code!
- * @INFO
- */
+        //code
+   const user = message.mentions.users.first();
+        if (!user) return message.channel.send('Oh oh... you gotta provide a valid user to Kill :/');
+        return message.channel.send(new Discord.MessageEmbed()
+            .setColor('RANDOM')
+            .setImage(kill[Math.floor(Math.random() * kill.length)])
+            .setDescription(`${message.author.username} Kill ${user.username}!`)
+        );
+    }}

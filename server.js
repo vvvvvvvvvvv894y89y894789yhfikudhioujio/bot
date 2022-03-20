@@ -1,7 +1,14 @@
-const app = require('express')();
+const express = require('express');
+const server = express();
 
-app.get('/', (req, res) => res.send('Server is up.'));
+server.all('/', (req, res)=>{
+   res.setHeader('Content-Type', 'text/html');
+   res.write('<link href="https://fonts.googleapis.com/css?family=Roboto Condensed" rel="stylesheet"> <style> body {font-family: "Roboto Condensed";font-size: 22px;} <p>Hosting Active</p>');
+   res.end();
+})
 
-module.exports = () => {
-  app.listen(3000);
+function keepAlive(){
+   server.listen(3000, ()=>{console.log("Server is online!")});
 }
+
+module.exports = keepAlive;

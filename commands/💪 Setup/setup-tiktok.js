@@ -2,13 +2,12 @@ var {
   MessageEmbed
 } = require(`discord.js`);
 var Discord = require(`discord.js`);
-var config = require(`${process.cwd()}/botconfig/config.json`);
-var ee = require(`${process.cwd()}/botconfig/embed.json`);
-var emoji = require(`${process.cwd()}/botconfig/emojis.json`);
+var config = require(`../../botconfig/config.json`);
+var ee = require(`../../botconfig/embed.json`);
+var emoji = require(`../../botconfig/emojis.json`);
 var {
   databasing
-} = require(`${process.cwd()}/handlers/functions`);
-const { MessageButton, MessageActionRow, MessageSelectMenu } = require('discord.js')
+} = require(`../../handlers/functions`);
 module.exports = {
   name: "setup-tiktok",
   category: "💪 Setup",
@@ -17,10 +16,8 @@ module.exports = {
   usage: "setup-tiktok  -->  Follow Steps",
   description: "Manage the tiktok logger, addstreamer, editstreamer, removestreamer, etc.",
   memberpermissions: ["ADMINISTRATOR"],
-  type: "fun",
   run: async (client, message, args, cmduser, text, prefix) => {
-    
-    let es = client.settings.get(message.guild.id, "embed");let ls = client.settings.get(message.guild.id, "language")
+    var es = client.settings.get(message.guild.id, "embed")
     try {
       var adminroles = client.settings.get(message.guild.id, "adminroles")
 
@@ -31,9 +28,9 @@ module.exports = {
       };
       var temptype = ""
       var tempmsg;
-      tempmsg = await message.reply({embeds: [new Discord.MessageEmbed()
-        .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-tiktok"]["variable1"]))
-        .setColor(es.color)
+      tempmsg = await message.channel.send(new Discord.MessageEmbed()
+        .setTitle("What do you want to do?")
+        .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
         .setDescription(`1️⃣ **== Set** Discord **Channel** for Posting new Vids
         
 2️⃣ **== Add** tiktok Channel
@@ -44,22 +41,22 @@ module.exports = {
 
 
 
-*React with the Right Emoji according to the Right action*`).setFooter(client.getFooter(es))
-      ]})
+*React with the Right Emoji according to the Right action*`).setFooter(es.footertext, es.footericon)
+      )
       try {
         tempmsg.react("1️⃣")
         tempmsg.react("2️⃣")
         tempmsg.react("3️⃣")
         tempmsg.react("4️⃣")
       } catch (e) {
-        return message.reply({embeds: [new Discord.MessageEmbed()
-          .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-tiktok"]["variable2"]))
+        return message.reply(new Discord.MessageEmbed()
+          .setTitle("<:cross:899255798142750770>  ERROR | Missing Permissions to add Reactions")
           .setColor(es.wrongcolor)
-          .setDescription(`\`\`\` ${e.message ? e.message : e.stack ? String(e.stack).grey.substr(0, 2000) : String(e).grey.substr(0, 2000)}\`\`\``.substr(0, 2000))
-          .setFooter(client.getFooter(es))
-        ]});
+          .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``.substr(0, 2000))
+          .setFooter(es.footertext, es.footericon)
+        );
       }
-      await tempmsg.awaitReactions({filter, 
+      await tempmsg.awaitReactions(filter, {
           max: 1,
           time: 90000,
           errors: ["time"]
@@ -67,31 +64,31 @@ module.exports = {
         .then(collected => {
           var reaction = collected.first()
           reaction.users.remove(message.author.id)
-          if (reaction.emoji?.name === "1️⃣") temptype = "set"
-          else if (reaction.emoji?.name === "2️⃣") temptype = "add"
-          else if (reaction.emoji?.name === "3️⃣") temptype = "remove"
-          else if (reaction.emoji?.name === "4️⃣") temptype = "edit"
+          if (reaction.emoji.name === "1️⃣") temptype = "set"
+          else if (reaction.emoji.name === "2️⃣") temptype = "add"
+          else if (reaction.emoji.name === "3️⃣") temptype = "remove"
+          else if (reaction.emoji.name === "4️⃣") temptype = "edit"
           else throw "You reacted with a wrong emoji"
         })
         .catch(e => {
           timeouterror = e;
         })
       if (timeouterror)
-        return message.reply({embeds: [new Discord.MessageEmbed()
-          .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-tiktok"]["variable3"]))
+        return message.reply(new Discord.MessageEmbed()
+          .setTitle("<:cross:899255798142750770>  ERROR | Your Time ran out")
           .setColor(es.wrongcolor)
           .setDescription(`Cancelled the Operation!`.substr(0, 2000))
-          .setFooter(client.getFooter(es))
-        ]});
+          .setFooter(es.footertext, es.footericon)
+        );
       if (temptype == "set") {
 
-        tempmsg = await tempmsg.edit({embeds: [new Discord.MessageEmbed()
-          .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-tiktok"]["variable4"]))
-          .setColor(es.color)
-          .setDescription(eval(client.la[ls]["cmds"]["setup"]["setup-tiktok"]["variable5"]))
-          .setFooter(client.getFooter(es))]
+        tempmsg = await tempmsg.edit({embed: new Discord.MessageEmbed()
+          .setTitle("In which Channel should I post all tiktok Videos?")
+          .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+          .setDescription(`Please just ping the Channel with #channel!`)
+          .setFooter(es.footertext, es.footericon)
         })
-        await tempmsg.channel.awaitMessages({filter: m => m.author.id === message.author.id,
+        await tempmsg.channel.awaitMessages(m => m.author.id === message.author.id, {
             max: 1,
             time: 90000,
             errors: ["time"]
@@ -100,12 +97,12 @@ module.exports = {
             var msg = collected.first();
             if(msg && msg.mentions.channels.filter(ch=>ch.guild.id==msg.guild.id).first()){
               client.social_log.set(message.guild.id, msg.mentions.channels.filter(ch=>ch.guild.id==msg.guild.id).first().id, "tiktok.dc_channel")
-              return message.reply({embeds: [new Discord.MessageEmbed()
-                .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-tiktok"]["variable6"]))
-                .setDescription(eval(client.la[ls]["cmds"]["setup"]["setup-tiktok"]["variable7"]))
-                .setColor(es.color)
-                .setFooter(client.getFooter(es))
-              ]});
+              return message.reply(new Discord.MessageEmbed()
+                .setTitle(`<:tick:899255869185855529> I will now send all tiktok Notifications in \`${msg.mentions.channels.filter(ch=>ch.guild.id==msg.guild.id).first().name}\``)
+                .setDescription("DONT FORGET TO ADD A **tiktok_CHANNELS**!!!")
+                .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+                .setFooter(es.footertext, es.footericon)
+              );
             }
             else{
               throw {
@@ -117,30 +114,30 @@ module.exports = {
             timeouterror = e;
           })
         if (timeouterror)
-          return message.reply({embeds: [new Discord.MessageEmbed()
-            .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-tiktok"]["variable8"]))
+          return message.reply(new Discord.MessageEmbed()
+            .setTitle("<:cross:899255798142750770>  ERROR | Your Time ran out")
             .setColor(es.wrongcolor)
             .setDescription(`Cancelled the Operation!`.substr(0, 2000))
-            .setFooter(client.getFooter(es))
-          ]});
+            .setFooter(es.footertext, es.footericon)
+          );
 
       } else if (temptype == "add") {
         if(client.social_log.get(message.guild.id, "tiktok.channels").length >= 3) 
-          return message.reply({embeds: [new Discord.MessageEmbed()
-            .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-tiktok"]["variable9"]))
+          return message.reply(new Discord.MessageEmbed()
+            .setTitle("<:cross:899255798142750770>  ERROR | You've reached the maximum amount of tiktok Channels")
             .setColor(es.wrongcolor)
             .setDescription(`Remove some others first...`.substr(0, 2000))
-            .setFooter(client.getFooter(es))
-          ]});
-        tempmsg = await tempmsg.edit({embeds: [new Discord.MessageEmbed()
-          .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-tiktok"]["variable10"]))
-          .setColor(es.color)
+            .setFooter(es.footertext, es.footericon)
+          );
+        tempmsg = await tempmsg.edit({embed: new Discord.MessageEmbed()
+          .setTitle("Which Channel do you wanna add? | Just send the LINK!")
+          .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
           .setDescription(`Example:
           
-https://www.tiktok.com/@milratodev`)
-          .setFooter(client.getFooter(es))]
+https://www.tiktok.com/@s409dev`)
+          .setFooter(es.footertext, es.footericon)
         })
-        await tempmsg.channel.awaitMessages({filter: m => m.author.id === message.author.id,
+        await tempmsg.channel.awaitMessages(m => m.author.id === message.author.id, {
             max: 1,
             time: 90000,
             errors: ["time"]
@@ -155,19 +152,19 @@ https://www.tiktok.com/@milratodev`)
               var Channel = msg.content.split("@")[1]
               if(Channel.includes("video")) Channel = Channel.split("/")[0]
               if(client.social_log.get(message.guild.id, "tiktok.channels").includes(Channel))
-                return message.reply({embeds: [new Discord.MessageEmbed()
-                  .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-tiktok"]["variable11"]))
+                return message.reply(new Discord.MessageEmbed()
+                  .setTitle("<:cross:899255798142750770>  ERROR | The tiktok Channel is already setup!")
                   .setColor(es.wrongcolor)
-                  .setFooter(client.getFooter(es))
-                ]});
-                client.social_log.push(message.guild.id, Channel, "tiktok.channels")
+                  .setFooter(es.footertext, es.footericon)
+                );
+              client.social_log.push(message.guild.id, Channel, "tiktok.channels")
 
-              return message.reply({embeds: [new Discord.MessageEmbed()
-                .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-tiktok"]["variable12"]))
-                .setDescription(eval(client.la[ls]["cmds"]["setup"]["setup-tiktok"]["variable13"]))
-                .setColor(es.color)
-                .setFooter(client.getFooter(es))
-              ]});
+              return message.reply(new Discord.MessageEmbed()
+                .setTitle(`<:tick:899255869185855529> added the Channel ${Channel}`)
+                .setDescription("You can change the default message via the **\"edit\"**")
+                .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+                .setFooter(es.footertext, es.footericon)
+              );
             }
             else{
               throw {
@@ -179,97 +176,97 @@ https://www.tiktok.com/@milratodev`)
             timeouterror = e;
           })
         if (timeouterror)
-          return message.reply({embeds: [new Discord.MessageEmbed()
-            .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-tiktok"]["variable14"]))
+          return message.reply(new Discord.MessageEmbed()
+            .setTitle("<:cross:899255798142750770>  ERROR | Your Time ran out")
             .setColor(es.wrongcolor)
             .setDescription(`Cancelled the Operation!`.substr(0, 2000))
-            .setFooter(client.getFooter(es))
-          ]});
+            .setFooter(es.footertext, es.footericon)
+          );
       } else if (temptype == "remove") {
         if(client.social_log.get(message.guild.id, "tiktok.channels").length <= 0) 
-          return message.reply({embeds: [new Discord.MessageEmbed()
-            .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-tiktok"]["variable15"]))
+          return message.reply(new Discord.MessageEmbed()
+            .setTitle("<:cross:899255798142750770>  ERROR | You havent setup any tiktok Channels yet!")
             .setColor(es.wrongcolor)
             .setDescription(`Add some others first...`.substr(0, 2000))
-            .setFooter(client.getFooter(es))
-          ]});
+            .setFooter(es.footertext, es.footericon)
+          );
           var buffer = "";
           var emojis = ["0️⃣", "5️⃣"]
           for(let i = 0; i< client.social_log.get(message.guild.id, "tiktok.channels").length; i++){
             buffer += `${emojis[i]} ${client.social_log.get(message.guild.id, "tiktok.channels")[i]}`
           }
-          tempmsg = await tempmsg.edit({embeds: [new Discord.MessageEmbed()
-            .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-tiktok"]["variable16"]))
-            .setColor(es.color)
+          tempmsg = await tempmsg.edit({embed: new Discord.MessageEmbed()
+            .setTitle("Which Channel do you wanna remove? | Just react with the right one!")
+            .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
             .setDescription(buffer+ "\n\n\n*React with the emoji regarding to the Channel you wanna remove*")
-            .setFooter(client.getFooter(es))]
+            .setFooter(es.footertext, es.footericon)
           })
           for(const emoji of emojis){
-            tempmsg.react(emoji).catch(e=>console.log(e.stack ? String(e.stack).grey : String(e).grey))
+            tempmsg.react(emoji).catch(e=>console.log(e))
           }
-        await tempmsg.awaitReactions({ filter: (reaction, user) => user.id == message.author.id && emojis.includes(reaction.emoji?.name), 
+        await tempmsg.awaitReactions((reaction, user) => user.id == message.author.id && emojis.includes(reaction.emoji.name), {
             max: 1,
             time: 90000,
             errors: ["time"]
           })
           .then(async collected => {
-            var channel = client.social_log.get(message.guild.id, "tiktok.channels")[emojis.findIndex(emoji => emoji == collected.first().emoji?.name)]
+            var channel = client.social_log.get(message.guild.id, "tiktok.channels")[emojis.findIndex(emoji => emoji == collected.first().emoji.name)]
             
             client.social_log.remove(message.guild.id, channel, "tiktok.channels")
 
-            return message.reply({embeds: [new Discord.MessageEmbed()
-              .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-tiktok"]["variable17"]))
-              .setColor(es.color)
-              .setFooter(client.getFooter(es))
-            ]});
+            return message.reply(new Discord.MessageEmbed()
+              .setTitle(`<:tick:899255869185855529> removed the Channel ${channel}`)
+              .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+              .setFooter(es.footertext, es.footericon)
+            );
           })
           .catch(e => {
             timeouterror = e;
           })
         if (timeouterror)
-          return message.reply({embeds: [new Discord.MessageEmbed()
-            .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-tiktok"]["variable18"]))
+          return message.reply(new Discord.MessageEmbed()
+            .setTitle("<:cross:899255798142750770>  ERROR | Your Time ran out")
             .setColor(es.wrongcolor)
             .setDescription(`Cancelled the Operation!`.substr(0, 2000))
-            .setFooter(client.getFooter(es))
-          ]});
+            .setFooter(es.footertext, es.footericon)
+          );
       } else if (temptype == "edit") {
         if(client.social_log.get(message.guild.id, "tiktok.channels").length <= 0) 
-          return message.reply({embeds: [new Discord.MessageEmbed()
-            .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-tiktok"]["variable19"]))
+          return message.reply(new Discord.MessageEmbed()
+            .setTitle("<:cross:899255798142750770>  ERROR | You havent setup any tiktok Channels yet!")
             .setColor(es.wrongcolor)
             .setDescription(`Add some others first...`.substr(0, 2000))
-            .setFooter(client.getFooter(es))
-          ]});
+            .setFooter(es.footertext, es.footericon)
+          );
           var buffer = "";
           var emojis = ["0️⃣", "5️⃣"]
           for(let i = 0; i< client.social_log.get(message.guild.id, "tiktok.channels").length; i++){
             buffer += `${emojis[i]} ${client.social_log.get(message.guild.id, "tiktok.channels")[i]}`
           }
-          tempmsg = await tempmsg.edit({embeds: [new Discord.MessageEmbed()
-            .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-tiktok"]["variable20"]))
-            .setColor(es.color)
+          tempmsg = await tempmsg.edit({embed: new Discord.MessageEmbed()
+            .setTitle("Which Channel's Message do you wanna edit? | Just react with the right one!")
+            .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
             .setDescription(buffer+ "\n\n\n*React with the emoji regarding to the Channel you wanna edit*")
-            .setFooter(client.getFooter(es))]
+            .setFooter(es.footertext, es.footericon)
           })
           for(const emoji of emojis){
-            tempmsg.react(emoji).catch(e=>console.log(e.stack ? String(e.stack).grey : String(e).grey))
+            tempmsg.react(emoji).catch(e=>console.log(e))
           }
-        await tempmsg.awaitReactions({ filter: (reaction, user) => user.id == message.author.id && emojis.includes(reaction.emoji?.name), 
+        await tempmsg.awaitReactions((reaction, user) => user.id == message.author.id && emojis.includes(reaction.emoji.name), {
             max: 1,
             time: 90000,
             errors: ["time"]
           })
           .then(async collected => {
-            var channel = client.social_log.get(message.guild.id, "tiktok.channels")[emojis.findIndex(emoji => emoji == collected.first().emoji?.name)]
+            var channel = client.social_log.get(message.guild.id, "tiktok.channels")[emojis.findIndex(emoji => emoji == collected.first().emoji.name)]
                         
             client.tiktok.ensure(channel, {
               oldvid: "",
               message: "**{videoAuthorName}** uploaded \`{videoTitle}\`!\n**Watch it:** {videoURL}"
             })
-            tempmsg = await message.reply({embeds: [new Discord.MessageEmbed()
-              .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-tiktok"]["variable21"]))
-              .setColor(es.color)
+            tempmsg = await message.channel.send(new Discord.MessageEmbed()
+              .setTitle("What should be the new Message?")
+              .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
               .setDescription(`
 **CURRENT MESSAGE:**
 > ${client.tiktok.get(channel, "message")}`.substr(0, 2048))
@@ -277,9 +274,9 @@ https://www.tiktok.com/@milratodev`)
 > \`{url}\` ... will be replaced with the video **LINK**
 > \`{author}\` ... will be replaced with the video's **Author**
 > \`{title}\` ... will be replaced with the video's **title**`)
-              .setFooter(client.getFooter(es))
-            ]})
-            await tempmsg.channel.awaitMessages({filter: m => m.author.id === message.author.id,
+              .setFooter(es.footertext, es.footericon)
+            )
+            await tempmsg.channel.awaitMessages(m => m.author.id === message.author.id, {
               max: 1,
               time: 90000,
               errors: ["time"]
@@ -288,12 +285,12 @@ https://www.tiktok.com/@milratodev`)
               var msg = collected.first();
               if(msg && msg.content ){
                 client.tiktok.set(channel, msg.content, "message")  
-                return message.reply({embeds: [new Discord.MessageEmbed()
-                  .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-tiktok"]["variable22"]))
+                return message.reply(new Discord.MessageEmbed()
+                  .setTitle(`<:tick:899255869185855529> Changed the message for the Channel ${channel}`)
                   .setDescription("New Message:\n" + msg.content)
-                  .setColor(es.color)
-                  .setFooter(client.getFooter(es))
-                ]});
+                  .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+                  .setFooter(es.footertext, es.footericon)
+                );
               }
               else{
                 throw {
@@ -302,52 +299,52 @@ https://www.tiktok.com/@milratodev`)
               }
             })
             .catch(e => {
-              console.log(e.stack ? String(e.stack).grey : String(e).grey)
+              console.log(e)
               timeouterror = e;
             })
           if (timeouterror)
-            return message.reply({embeds: [new Discord.MessageEmbed()
-              .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-tiktok"]["variable23"]))
+            return message.reply(new Discord.MessageEmbed()
+              .setTitle("<:cross:899255798142750770>  ERROR | Your Time ran out")
               .setColor(es.wrongcolor)
               .setDescription(`Cancelled the Operation!`.substr(0, 2000))
-              .setFooter(client.getFooter(es))
-            ]});
+              .setFooter(es.footertext, es.footericon)
+            );
           })
           .catch(e => {
-            console.log(e.stack ? String(e.stack).grey : String(e).grey)
+            console.log(e)
             timeouterror = e;
           })
         if (timeouterror)
-          return message.reply({embeds: [new Discord.MessageEmbed()
-            .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-tiktok"]["variable24"]))
+          return message.reply(new Discord.MessageEmbed()
+            .setTitle("<:cross:899255798142750770>  ERROR | Your Time ran out")
             .setColor(es.wrongcolor)
             .setDescription(`Cancelled the Operation!`.substr(0, 2000))
-            .setFooter(client.getFooter(es))
-          ]});
+            .setFooter(es.footertext, es.footericon)
+          );
       }  else {
-        return message.reply({embeds: [new Discord.MessageEmbed()
-          .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-tiktok"]["variable25"]))
+        return message.reply(new Discord.MessageEmbed()
+          .setTitle("<:cross:899255798142750770>  ERROR | PLEASE CONTACT `S409™#9685`")
           .setColor(es.wrongcolor)
-          .setFooter(client.getFooter(es))
-        ]});
+          .setFooter(es.footertext, es.footericon)
+        );
       }
 
     } catch (e) {
-      console.log(String(e.stack).grey.bgRed)
-      return message.reply({embeds: [new MessageEmbed()
-        .setColor(es.wrongcolor).setFooter(client.getFooter(es))
-        .setTitle(client.la[ls].common.erroroccur)
-        .setDescription(eval(client.la[ls]["cmds"]["setup"]["setup-tiktok"]["variable26"]))
-      ]});
+      console.log(String(e.stack).bgRed)
+      return message.channel.send(new MessageEmbed()
+        .setColor(es.wrongcolor).setFooter(es.footertext, es.footericon)
+        .setTitle(`<:cross:899255798142750770>  Something went Wrong`)
+        .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``)
+      );
     }
   },
 };
 /**
  * @INFO
- * Bot Coded by Tomato#6966 | https://discord.gg/milrato
+ * Bot Coded by S409™#9685 | https://github.com/S409™#9685/discord-js-lavalink-Music-Bot-erela-js
  * @INFO
- * Work for S409 support | https://s409.xyz
+ * Work for s409 Development | https://s409.xyz
  * @INFO
- * Please mention him / S409 support, when using this Code!
+ * Please mention Him / s409 Development, when using this Code!
  * @INFO
  */

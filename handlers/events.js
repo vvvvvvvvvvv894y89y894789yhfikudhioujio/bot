@@ -1,31 +1,37 @@
 const fs = require("fs");
+const ascii = require("ascii-table");
+let table = new ascii("Events");
+table.setHeading("Events", "Load status");
 const allevents = [];
 module.exports = async (client) => {
   try {
     const load_dir = (dir) => {
       const event_files = fs.readdirSync(`./events/${dir}`).filter((file) => file.endsWith(".js"));
       for (const file of event_files) {
-        try{
-          const event = require(`../events/${dir}/${file}`)
-          let eventName = file.split(".")[0];
-          if(eventName == "message") continue;
-          allevents.push(eventName);
-          client.on(eventName, event.bind(null, client));
-        }catch(e){
-          console.log(String(e.stack).grey.bgRed)
-        }
+        const event = require(`../events/${dir}/${file}`)
+        let eventName = file.split(".")[0];
+        allevents.push(eventName);
+        client.on(eventName, event.bind(null, client));
       }
     }
     await ["client", "guild"].forEach(e => load_dir(e));
+    for (let i = 0; i < allevents.length; i++) {
+      try {
+        table.addRow(allevents[i], "Ready");
+      } catch (e) {
+        console.log(String(e.stack).red);
+      }
+    }
+    //console.log(table.toString().cyan);
     try {
       const stringlength = 69;
       console.log("\n")
       console.log(`     ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓`.bold.brightGreen)
       console.log(`     ┃ `.bold.brightGreen + " ".repeat(-1 + stringlength - ` ┃ `.length) + "┃".bold.brightGreen)
       console.log(`     ┃ `.bold.brightGreen + `Welcome to SERVICE HANDLER!`.bold.brightGreen + " ".repeat(-1 + stringlength - ` ┃ `.length - `Welcome to SERVICE HANDLER!`.length) + "┃".bold.brightGreen)
-      console.log(`     ┃ `.bold.brightGreen + `  /-/ By https://s409.xyz /-/`.bold.brightGreen + " ".repeat(-1 + stringlength - ` ┃ `.length - `  /-/ By https://s409.xyz /-/`.length) + "┃".bold.brightGreen)
+      console.log(`     ┃ `.bold.brightGreen + `  /-/ ByBROS409™#9685 /-/`.bold.brightGreen + " ".repeat(-1 + stringlength - ` ┃ `.length - `  /-/ By BROS409™#9685 /-/`.length) + "┃".bold.brightGreen)
       console.log(`     ┃ `.bold.brightGreen + " ".repeat(-1 + stringlength - ` ┃ `.length) + "┃".bold.brightGreen)
-      console.log(`     ┃ `.bold.brightGreen + `  /-/ Discord: s409 /-/`.bold.brightGreen + " ".repeat(-1 + stringlength - ` ┃ `.length - `  /-/ By Discord: s409 /-/`.length) + "   ┃".bold.brightGreen)
+      console.log(`     ┃ `.bold.brightGreen + `  /-/ Discord: S409™#9685 /-/`.bold.brightGreen + " ".repeat(-1 + stringlength - ` ┃ `.length - `  /-/ By Discord: S409™#9685 /-/`.length) + "   ┃".bold.brightGreen)
       console.log(`     ┃ `.bold.brightGreen + " ".repeat(-1 + stringlength - ` ┃ `.length) + "┃".bold.brightGreen)
       console.log(`     ┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛`.bold.brightGreen)
     } catch {
@@ -41,15 +47,6 @@ module.exports = async (client) => {
     } catch {
       /* */ }
   } catch (e) {
-    console.log(String(e.stack).grey.bgRed)
+    console.log(String(e.stack).bgRed)
   }
 };
-/**
- * @INFO
- * Bot Coded by s409 | https://discord.gg/milrato
- * @INFO
- * Work for S409 support | https://s409.xyz
- * @INFO
- * Please mention him / S409 support, when using this Code!
- * @INFO
- */

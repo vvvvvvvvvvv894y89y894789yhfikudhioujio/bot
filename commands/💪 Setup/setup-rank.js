@@ -2,316 +2,269 @@ var {
   MessageEmbed
 } = require(`discord.js`);
 var Discord = require(`discord.js`);
-var config = require(`${process.cwd()}/botconfig/config.json`);
-var ee = require(`${process.cwd()}/botconfig/embed.json`);
-var emoji = require(`${process.cwd()}/botconfig/emojis.json`);
+var config = require(`../../botconfig/config.json`);
+var ee = require(`../../botconfig/embed.json`);
+var emoji = require(`../../botconfig/emojis.json`);
 var {
   databasing,
   edit_msg,
   send_roster
-} = require(`${process.cwd()}/handlers/functions`);
-const { MessageButton, MessageActionRow, MessageSelectMenu } = require('discord.js')
+} = require(`../../handlers/functions`);
 module.exports = {
   name: "setup-rank",
   category: "💪 Setup",
-  aliases: ["setuprank", "rank-setup", "setup-level", "setup-levels", "setup-leveling", "setuplevel", "setuplevels", "setupleveling"],
+  aliases: ["setuprank", "rank-setup"],
   cooldown: 5,
   usage: "setup-rank --> Follow Steps",
   description: "Manage the Ranking System with stuff like channel, background, etc",
   memberpermissions: ["ADMINISTRATOR"],
-  type: "system",
   run: async (client, message, args, cmduser, text, prefix) => {
-    
-    let es = client.settings.get(message.guild.id, "embed");let ls = client.settings.get(message.guild.id, "language")
+    var es = client.settings.get(message.guild.id, "embed")
     try {
+      var adminroles = client.settings.get(message.guild.id, "adminroles")
 
-      first_layer()
-      async function first_layer(){
-        let menuoptions = [
-          {
-            value: "Channel Levelup",
-            description: `Define the a Channel for all Levelup Messages`,
-            emoji: "✅"
-          },
-          {
-            value: "Reply on Levelup",
-            description: `Set it that the Levelup Messages are getting replied`,
-            emoji: "👻"
-          },
-          {
-            value: "Disable Levelup",
-            description: `Never send Levelup Information`,
-            emoji: "❌"
-          },
-          {
-            value: "Levelup Roles",
-            description: `Manage Levelup Roles`,
-            emoji: "💾"
-          },
-          {
-            value: "Show Settings",
-            description: `Show Settings of the Ranking System`,
-            emoji: "📑"
-          },
-          {
-            value: "Cancel",
-            description: `Cancel and stop the Ranking-System-Setup!`,
-            emoji: "862306766338523166"
-          }
-        ]
-        //define the selection
-        let Selection = new MessageSelectMenu()
-          .setCustomId('MenuSelection') 
-          .setMaxValues(1) //OPTIONAL, this is how many values you can have at each selection
-          .setMinValues(1) //OPTIONAL , this is how many values you need to have at each selection
-          .setPlaceholder('Click me to setup the Ranking-System') 
-          .addOptions(
-          menuoptions.map(option => {
-            let Obj = {
-              label: option.label ? option.label.substr(0, 50) : option.value.substr(0, 50),
-              value: option.value.substr(0, 50),
-              description: option.description.substr(0, 50),
-            }
-          if(option.emoji) Obj.emoji = option.emoji;
-          return Obj;
-         }))
-        
-        //define the embed
-        let MenuEmbed = new MessageEmbed()
-          .setColor(es.color)
-          .setAuthor('Rank Setup', 'https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/120/apple/285/page-with-curl_1f4c3.png', 'https://discord.gg/milrato')
-          .setDescription(eval(client.la[ls]["cmds"]["setup"]["setup-ticket"]["variable2"]))
-        //send the menu msg
-        let menumsg = await message.reply({embeds: [MenuEmbed], components: [new MessageActionRow().addComponents(Selection)]})
-        //Create the collector
-        const collector = menumsg.createMessageComponentCollector({ 
-          filter: i => i?.isSelectMenu() && i?.message.author.id == client.user.id && i?.user,
-          time: 90000
+      var timeouterror = false;
+      var filter = (reaction, user) => {
+        return user.id === message.author.id;
+      };
+      var temptype = ""
+      var tempmsg;
+      tempmsg = await message.channel.send(new Discord.MessageEmbed()
+        .setTitle("What do you want to do?")
+        .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+        .setDescription(`1️⃣ **== Set Channel** to send Level Up Messages\n\n2️⃣ **== Reply** with Level Up Messages\n\n3️⃣ **== Disable** Level Up Messages\n\n\n\n*React with the Right Emoji according to the Right action*`).setFooter(es.footertext, es.footericon)
+      )
+      try {
+        tempmsg.react("1️⃣")
+        tempmsg.react("2️⃣")
+        tempmsg.react("3️⃣")
+      } catch (e) {
+        return message.channel.send(new Discord.MessageEmbed()
+          .setTitle("<:cross:899255798142750770>  ERROR | Missing Permissions to add Reactions")
+          .setColor(es.wrongcolor)
+          .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``.substr(0, 2000))
+          .setFooter(es.footertext, es.footericon)
+        );
+      }
+      await tempmsg.awaitReactions(filter, {
+          max: 1,
+          time: 90000,
+          errors: ["time"]
         })
-        //Menu Collections
-        collector.on('collect', menu => {
-          if (menu?.user.id === cmduser.id) {
-            collector.stop();
-            let menuoptiondata = menuoptions.find(v=>v.value == menu?.values[0])
-            if(menu?.values[0] == "Cancel") return menu?.reply(eval(client.la[ls]["cmds"]["setup"]["setup-ticket"]["variable3"]))
-            menu?.deferUpdate();
-            let SetupNumber = menu?.values[0].split(" ")[0]
-            handle_the_picks(menu?.values[0], SetupNumber, menuoptiondata)
-          }
-          else menu?.reply({content: `<:no:833101993668771842> You are not allowed to do that! Only: <@${cmduser.id}>`, ephemeral: true});
-        });
-        //Once the Collections ended edit the menu message
-        collector.on('end', collected => {
-          menumsg.edit({embeds: [menumsg.embeds[0].setDescription(`~~${menumsg.embeds[0].description}~~`)], components: [], content: `${collected && collected.first() && collected.first().values ? `<a:yes:833101995723194437> **Selected: \`${collected ? collected.first().values[0] : "Nothing"}\`**` : "❌ **NOTHING SELECTED - CANCELLED**" }`})
-        });
-      }
+        .then(collected => {
+          var reaction = collected.first()
+          reaction.users.remove(message.author.id)
+          if (reaction.emoji.name === "1️⃣") temptype = "channel"
+          else if (reaction.emoji.name === "2️⃣") temptype = "reply"
+          else if (reaction.emoji.name === "3️⃣") temptype = "disable"
+          else throw "You reacted with a wrong emoji"
 
-      async function handle_the_picks(optionhandletype, SetupNumber, menuoptiondata) {
-        switch (optionhandletype) {
-          case "Channel Levelup": {
-            var tempmsg = await message.reply({embeds: [new Discord.MessageEmbed()
-              .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-rank"]["variable5"]))
-              .setColor(es.color)
-              .setDescription(eval(client.la[ls]["cmds"]["setup"]["setup-rank"]["variable6"]))
-              .setFooter(client.getFooter(es))
-            ]})
-            await tempmsg.channel.awaitMessages({filter: m => m.author.id === message.author.id,
-                max: 1,
-                time: 90000,
-                errors: ["time"]
-              })
-              .then(collected => {
-                var message = collected.first();
-                var channel = message.mentions.channels.filter(ch=>ch.guild.id==message.guild.id).first() || message.guild.channels.cache.get(message.content.trim().split(" ")[0]);
-                if (channel) {
-                  try {
-                    client.points.set(message.guild.id, channel.id, "channel")
-                    client.points.set(message.guild.id, false, "disabled")
-                    return message.reply({embeds: [new Discord.MessageEmbed()
-                      .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-rank"]["variable7"]))
-                      .setColor(es.color)
-                      .setFooter(client.getFooter(es))
-                    ]});
-                  } catch (e) {
-                    return message.reply({embeds: [new Discord.MessageEmbed()
-                      .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-rank"]["variable8"]))
-                      .setColor(es.wrongcolor)
-                      .setDescription(eval(client.la[ls]["cmds"]["setup"]["setup-rank"]["variable9"]))
-                      .setFooter(client.getFooter(es))
-                    ]});
-                  }
-                } else {
-                  throw "you didn't ping a valid Channel"
-                }
-              })
-              .catch(e => {
-                console.log(e.stack ? String(e.stack).grey : String(e).grey);
-                return message.reply({embeds: [new Discord.MessageEmbed()
-                  .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-rank"]["variable10"]))
-                  .setColor(es.wrongcolor)
-                  .setDescription(`Cancelled the Operation!`.substr(0, 2000))
-                  .setFooter(client.getFooter(es))
-                ]});
-              })
-          }break;
-          case "Reply on Levelup": {
-            try {
-              client.points.set(message.guild.id, false, "channel")
-              client.points.set(message.guild.id, false, "disabled")
-              return message.reply({embeds: [new Discord.MessageEmbed()
-                .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-rank"]["variable11"]))
-                .setDescription(eval(client.la[ls]["cmds"]["setup"]["setup-rank"]["variable12"]))
-                .setColor(es.color)
-                .setFooter(client.getFooter(es))
-              ]});
-            } catch (e) {
-              return message.reply({embeds: [new Discord.MessageEmbed()
-                .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-rank"]["variable13"]))
-                .setColor(es.wrongcolor)
-                .setDescription(eval(client.la[ls]["cmds"]["setup"]["setup-rank"]["variable14"]))
-                .setFooter(client.getFooter(es))
-              ]});
-            }
-          }break;
-          case "Disable Levelup": {
-            try {
-              if (client.points.get(message.guild.id, "disabled")) return message.reply({embeds: [new Discord.MessageEmbed()
-                .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-rank"]["variable15"]))
-                .setColor(es.wrongcolor)
-                .setDescription(eval(client.la[ls]["cmds"]["setup"]["setup-rank"]["variable16"]))
-                .setFooter(client.getFooter(es))
-              ]});
-              client.points.set(message.guild.id, true, "disabled")
-              return message.reply({embeds: [new Discord.MessageEmbed()
-                .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-rank"]["variable17"]))
-                .setDescription(eval(client.la[ls]["cmds"]["setup"]["setup-rank"]["variable18"]))
-                .setColor(es.color)
-                .setFooter(client.getFooter(es))
-              ]});
-            } catch (e) {
-              return message.reply({embeds: [new Discord.MessageEmbed()
-                .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-rank"]["variable19"]))
-                .setColor(es.wrongcolor)
-                .setDescription(eval(client.la[ls]["cmds"]["setup"]["setup-rank"]["variable20"]))
-                .setFooter(client.getFooter(es))
-              ]});
-            }
-          }break;
-          case "Levelup Roles": {
-            client.points.ensure(message.guild.id, {
-              rankroles: {
-                  
-              }
+        })
+        .catch(e => {
+          timeouterror = e;
+        })
+      if (timeouterror)
+        return message.reply(new Discord.MessageEmbed()
+          .setTitle("<:cross:899255798142750770>  ERROR | Your Time ran out")
+          .setColor(es.wrongcolor)
+          .setDescription(`Cancelled the Operation!`.substr(0, 2000))
+          .setFooter(es.footertext, es.footericon)
+        );
+
+      if (temptype == "channel") {
+
+        tempmsg = await tempmsg.edit({embed: new Discord.MessageEmbed()
+          .setTitle("Which Channel do you wanna use?")
+          .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+          .setDescription(`Please Ping the Channel now!`)
+          .setFooter(es.footertext, es.footericon)
+        })
+        await tempmsg.channel.awaitMessages(m => m.author.id === message.author.id, {
+            max: 1,
+            time: 90000,
+            errors: ["time"]
           })
-          var tempmsg = await message.reply({embeds: [new Discord.MessageEmbed()
-            .setTitle("What do you want to do now?")
-            .setColor(es.color)
-            .addField("To __add__ a Rank Role send the Following:", 
-            "> `LEVEL @ROLE`\nExample:\n > `3 @Level3` / `5 @LEVEL5`\n\n*After a Role has been set, you can just type this again to CHAGEN it!*")
-            .addField("To __remove__ a Rank Role send the Following:", 
-            "> `LEVEL`\nExample:\n > `3` / `5`")
-            .setFooter(client.getFooter(es))
-          ]})
-          await tempmsg.channel.awaitMessages({
-              filter: m => m.author.id === message.author.id,
-              max: 1,
-              time: 90000,
-              errors: ["time"]
-            })
-            .then(collected => {
-              var message = collected.first();
-              let arggs = message.content.trim().split(" ");
-              if(!arggs[0] || isNaN(arggs[0])) return message.reply("**:x: YOU DID WRONG! Please read what the introduction tells you!**\nCancelled!")
-              var Role = message.mentions.roles.filter(ch=>ch.guild.id==message.guild.id).first() || message.guild.roles.cache.get(arggs[1]);
-                try {
-                  let oldRankRoles = client.points.get(message.guild.id, "rankroles");
-                  if(!arggs[1] && oldRankRoles[parseInt(arggs[0])]){
-                    delete oldRankRoles[parseInt(arggs[0])]
-                    client.points.set(message.guild.id, oldRankRoles, "rankroles");
-                    return message.reply({embeds: [new Discord.MessageEmbed()
-                      .setTitle(`**REMOVED** the Levelup-Role: ${Role.name} for the Levelup-Level: ${parseInt(arggs[0])}`)
-                      .setColor(es.color)
-                      .setDescription(`To add it back type: \`${prefix}setup-rank\` --> 4️⃣ -->  \`${parseInt(arggs[0])} @${Role.name}\``)
-                      .setFooter(client.getFooter(es))
-                    ]});
-                  } else if(arggs[1] && oldRankRoles[parseInt(arggs[0])]){
-                    oldRankRoles[parseInt(arggs[0])] = Role.id;
-                    client.points.set(message.guild.id, oldRankRoles, "rankroles");
-                    return message.reply({embeds: [new Discord.MessageEmbed()
-                      .setTitle(`**CHANGE** the Levelup-Role: ${Role.name} for the Levelup-Level: ${parseInt(arggs[0])}`)
-                      .setColor(es.color)
-                      .setDescription(`To add it back type: \`${prefix}setup-rank\` --> 4️⃣ -->  \`${parseInt(arggs[0])} @${Role.name}\``)
-                      .setFooter(client.getFooter(es))
-                    ]});
-                  } else {
-                    oldRankRoles[parseInt(arggs[0])] = Role.id;
-                    client.points.set(message.guild.id, oldRankRoles, "rankroles");
-                    return message.reply({embeds: [new Discord.MessageEmbed()
-                      .setTitle(`**ADDED** the Levelup-Role: ${Role.name} for the Levelup-Level: ${parseInt(arggs[0])}`)
-                      .setColor(es.color)
-                      .setDescription(`To remove it type: \`${prefix}setup-rank\` --> 4️⃣ -->  \`${parseInt(arggs[0])}\``)
-                      .setFooter(client.getFooter(es))
-                    ]});
-                  }
-                } catch (e) {
-                  return message.reply({embeds: [new Discord.MessageEmbed()
-                    .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-rank"]["variable8"]))
-                    .setColor(es.wrongcolor)
-                    .setDescription(eval(client.la[ls]["cmds"]["setup"]["setup-rank"]["variable9"]))
-                    .setFooter(client.getFooter(es))
-                  ]});
-                }
-            })
-            .catch(e => {
-              console.log(e.stack ? String(e.stack).grey : String(e).grey)
-              return message.reply({embeds: [new Discord.MessageEmbed()
-                .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-rank"]["variable10"]))
-                .setColor(es.wrongcolor)
-                .setDescription(`Cancelled the Operation!`.substr(0, 2000))
-                .setFooter(client.getFooter(es))
-              ]});
-            })
-          }break;
-          case "Show Settings": {
-
-            client.points.ensure(message.guild.id, {
-              rankroles: {
-                  
+          .then(collected => {
+            var message = collected.first();
+            var channel = message.mentions.channels.filter(ch=>ch.guild.id==message.guild.id).first();
+            if (channel) {
+              try {
+                client.points.set(message.guild.id, channel.id, "channel")
+                client.points.set(message.guild.id, false, "disabled")
+                return message.channel.send(new Discord.MessageEmbed()
+                  .setTitle(`<:tick:899255869185855529> I will now send the Levelup Messages in \`${channel.name}\``)
+                  .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+                  .setFooter(es.footertext, es.footericon)
+                );
+              } catch (e) {
+                return message.channel.send(new Discord.MessageEmbed()
+                  .setTitle("<:cross:899255798142750770>  ERROR | Something went wrong, please contact: `S409™#9685`")
+                  .setColor(es.wrongcolor)
+                  .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``)
+                  .setFooter(es.footertext, es.footericon)
+                );
               }
-            })
-            let rankroles = [];
-            let rolesdata = client.points.get(message.guild.id, "rankroles")
-            let channel = client.points.get(message.guild.id, "channel")
-            let disabled = client.points.get(message.guild.id, "disabled")
-            for(const [key, value] of Object.entries(rolesdata)){
-              rankroles.push(`\`${key}\`. <@&${value}>`)
+            } else {
+              throw "you didn't ping a valid Channel"
             }
-            return message.reply({embeds: [new Discord.MessageEmbed()
-              .setTitle("Settings of the Ranking System")
-              .setColor(es.color)
-              .addField("**Levelup-Message**", `> Disabled: ${!disabled ? "NO (ACTIVE)" : "Yes (DISABLED)"}\n> **Reply in ${channel ? `<#${channel}>`: "the same Channel"}**`)
-              .setDescription(`**Level up Roles:**\n>>> ${rankroles.length > 0 ? rankroles.join("\n") : "\`NONE\`"}`.substr(0, 2000))
-              .setFooter(client.getFooter(es))
-            ]});
-          }break;
+          })
+          .catch(e => {
+            timeouterror = e;
+          })
+        if (timeouterror)
+          return message.reply(new Discord.MessageEmbed()
+            .setTitle("<:cross:899255798142750770>  ERROR | Your Time ran out")
+            .setColor(es.wrongcolor)
+            .setDescription(`Cancelled the Operation!`.substr(0, 2000))
+            .setFooter(es.footertext, es.footericon)
+          );
+
+      } else if (temptype == "reply") {
+        try {
+          client.points.set(message.guild.id, false, "channel")
+          client.points.set(message.guild.id, false, "disabled")
+          return message.channel.send(new Discord.MessageEmbed()
+            .setTitle(`<:tick:899255869185855529> I will now reply with the Levelup Messages`)
+            .setDescription(`To disable them, type: \`${prefix}setup-rank disable\`To send them into a channel, type: \`${prefix}setup-rank channel #channel\``)
+            .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+            .setFooter(es.footertext, es.footericon)
+          );
+        } catch (e) {
+          return message.channel.send(new Discord.MessageEmbed()
+            .setTitle("<:cross:899255798142750770>  ERROR | Something went wrong, please contact: `S409™#9685`")
+            .setColor(es.wrongcolor)
+            .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``)
+            .setFooter(es.footertext, es.footericon)
+          );
         }
+      } else if (temptype == "disable") {
+        try {
+          if (client.points.get(message.guild.id, "disabled")) return message.channel.send(new Discord.MessageEmbed()
+            .setTitle("<:cross:899255798142750770>  ERROR | Level Up Messages are Already Disabled")
+            .setColor(es.wrongcolor)
+            .setDescription(`To enable them again type: \`${prefix}setup-rank reply\``)
+            .setFooter(es.footertext, es.footericon)
+          );
+          client.points.set(message.guild.id, true, "disabled")
+          return message.channel.send(new Discord.MessageEmbed()
+            .setTitle(`<:tick:899255869185855529> Disabled Levelup Messages`)
+            .setDescription(`To enable them again type: \`${prefix}setup-rank reply\``)
+            .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+            .setFooter(es.footertext, es.footericon)
+          );
+        } catch (e) {
+          return message.channel.send(new Discord.MessageEmbed()
+            .setTitle("<:cross:899255798142750770>  ERROR | Something went wrong, please contact: `S409™#9685`")
+            .setColor(es.wrongcolor)
+            .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``)
+            .setFooter(es.footertext, es.footericon)
+          );
+        }
+      } else if (temptype == "setbg") {
+        try {
+          var url;
+          tempmsg = await tempmsg.edit({embed: new MessageEmbed()
+            .setColor(ee.color)
+            .setTitle("Which Image should i Use?")
+            .setDescription(`*Just Send the Url*`)
+            .setFooter("Pick the INDEX NUMBER / send the IMAGE URl", ee.footericon)
+            .setThumbnail(ee.footericon)}).then(msg => {
+            msg.channel.awaitMessages(m => m.author.id === message.author.id, {
+              max: 1,
+              time: 30000,
+              errors: ['time']
+            }).then(collected => {
+              if (collected.first().attachments.size > 0) {
+                if (collected.first().attachments.every(attachIsImage)) {
+                  client.setups.set(message.guild.id, url, "ranking.backgroundimage")
+                  return message.channel.send(new Discord.MessageEmbed()
+                    .setTitle(`<:tick:899255869185855529> Successfully, set your Background Image!`)
+                    .setDescription(`Please make sure to **not** delete your Image from the Channel!`)
+                    .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+                    .setFooter(es.footertext, es.footericon)
+                  );
+                } else {
+                  return message.channel.send(new Discord.MessageEmbed()
+                    .setTitle(`<:cross:899255798142750770>  ERROR | Could not your message as a backgroundimage`)
+                    .setColor(es.wrongcolor)
+                    .setFooter(es.footertext, es.footericon)
+                  );
+                }
+              } else if (collected.first().content.includes("https") || collected.first().content.includes("http")) {
+                client.setups.set(message.guild.id, collected.first().content, "ranking.backgroundimage")
+                return message.channel.send(new Discord.MessageEmbed()
+                  .setTitle(`<:tick:899255869185855529> Successfully, set your Background Image!`)
+                  .setDescription(`Please make sure to **not** delete your Image from the Channel!`)
+                  .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+                  .setFooter(es.footertext, es.footericon)
+                );
+              } else {
+                return message.channel.send(new Discord.MessageEmbed()
+                  .setTitle(`<:cross:899255798142750770>  ERROR | Could not your message as a backgroundimage`)
+                  .setColor(es.wrongcolor)
+                  .setFooter(es.footertext, es.footericon)
+                );
+              }
+
+              function attachIsImage(msgAttach) {
+                url = msgAttach.url;
+
+                //True if this url is a png image.
+                return url.indexOf("png", url.length - "png".length /*or 3*/ ) !== -1 ||
+                  url.indexOf("jpeg", url.length - "jpeg".length /*or 3*/ ) !== -1 ||
+                  url.indexOf("jpg", url.length - "jpg".length /*or 3*/ ) !== -1;
+              }
+            });
+          })
+        } catch (e) {
+          return message.channel.send(new Discord.MessageEmbed()
+            .setTitle("<:cross:899255798142750770>  ERROR | Something went wrong, please contact: `S409™#9685`")
+            .setColor(es.wrongcolor)
+            .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``)
+            .setFooter(es.footertext, es.footericon)
+          );
+        }
+      } else if (temptype == "resetbg") {
+        try {
+          client.setups.set(message.guild.id, "null", "ranking.backgroundimage")
+          return message.channel.send(new Discord.MessageEmbed()
+            .setTitle(`<:tick:899255869185855529> Resetted Levelup Message Image Background`)
+            .setDescription(`I will now use the Default Levelup Image`)
+            .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+            .setFooter(es.footertext, es.footericon)
+          );
+        } catch (e) {
+          return message.channel.send(new Discord.MessageEmbed()
+            .setTitle("<:cross:899255798142750770>  ERROR | Something went wrong, please contact: `S409™#9685`")
+            .setColor(es.wrongcolor)
+            .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``)
+            .setFooter(es.footertext, es.footericon)
+          );
+        }
+      } else {
+        return message.channel.send(new Discord.MessageEmbed()
+          .setTitle("<:cross:899255798142750770>  ERROR | PLEASE CONTACT `S409™#9685`")
+          .setColor(es.wrongcolor)
+          .setFooter(es.footertext, es.footericon)
+        );
       }
+
     } catch (e) {
-      console.log(String(e.stack).grey.bgRed)
-      return message.reply({embeds: [new MessageEmbed()
-        .setColor(es.wrongcolor).setFooter(client.getFooter(es))
-        .setTitle(client.la[ls].common.erroroccur)
-        .setDescription(eval(client.la[ls]["cmds"]["setup"]["setup-rank"]["variable36"]))
-      ]});
+      console.log(String(e.stack).bgRed)
+      return message.channel.send(new MessageEmbed()
+        .setColor(es.wrongcolor).setFooter(es.footertext, es.footericon)
+        .setTitle(`<:cross:899255798142750770>  Something went Wrong`)
+        .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``)
+      );
     }
   },
 };
 /**
  * @INFO
- * Bot Coded by Tomato#6966 | https://discord.gg/milrato
+ * Bot Coded by S409™#9685 | https://github.com/S409™#9685/discord-js-lavalink-Music-Bot-erela-js
  * @INFO
- * Work for S409 support | https://s409.xyz
+ * Work for s409 Development | https://s409.xyz
  * @INFO
- * Please mention him / S409 support, when using this Code!
+ * Please mention Him / s409 Development, when using this Code!
  * @INFO
  */

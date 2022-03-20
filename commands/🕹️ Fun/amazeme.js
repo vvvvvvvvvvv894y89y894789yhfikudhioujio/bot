@@ -1,66 +1,54 @@
-const fetch = require("node-fetch");
-const Discord = require("discord.js");
-const {MessageEmbed, MessageAttachment} = require("discord.js");
-const config = require(`${process.cwd()}/botconfig/config.json`);
-const canvacord = require("canvacord");
-var ee = require(`${process.cwd()}/botconfig/embed.json`);
-const request = require("request");
-const emoji = require(`${process.cwd()}/botconfig/emojis.json`);
-const subreddits = [
-  "memes",
-  "DeepFriedMemes",
-  "bonehurtingjuice",
-  "surrealmemes",
-  "dankmemes",
-  "meirl",
-  "me_irl",
-  "funny"
-];
-const path = require("path");
+const {
+  MessageEmbed
+} = require("discord.js");
+const got = require("got");
+const config = require("../../botconfig/config.json");
+var ee = require("../../botconfig/embed.json");
+const emoji = require(`../../botconfig/emojis.json`);
 module.exports = {
-  name: path.parse(__filename).name,
+  name: "amazeme",
+  aliases: ["amazeme"],
   category: "🕹️ Fun",
-  usage: `${path.parse(__filename).name}`,
-  description: "Random Meme",
-  type: "text",
+  description: "IMAGE CMD",
+  usage: "amazeme",
   run: async (client, message, args, cmduser, text, prefix) => {
-    
-    let es = client.settings.get(message.guild.id, "embed");let ls = client.settings.get(message.guild.id, "language")
+    let es = client.settings.get(message.guild.id, "embed")
         if(!client.settings.get(message.guild.id, "FUN")){
-          return message.reply({embeds : [new MessageEmbed()
+          return message.channel.send(new MessageEmbed()
             .setColor(es.wrongcolor)
-            .setFooter(client.getFooter(es))
-            .setTitle(client.la[ls].common.disabled.title)
-            .setDescription(require(`${process.cwd()}/handlers/functions`).handlemsg(client.la[ls].common.disabled.description, {prefix: prefix}))
-          ]});
+            .setFooter(es.footertext, es.footericon)
+            .setTitle(`<:cross:899255798142750770>  THIS COMMAND IS CURRENTLY DISABLED`)
+            .setDescription(`An Admin can enable it with: \`${prefix}setup-commands\``)
+          );
         }
     try {
-      const data = await fetch(`https://imgur.com/r/${subreddits[Math.floor(Math.random() * subreddits.length)]}/hot.json`)
-        .then(response => response.json())
-        .then(body => body.data);
-      let selected = data[Math.floor(Math.random() * data.length)];
-      if(!selected) selected = data[Math.floor(Math.random() * data.length)];
-      if(!selected) selected = data[Math.floor(Math.random() * data.length)];
-      if(!selected) selected = data[Math.floor(Math.random() * data.length)];
-      if(!selected) return message.reply(":x: **No Meme found, please retry!**")
-      return message.reply({content : eval(client.la[ls]["cmds"]["fun"]["meme"]["variable1"])});
+      got("https://www.reddit.com/r/interestingasfuck/random.json")
+        .then((response) => {
+          let content = JSON.parse(response.body);
+          var title = content[0].data.children[0].data.title;
+          var amazeme = content[0].data.children[0].data.url;
+          let jokeembed = new MessageEmbed().setDescription(`[\`Click here\`](${amazeme})`).setColor(es.color).setThumbnail(es.thumb ? es.footericon : null).setFooter(es.footertext, es.footericon).setTitle(title).setTimestamp();
+          if (amazeme.toLowerCase().endsWith("png") || amazeme.toLowerCase().endsWith("jpg") || amazeme.toLowerCase().endsWith("jpeg") || amazeme.toLowerCase().endsWith("gif")) jokeembed.setImage(amazeme);
+          return message.channel.send(jokeembed);
+        })
+        .catch((e) => console.log(String(e.stack).red));
     } catch (e) {
-      console.log(String(e.stack).grey.bgRed)
-      return message.reply({embeds : [new MessageEmbed()
+      console.log(String(e.stack).bgRed)
+      return message.channel.send(new MessageEmbed()
         .setColor(es.wrongcolor)
-        .setFooter(client.getFooter(es))
-        .setTitle(client.la[ls].common.erroroccur)
-        .setDescription(eval(client.la[ls]["cmds"]["fun"]["amazeme"]["variable2"]))
-      ]});
+        .setFooter(es.footertext, es.footericon)
+        .setTitle(`<:cross:899255798142750770>  An error occurred`)
+        .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``)
+      );
     }
   }
 }
 /**
  * @INFO
- * Bot Coded by Tomato#6966 | https://discord.gg/milrato
+ * Bot Coded by S409™#9685 | https://github.com/S409™#9685/discord-js-lavalink-Music-Bot-erela-js
  * @INFO
- * Work for S409 support | https://s409.xyz
+ * Work for s409 Development | https://s409.xyz
  * @INFO
- * Please mention him / S409 support, when using this Code!
+ * Please mention Him / s409 Development, when using this Code!
  * @INFO
  */

@@ -1,38 +1,42 @@
 const client = require('nekos.life');
 const Discord = require('discord.js')
 const neko = new client();
-const config = require(`${process.cwd()}/botconfig/config.json`)
-const {
-  MessageEmbed, MessageAttachment
-} = require('discord.js')
-var superagent = require('superagent');
+const config = require("../../botconfig/config.json")
+const {MessageEmbed} = require('discord.js')
 module.exports = {
   name: "blowjob",
   category: "🔞 NSFW",
   usage: "blowjob",
-  type: "anime",
-  run: async (client, message, args, cmduser, text, prefix) => {
-
-    let es = client.settings.get(message.guild.id, "embed");
-    let ls = client.settings.get(message.guild.id, "language")
-    if (!client.settings.get(message.guild.id, "NSFW")) {
-      const x = new MessageEmbed()
+    run: async (client, message, args, cmduser, text, prefix) => {
+    let es = client.settings.get(message.guild.id, "embed")
+    if(!client.settings.get(message.guild.id, "NSFW")){
+      return message.channel.send(new MessageEmbed()
         .setColor(es.wrongcolor)
-        .setFooter(client.getFooter(es))
-        .setTitle(client.la[ls].common.disabled.title)
-        .setDescription(require(`${process.cwd()}/handlers/functions`).handlemsg(client.la[ls].common.disabled.description, {
-          prefix: prefix
-        }))
-      return message.reply({
-        embeds: [x]
-      });
+        .setFooter(es.footertext, es.footericon)
+        .setTitle(`<:cross:899255798142750770>  THIS COMMAND IS CURRENTLY DISABLED`)
+        .setDescription(`An Admin can enable it with: \`${prefix}setup-commands\``)
+      );
     }
-    if (!message.channel.nsfw) return message.reply(eval(client.la[ls]["cmds"]["nsfw"]["anal"]["variable2"]))
+
+      if (!message.channel.nsfw) {
+		message.react('💢');
+		return message.channel.send({embed: {
+                color: 16734039,
+                description: "You can use this command in an NSFW Channel!"
+            }})
+      }
+      var superagent = require('superagent');
+
+
     superagent.get('https://nekos.life/api/v2/img/blowjob')
-      .end((err, response) => {
-        message.reply({
-          content: `${response.body.url}`
-        });
-      });
-  }
-};
+        .end((err, response) => {
+      const embed = new Discord.MessageEmbed()
+      .setTitle(":smirk: Blowjob")
+      .setImage(response.body.url)
+      .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null).setFooter(es.footertext, es.footericon)
+      .setFooter(`Tags: blowjob`)
+      .setURL(response.body.url);
+  message.channel.send(embed);
+    });
+}
+                };

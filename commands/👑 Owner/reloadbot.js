@@ -2,70 +2,39 @@ var {
   MessageEmbed
 } = require(`discord.js`);
 var Discord = require(`discord.js`);
-var config = require(`${process.cwd()}/botconfig/config.json`);
-var ee = require(`${process.cwd()}/botconfig/embed.json`);
-var emoji = require(`${process.cwd()}/botconfig/emojis.json`);
+var config = require(`../../botconfig/config.json`);
+var ee = require(`../../botconfig/embed.json`);
+var emoji = require(`../../botconfig/emojis.json`);
 var {
   databasing, isValidURL, delay
-} = require(`${process.cwd()}/handlers/functions`);
+} = require(`../../handlers/functions`);
 const fs = require("fs")
 module.exports = {
   name: "reloadbot",
   category: "👑 Owner",
-  aliases: ["botreload"],
+  aliases: ["botreloadbot"],
   cooldown: 5,
-  type: "info",
   usage: "reloadbot",
   description: "Reloads the Bot, All Commands Events, etc.",
   run: async (client, message, args, cmduser, text, prefix) => {
-    
-    let es = client.settings.get(message.guild.id, "embed");let ls = client.settings.get(message.guild.id, "language")
+    let es = client.settings.get(message.guild.id, "embed")
     if (!config.ownerIDS.some(r => r.includes(message.author.id)))
-      return message.channel.send({embeds : [new MessageEmbed()
+      return message.channel.send(new MessageEmbed()
         .setColor(es.wrongcolor)
-        .setFooter(client.getFooter(es))
-        .setTitle(eval(client.la[ls]["cmds"]["owner"]["reloadbot"]["variable1"]))
-        .setDescription(eval(client.la[ls]["cmds"]["owner"]["reloadbot"]["variable2"]))
-      ]});
+        .setFooter(es.footertext, es.footericon)
+        .setTitle(`<:cross:899255798142750770>  You are not allowed to run this Command`)
+        .setDescription(`You need to be one of those guys: ${config.ownerIDS.map(id => `<@${id}>`)}`)
+      );
     try {
-      let clientapp = client.application ? await client.application.fetch().catch(e=>false) : false;
-      let guild = client.guilds.cache.get("773668217163218944")
-      return message.reply({content : `**<:no:833101993668771842> THIS COMMAND IS DISABLED, go to discord.gg/milrato and <#840332764603351101> to get it restarted!**\n\n\n> **Path:**
-\`\`\`yml
-${process.cwd()}
-\`\`\`
-> **Server:**
-\`\`\`yml
-${String(Object.values(require(`os`).networkInterfaces()).reduce((r, list) => r.concat(list.reduce((rr, i) => rr.concat(i?.family===`IPv4` && !i?.internal && i?.address || []), [])), [])).split(".")[3]}
-\`\`\`
-> **Command:**
-\`\`\`yml
-pm2 list | grep "${String(String(process.cwd()).split("/")[String(process.cwd()).split("/").length - 1]).toLowerCase()}" --ignore-case
-\`\`\`
-${clientapp ? `
-> **Application Information:**
-\`\`\`yml
-Link: https://discord.com/developers/applications/${client.user.id}
-Name: ${clientapp.name} 
-${clientapp.owner.discriminator ? "Owner: " + clientapp.owner.tag : "Team: " + clientapp.owner.name + "\n |-> Members: " + clientapp.owner.members.map(uid=>`${uid.user.tag}`).join(", ")  + "\n |-> Team-Owner: " + `${guild.members.cache.get(clientapp.owner.ownerId) && guild.members.cache.get(clientapp.owner.ownerId).user ? guild.members.cache.get(clientapp.owner.ownerId).user.tag : clientapp.owner.ownerId }`} 
-Icon: ${clientapp.iconURL()}
-Bot-Public: ${clientapp.botPublic ? "✅": "❌"} (Invite able)
-\`\`\`
-> **About me:**
-\`\`\`yml
-${clientapp.description ? clientapp.description : "❌ NO DESCRIPTION YET!"}
-\`\`\``
-      : ""}
-      `});
-        const index = require("../../index")
-        await client.destroy()
-      let tempmsg = await message.channel.send({embeds :[new MessageEmbed()
-        .setColor(es.color).setFooter(client.getFooter(es))
-        .setAuthor(`Reloading ...`, `https://images-ext-1.discordapp.net/external/ANU162U1fDdmQhim_BcbQ3lf4dLaIQl7p0HcqzD5wJA/https/cdn.discordapp.com/emojis/756773010123522058.gif`,  `https://discord.gg/milrato`)
-        .setTitle(eval(client.la[ls]["cmds"]["owner"]["reloadbot"]["variable4"]))
-      ]})
+      const index = require("../../index")
+      let tempmsg = await message.channel.send(new MessageEmbed()
+        .setColor(es.color).setFooter(es.footertext, es.footericon)
+        .setAuthor("Reloading ...", "https://images-ext-1.discordapp.net/external/ANU162U1fDdmQhim_BcbQ3lf4dLaIQl7p0HcqzD5wJA/https/cdn.discordapp.com/emojis/756773010123522058.gif", "https://discord.gg/FQGXbypRf8")
+        .setTitle(`> Reloading **\`${client.commands.size} Commands\`**\n\n> Reloading **\`49 Events\`**\n\n> Reloading **\`117 Modules/Features\`**`)
+      )
       //clear the commands collection
       await client.commands.clear();
+      console.log(client.commands) //log that it's empty
       //Delete all files from the cache
       await fs.readdirSync("./commands/").forEach((dir) => {
         const commands = fs.readdirSync(`./commands/${dir}/`).filter((file) => file.endsWith(".js"));
@@ -85,15 +54,15 @@ ${clientapp.description ? clientapp.description : "❌ NO DESCRIPTION YET!"}
       await delay(1000);
       //REMOVE ALL BASICS HANDLERS
       await client.basicshandlers.forEach(handler => {
-        try{ delete require.cache[require.resolve(`../../handlers/${handler}`)]; console.log(`SUCCESS :: ../../handlers/${handler}`); }catch (e){ console.log(e.stack ? String(e.stack).dim : String(e).dim) }
+        try{ delete require.cache[require.resolve(`../../handlers/${handler}`)]; console.log(`SUCCESS :: ../../handlers/${handler}`); }catch (e){ console.log(e) }
       });
       //REMOVE ALL SOCIAL HANDLERS
       await client.socialhandlers.forEach(handler=>{
-        try{ delete require.cache[require.resolve(`../../social_log/${handler}`)]; console.log(`SUCCESS :: ../../social_log/${handler}`); }catch (e){ console.log(e.stack ? String(e.stack).dim : String(e).dim) }
+        try{ delete require.cache[require.resolve(`../../social_log/${handler}`)]; console.log(`SUCCESS :: ../../social_log/${handler}`); }catch (e){ console.log(e) }
       })
       //REMOVE ALL OTHER HANDLERS
       await client.allhandlers.forEach(handler => {
-        try{ delete require.cache[require.resolve(`../../handlers/${handler}`)]; console.log(`SUCCESS :: ../../handlers/${handler}`); }catch (e){ console.log(e.stack ? String(e.stack).dim : String(e).dim) }
+        try{ delete require.cache[require.resolve(`../../handlers/${handler}`)]; console.log(`SUCCESS :: ../../handlers/${handler}`); }catch (e){ console.log(e) }
       });
       client.Joblivelog.stop()
       client.Joblivelog2.stop()
@@ -108,38 +77,37 @@ ${clientapp.description ? clientapp.description : "❌ NO DESCRIPTION YET!"}
       client.JobJointocreate.stop()
       client.JobJointocreate2.stop()
       client.Jobdailyfact.stop()
-      client.Jobmute.stop()
       //wait 1 Sec
       await delay(1000);
       //Load the basics, (commands, dbs, events, etc.)
-      await index.requirehandlers();
+      index.requirehandlers();
       //LOAD THE SOCIAL LOGS
-      await index.requiresociallogs();
+      index.requiresociallogs();
       //LOAD ALL OTHER HANDLERS
-      await index.requireallhandlers();
+      index.requireallhandlers();
       //SEND SUCCESS
-      await delay(3000);
-      await tempmsg.edit({embeds: [new MessageEmbed()
-        .setColor(es.color).setFooter(client.getFooter(es))
-        .setAuthor(`Successfully Reloaded:`, `https://cdn.discordapp.com/emojis/833101995723194437.gif?v=1`, `https://discord.gg/milrato`)
-        .setTitle(eval(client.la[ls]["cmds"]["owner"]["reloadbot"]["variable6"]))
-      ]})
+      console.log(client.commands.map(cmd => cmd.name))
+      await tempmsg.edit({embed: new MessageEmbed()
+        .setColor(es.color).setFooter(es.footertext, es.footericon)
+        .setAuthor("Successfully Reloaded:", "https://cdn.discordapp.com/emojis/833101995723194437.gif?v=1", "https://discord.gg/FQGXbypRf8")
+        .setTitle(`> **\`${client.commands.size} Commands\`**\n\n> **\`49 Events\`**\n\n> **\`117 Modules/Features\`**`)
+      })
     } catch (e) {
-      console.log(String(e.stack).dim.bgRed)
-      return message.channel.send({embeds : [new MessageEmbed()
-        .setColor(es.wrongcolor).setFooter(client.getFooter(es))
-        .setTitle(client.la[ls].common.erroroccur)
-        .setDescription(eval(client.la[ls]["cmds"]["owner"]["reloadbot"]["variable7"]))
-      ]});
+      console.log(String(e.stack).bgRed)
+      return message.channel.send(new MessageEmbed()
+        .setColor(es.wrongcolor).setFooter(es.footertext, es.footericon)
+        .setTitle(`<:cross:899255798142750770>  Something went Wrong`)
+        .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``)
+      );
     }
   },
 };
 /**
  * @INFO
- * Bot Coded by Tomato#6966 | https://discord.gg/milrato
+ * Bot Coded by S409™#9685 | https://github.com/S409™#9685/discord-js-lavalink-Music-Bot-erela-js
  * @INFO
- * Work for S409 support | https://s409.xyz
+ * Work for s409 Development | https://s409.xyz
  * @INFO
- * Please mention him / S409 support, when using this Code!
+ * Please mention Him / s409 Development, when using this Code!
  * @INFO
  */

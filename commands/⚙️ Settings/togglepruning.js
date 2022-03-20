@@ -1,6 +1,6 @@
 const { MessageEmbed } = require("discord.js");
-const config = require(`${process.cwd()}/botconfig/config.json`);
-var ee = require(`${process.cwd()}/botconfig/embed.json`);
+const config = require("../../botconfig/config.json");
+var ee = require("../../botconfig/embed.json");
 const emoji = require("../../botconfig/emojis.json");
 module.exports = {
     name: "togglepruning",
@@ -9,39 +9,27 @@ module.exports = {
     description: "Toggles pruning. If its true a message of playing a new track will be sent, even if your afk. If false it wont send any message if a new Track plays! | Default: true aka send new Track information",
     usage: "togglepruning",
     memberpermissions: ["ADMINISTRATOR"],
-    type: "music",
     run: async (client, message, args, cmduser, text, prefix) => {
-    
-      let es = client.settings.get(message.guild.id, "embed");let ls = client.settings.get(message.guild.id, "language")
+      let es = client.settings.get(message.guild.id, "embed")
     try{
-      client.settings.ensure(message.guild.id, {
-        playmsg: true
-      });
       
-      client.settings.set(message.guild.id, !client.settings.get(message.guild.id, "playmsg"), "playmsg");
-      
-      return message.reply({embeds : [new MessageEmbed()
-        .setFooter(client.getFooter(es)).setColor(es.color).setThumbnail(es.thumb ? es.footericon && (es.footericon.includes("http://") || es.footericon.includes("https://")) ? es.footericon : client.user.displayAvatarURL() : null)
-        .setTitle(eval(client.la[ls]["cmds"]["settings"]["togglepruning"]["variable1"]))
-        .setDescription(eval(client.la[ls]["cmds"]["settings"]["togglepruning"]["variable2"]))
-      ]});
+      //set the new prefix
+      client.settings.set(message.guild.id, !client.settings.get(message.guild.id, `pruning`), `pruning`);
+      //return success embed
+      return message.channel.send(new MessageEmbed()
+        .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+        .setFooter(es.footertext, es.footericon)
+        .setTitle(`<:tick:899255869185855529> ${client.settings.get(message.guild.id, `pruning`) ? `${emoji.msg.enabled} Enabled` : `${emoji.msg.ERROR} Disabled`} Pruning`)
+        .setDescription(`I will now ${client.settings.get(message.guild.id, `pruning`) ? `` : `not`} send a message with Track Information, if I am on "AFK"`)
+      );
     } catch (e) {
-        console.log(String(e.stack).grey.bgRed)
-        return message.reply({embeds : [new MessageEmbed()
+        console.log(String(e.stack).bgRed)
+        return message.channel.send(new MessageEmbed()
             .setColor(es.wrongcolor)
-						.setFooter(client.getFooter(es))
-            .setTitle(client.la[ls].common.erroroccur)
-            .setDescription(eval(client.la[ls]["cmds"]["settings"]["togglepruning"]["variable3"]))
-        ]});
+						.setFooter(es.footertext, es.footericon)
+            .setTitle(`<:cross:899255798142750770>  An error occurred`)
+            .setDescription(`${e.message}`)
+        );
     }
   }
 };
-/**
-  * @INFO
-  * Bot Coded by Tomato#6966 | https://discord.gg/milrato
-  * @INFO
-  * Work for S409 support | https://s409.xyz
-  * @INFO
-  * Please mention him / S409 support, when using this Code!
-  * @INFO
-*/

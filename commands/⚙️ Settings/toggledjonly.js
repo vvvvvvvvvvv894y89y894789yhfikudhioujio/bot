@@ -1,6 +1,6 @@
-/*const { MessageEmbed } = require("discord.js");
-const config = require(`${process.cwd()}/botconfig/config.json`);
-var ee = require(`${process.cwd()}/botconfig/embed.json`);
+const { MessageEmbed } = require("discord.js");
+const config = require("../../botconfig/config.json");
+var ee = require("../../botconfig/embed.json");
 const emoji = require("../../botconfig/emojis.json");
 module.exports = {
     name: "toggledjonly",
@@ -10,20 +10,19 @@ module.exports = {
     usage: "adddj @role",
     memberpermissions: ["ADMINISTRATOR"],
     run: async (client, message, args, cmduser, text, prefix) => {
-    
-      let es = client.settings.get(message.guild.id, "embed");let ls = client.settings.get(message.guild.id, "language")
+      let es = client.settings.get(message.guild.id, "embed")
     try{
       
       //get the role of the mention
       let cmd = args[0]
       //if no pinged role return error
       if (!cmd)
-        return message.reply({embeds :[new MessageEmbed()
+        return message.channel.send(new MessageEmbed()
           .setColor(es.wrongcolor)
-          .setFooter(client.getFooter(es))
-          .setTitle(eval(client.la[ls]["cmds"]["settings"]["toggledjonly"]["variable1"]))
-          .setDescription(eval(client.la[ls]["cmds"]["settings"]["toggledjonly"]["variable2"]))
-        ]});
+          .setFooter(es.footertext, es.footericon)
+          .setTitle("<:cross:899255798142750770>  Please add a cmd!")
+          .setDescription("Example: `toggledjonly skip`")
+        );
 
       let musiccmds = [];
       const commands = (category) => {
@@ -39,66 +38,56 @@ module.exports = {
           if(client.settings.get(message.guild.id, `djonlycmds`).join(" ").toLowerCase().split(" ").includes(args[0].toLowerCase())){
             try{
               client.settings.remove(message.guild.id, args[0], `djonlycmds`);
-              return message.reply({embeds :[new MessageEmbed()
-                .setColor(es.color).setThumbnail(es.thumb ? es.footericon && (es.footericon.includes("http://") || es.footericon.includes("https://")) ? es.footericon : client.user.displayAvatarURL() : null)
-                .setFooter(client.getFooter(es))
-                .setTitle(eval(client.la[ls]["cmds"]["settings"]["toggledjonly"]["variable3"]))
-                .setDescription(eval(client.la[ls]["cmds"]["settings"]["toggledjonly"]["variable4"]))
-              ]});
+              return message.channel.send(new MessageEmbed()
+                .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+                .setFooter(es.footertext, es.footericon)
+                .setTitle(`<:tick:899255869185855529> Set Cmd \`${args[0]}\` to NOT DJ ONLY`)
+                .setDescription(`All Dj-ONLY-CMDS:\n> \`${client.settings.get(message.guild.id, `djonlycmds`).sort(function(a, b){if(a < b) { return -1; }if(a > b) { return 1; }  return 0;}).join("`, `")}\``)
+              );
             }catch (e){
-              console.log(e.stack ? String(e.stack).grey : String(e).grey);
-              return message.reply({embeds :[new MessageEmbed()
+              console.log(String(e.stack).red);
+              return message.channel.send(new MessageEmbed()
                 .setColor(es.wrongcolor)
-                .setFooter(client.getFooter(es))
-                .setTitle(eval(client.la[ls]["cmds"]["settings"]["toggledjonly"]["variable5"]))
-                .setDescription(eval(client.la[ls]["cmds"]["settings"]["toggledjonly"]["variable6"]))
-              ]});
+                .setFooter(es.footertext, es.footericon)
+                .setTitle("<:cross:899255798142750770>  Something went wrong!")
+                .setDescription("```" + e.stack + "```")
+              );
             }
           }
           else {
             try{
               client.settings.push(message.guild.id, args[0], `djonlycmds`);
-              return message.reply({embeds :[new MessageEmbed()
-                .setColor(es.color).setThumbnail(es.thumb ? es.footericon && (es.footericon.includes("http://") || es.footericon.includes("https://")) ? es.footericon : client.user.displayAvatarURL() : null)
-                .setFooter(client.getFooter(es))
-                .setTitle(eval(client.la[ls]["cmds"]["settings"]["toggledjonly"]["variable7"]))
-                .setDescription(eval(client.la[ls]["cmds"]["settings"]["toggledjonly"]["variable8"]))
-              ]});
+              return message.channel.send(new MessageEmbed()
+                .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+                .setFooter(es.footertext, es.footericon)
+                .setTitle(`<:tick:899255869185855529> Set Cmd \`${args[0]}\` to DJ ONLY`)
+                .setDescription(`All Dj-ONLY-CMDS:\n> \`${client.settings.get(message.guild.id, `djonlycmds`).sort(function(a, b){if(a < b) { return -1; }if(a > b) { return 1; }  return 0;}).join("`, `")}\``)
+              );
             }catch (e){
-              console.log(e.stack ? String(e.stack).grey : String(e).grey);
-              return message.reply({embeds : [new MessageEmbed()
+              console.log(String(e.stack).red);
+              return message.channel.send(new MessageEmbed()
                 .setColor(es.wrongcolor)
-                .setFooter(client.getFooter(es))
-                .setTitle(eval(client.la[ls]["cmds"]["settings"]["toggledjonly"]["variable9"]))
-                .setDescription(eval(client.la[ls]["cmds"]["settings"]["toggledjonly"]["variable10"]))
-              ]});
+                .setFooter(es.footertext, es.footericon)
+                .setTitle("<:cross:899255798142750770>  Something went wrong!")
+                .setDescription("```" + e.stack + "```")
+              );
             }
           }
       }else{
-        return message.reply({embeds  :[new MessageEmbed()
+        return message.channel.send(new MessageEmbed()
           .setColor(es.wrongcolor)
-          .setFooter(client.getFooter(es))
-          .setTitle(eval(client.la[ls]["cmds"]["settings"]["toggledjonly"]["variable11"]))
-        ]});
+          .setFooter(es.footertext, es.footericon)
+          .setTitle(`<:cross:899255798142750770>  Could not find Music Command \`${args[0]}\``)
+        );
       }
     } catch (e) {
-        console.log(String(e.stack).grey.bgRed)
-        return message.reply({embeds : [new MessageEmbed()
+        console.log(String(e.stack).bgRed)
+        return message.channel.send(new MessageEmbed()
             .setColor(es.wrongcolor)
-						.setFooter(client.getFooter(es))
-            .setTitle(client.la[ls].common.erroroccur)
-            .setDescription(eval(client.la[ls]["cmds"]["settings"]["toggledjonly"]["variable12"]))
-        ]});
+						.setFooter(es.footertext, es.footericon)
+            .setTitle(`<:cross:899255798142750770>  An error occurred`)
+            .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``)
+        );
     }
   }
 };
-*/
-/**
-  * @INFO
-  * Bot Coded by Tomato#6966 | https://discord.gg/milrato
-  * @INFO
-  * Work for S409 support | https://s409.xyz
-  * @INFO
-  * Please mention him / S409 support, when using this Code!
-  * @INFO
-*/

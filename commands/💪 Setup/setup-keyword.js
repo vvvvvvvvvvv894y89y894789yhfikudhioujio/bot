@@ -2,15 +2,14 @@ var {
   MessageEmbed
 } = require(`discord.js`);
 var Discord = require(`discord.js`);
-var config = require(`${process.cwd()}/botconfig/config.json`);
-var ee = require(`${process.cwd()}/botconfig/embed.json`);
-var emoji = require(`${process.cwd()}/botconfig/emojis.json`);
+var config = require(`../../botconfig/config.json`);
+var ee = require(`../../botconfig/embed.json`);
+var emoji = require(`../../botconfig/emojis.json`);
 var {
   databasing,
   edit_msg,
   send_roster
-} = require(`${process.cwd()}/handlers/functions`);
-const { MessageButton, MessageActionRow, MessageSelectMenu } = require('discord.js')
+} = require(`../../handlers/functions`);
 module.exports = {
   name: "setup-keyword",
   category: "💪 Setup",
@@ -19,96 +18,77 @@ module.exports = {
   usage: "setup-keyword  --> Follow the Steps",
   description: "Define Key Word messages, so that if someone sends a Message containing that Keyword, the Bot will responde with your defined MESSAGE",
   memberpermissions: ["ADMINISTRATOR"],
-  type: "system",
   run: async (client, message, args, cmduser, text, prefix) => {
-    
-    let es = client.settings.get(message.guild.id, "embed");let ls = client.settings.get(message.guild.id, "language")
+    var es = client.settings.get(message.guild.id, "embed")
     try {
       var originalowner = message.author.id;
-      let timeouterror;
-      let NumberEmojiIds = getNumberEmojis().map(emoji => emoji?.replace(">", "").split(":")[2])
-      first_layer()
-      async function first_layer(){
-        let menuoptions = [{
-            value: "Create Keyword",
-            description: `Create a Keyword of your Choice`,
-            emoji: "✅"
-          },
-          {
-            value: "Delete Keyword",
-            description: `Delete one of the Keyword(s)`,
-            emoji: "❌"
-          },
-          {
-            value: "Show Settings",
-            description: `Show all Keywords!`,
-            emoji: "📑"
-          }
-        ]
-        //define the selection
-        let Selection = new MessageSelectMenu()
-          .setCustomId('MenuSelection') 
-          .setMaxValues(1) //OPTIONAL, this is how many values you can have at each selection
-          .setMinValues(1) //OPTIONAL , this is how many values you need to have at each selection
-          .setPlaceholder('Click me to setup the Automated Embed System!') 
-          .addOptions(
-          menuoptions.map(option => {
-            let Obj = {
-              label: option.label ? option.label.substr(0, 50) : option.value.substr(0, 50),
-              value: option.value.substr(0, 50),
-              description: option.description.substr(0, 50),
-            }
-          if(option.emoji) Obj.emoji = option.emoji;
-          return Obj;
-         }))
-        
-        //define the embed
-        let MenuEmbed = new Discord.MessageEmbed()
-        .setColor(es.color)
-        .setAuthor('Keyword Setup', 'https://images-ext-1.discordapp.net/external/HF-XNy3iUP4D95zv2fuTUy1csYWuNa5IZj2HSCSkvhs/https/emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/120/google/298/flexed-biceps_1f4aa.png', 'https://discord.gg/milrato')
-        .setDescription(eval(client.la[ls]["cmds"]["setup"]["setup-ticket"]["variable2"]))
-        //send the menu msg
-        let menumsg = await message.reply({embeds: [MenuEmbed], components: [new MessageActionRow().addComponents(Selection)]})
+      var adminroles = client.settings.get(message.guild.id, "adminroles")
 
-        //Create the collector
-        const collector = menumsg.createMessageComponentCollector({ 
-          filter: i => i?.isSelectMenu() && i?.message.author.id == client.user.id && i?.user,
-          time: 90000
-        })
-        //Menu Collections
-        collector.on('collect', menu => {
-          if (menu?.user.id === cmduser.id) {
-            collector.stop();
-            let menuoptiondata = menuoptions.find(v=>v.value == menu?.values[0])
-            if(menu?.values[0] == "Cancel") return menu?.reply(eval(client.la[ls]["cmds"]["setup"]["setup-ticket"]["variable3"]))
-            menu?.deferUpdate();
-            used1 = true;
-            handle_the_picks(menu?.values[0], menuoptiondata)
-          }
-          else menu?.reply({content: `<:no:833101993668771842> You are not allowed to do that! Only: <@${cmduser.id}>`, ephemeral: true});
-        });
-        //Once the Collections ended edit the menu message
-        collector.on('end', collected => {
-          menumsg.edit({embeds: [menumsg.embeds[0].setDescription(`~~${menumsg.embeds[0].description}~~`)], components: [], content: `${collected && collected.first() && collected.first().values ? `<a:yes:833101995723194437> **Selected: \`${collected ? collected.first().values[0] : "Nothing"}\`**` : "❌ **NOTHING SELECTED - CANCELLED**" }`})
-        });
+      var timeouterror = false;
+      var filter = (reaction, user) => {
+        return user.id === message.author.id;
+      };
+      var temptype = ""
+      var tempmsg;
+
+      tempmsg = await message.channel.send(new Discord.MessageEmbed()
+        .setTitle("What do you want to do?")
+        .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+        .setDescription(`1️⃣ **== Add** a Key Word Message\n\n2️⃣ **== Remove** a Key Word Message\n\n3️⃣ **== Show** the Key Word Messages\n\n\n\n\n\n*React with the Right Emoji according to the Right action*`).setFooter(es.footertext, es.footericon)
+      )
+      try {
+        tempmsg.react("1️⃣")
+        tempmsg.react("2️⃣")
+        tempmsg.react("3️⃣")
+      } catch (e) {
+        return message.reply(new Discord.MessageEmbed()
+          .setTitle("<:cross:899255798142750770>  ERROR | Missing Permissions to add Reactions")
+          .setColor(es.wrongcolor)
+          .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``.substr(0, 2000))
+          .setFooter(es.footertext, es.footericon)
+        );
       }
-      async function handle_the_picks(optionhandletype, menuoptiondata) {
-        switch (optionhandletype){ // return message.reply
-          case "Create Keyword": {
-            if (client.keyword.get(message.guild.id, "commands").length > 24)
-          return message.reply({embeds: [new Discord.MessageEmbed()
-            .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-keyword"]["variable5"]))
-            .setColor(es.wrongcolor)
-            .setDescription(`You cannot have more then **24** Key Words`.substr(0, 2000))
-            .setFooter(client.getFooter(es))
-          ]});
-        var tempmsg = await message.reply({embeds: [new Discord.MessageEmbed()
-          .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-keyword"]["variable6"]))
-          .setColor(es.color)
-          .setDescription(eval(client.la[ls]["cmds"]["setup"]["setup-keyword"]["variable7"]))
-          .setFooter(client.getFooter(es))]
+      await tempmsg.awaitReactions(filter, {
+          max: 1,
+          time: 120000,
+          errors: ["time"]
         })
-        await tempmsg.channel.awaitMessages({filter: m => m.author.id === message.author.id,
+        .then(async collected => {
+          var reaction = collected.first()
+          reaction.users.remove(message.author.id)
+          if (reaction.emoji.name === "1️⃣") temptype = "add"
+          else if (reaction.emoji.name === "2️⃣") temptype = "remove"
+          else if (reaction.emoji.name === "3️⃣") temptype = "show"
+          else throw "You reacted with a wrong emoji"
+
+        })
+        .catch(e => {
+          timeouterror = e;
+        })
+      if (timeouterror)
+        return message.reply(new Discord.MessageEmbed()
+          .setTitle("<:cross:899255798142750770>  ERROR | Your Time ran out")
+          .setColor(es.wrongcolor)
+          .setDescription(`Cancelled the Operation!`.substr(0, 2000))
+          .setFooter(es.footertext, es.footericon)
+        );
+
+
+      if (temptype == "add") {
+        if (client.keyword.get(message.guild.id, "commands").length > 19)
+          return message.reply(new Discord.MessageEmbed()
+            .setTitle("<:cross:899255798142750770>  ERROR | You've reached the maximum Key Words Amount!")
+            .setColor(es.wrongcolor)
+            .setDescription(`You cannot have more then **20** Key Words`.substr(0, 2000))
+            .setFooter(es.footertext, es.footericon)
+          );
+        tempmsg = await tempmsg.edit({embed: new Discord.MessageEmbed()
+          .setTitle("What Key Words do you wanna add?")
+          .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+          .setDescription(`Please type the Keyword **without** the Prefix:\nExample if you wanna get a \`Hello\` Key Word send \`hello\``)
+          .setFooter(es.footertext, es.footericon)
+        })
+        await tempmsg.channel.awaitMessages(m => m.author.id === message.author.id, {
             max: 1,
             time: 120000,
             errors: ["time"]
@@ -119,17 +99,17 @@ module.exports = {
               var thekeyword = {
                 name: msg,
                 output: "ye",
-                embeds: false,
+                embed: false,
                 channels: [],
                 aliases: []
               }
-              tempmsg = await message.reply({embeds: [new Discord.MessageEmbed()
-                .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-keyword"]["variable8"]))
-                .setColor(es.color)
-                .setDescription(eval(client.la[ls]["cmds"]["setup"]["setup-keyword"]["variable9"]))
-                .setFooter(client.getFooter(es))
-              ]})
-              await tempmsg.channel.awaitMessages({filter: m => m.author.id === message.author.id,
+              tempmsg = await message.channel.send(new Discord.MessageEmbed()
+                .setTitle("What Should the Key Word send?")
+                .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+                .setDescription(`Please just type the content in the Chat\nExample: \`Hello {member} Welcome to this Server 👋\``)
+                .setFooter(es.footertext, es.footericon)
+              )
+              await tempmsg.channel.awaitMessages(m => m.author.id === message.author.id, {
                   max: 1,
                   time: 120000,
                   errors: ["time"]
@@ -138,13 +118,13 @@ module.exports = {
                   var msg = collected.first().content;
                   if (msg) {
                     thekeyword.output = msg;
-                    tempmsg = await message.reply({embeds: [new Discord.MessageEmbed()
-                      .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-keyword"]["variable10"]))
-                      .setColor(es.color)
-                      .setDescription(eval(client.la[ls]["cmds"]["setup"]["setup-keyword"]["variable11"]))
-                      .setFooter(client.getFooter(es))
-                    ]})
-                    await tempmsg.channel.awaitMessages({filter: m => m.author.id === message.author.id,
+                    tempmsg = await message.channel.send(new Discord.MessageEmbed()
+                      .setTitle("In which Channels should the Keyword work?")
+                      .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+                      .setDescription(`Please make sure to ping **__all__** Channels, like that: \`#channel1 #channel2 #channel3\``)
+                      .setFooter(es.footertext, es.footericon)
+                    )
+                    await tempmsg.channel.awaitMessages(m => m.author.id === message.author.id, {
                         max: 1,
                         time: 120000,
                         errors: ["time"]
@@ -152,17 +132,17 @@ module.exports = {
                       .then(async collected => {
                         var channel = collected.first().mentions.channels.filter(ch=>ch.guild.id==message.guild.id).first();
                         if (channel) {
-                          for (const ch of collected.first().mentions.channels.map(this_Code_is_by_Tomato_6966 => this_Code_is_by_Tomato_6966)) {
-                            
+                          for (const ch of collected.first().mentions.channels.array()) {
+                            console.log(ch.id)
                             thekeyword.channels.push(ch.id)
                           }
-                          tempmsg = await message.reply({embeds: [new Discord.MessageEmbed()
-                            .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-keyword"]["variable12"]))
-                            .setColor(es.color)
-                            .setDescription(eval(client.la[ls]["cmds"]["setup"]["setup-keyword"]["variable13"]))
-                            .setFooter(client.getFooter(es))
-                          ]})
-                          await tempmsg.channel.awaitMessages({filter: m => m.author.id === message.author.id,
+                          tempmsg = await message.channel.send(new Discord.MessageEmbed()
+                            .setTitle("Do you want aliases?")
+                            .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+                            .setDescription(`For example, if you picked the keyword: \`hello\`, then you could want aliases like them: \`hi hey hallo welcome\`\nSimple send Each Alias in the Channel with a \` \` SPACE inbetween\nIf you don't want any aliases type: \`noalias\``)
+                            .setFooter(es.footertext, es.footericon)
+                          )
+                          await tempmsg.channel.awaitMessages(m => m.author.id === message.author.id, {
                               max: 1,
                               time: 120000,
                               errors: ["time"]
@@ -174,6 +154,7 @@ module.exports = {
                                 var args = collected.first().content.split(" ")
                                 if (args) {
                                   for (const m of args) {
+                                    console.log(m)
                                     thekeyword.aliases.push(m.toLowerCase())
                                   }
                                 } else {
@@ -182,19 +163,19 @@ module.exports = {
                                   }
                                 }
                               }
-                              var ttempmsg = await message.reply({embeds: [new Discord.MessageEmbed()
-                                .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-keyword"]["variable14"]))
-                                .setColor(es.color)
-                                .setDescription(eval(client.la[ls]["cmds"]["setup"]["setup-keyword"]["variable15"]))
-                                .setFooter(client.getFooter(es))
-                              ]})
+                              var ttempmsg = await message.channel.send(new Discord.MessageEmbed()
+                                .setTitle("Should I send it as an EMBED or as an MESSAGE")
+                                .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+                                .setDescription(`React with ✅ to send it as an Embed\n\nReact with ❌ to just send it as a normal Message`)
+                                .setFooter(es.footertext, es.footericon)
+                              )
                               try {
                                 ttempmsg.react("✅")
                                 ttempmsg.react("❌")
                               } catch {
 
                               }
-                              await ttempmsg.awaitReactions({filter: (reaction, user) => user == originalowner, 
+                              await ttempmsg.awaitReactions((reaction, user) => user == originalowner, {
                                   max: 1,
                                   time: 90000,
                                   errors: ["time"]
@@ -202,7 +183,7 @@ module.exports = {
                                 .then(collected => {
                                   var reaction = collected.first();
                                   if (reaction) {
-                                    if (reaction.emoji?.name == "✅") {
+                                    if (reaction.emoji.name == "✅") {
                                       thekeyword.embed = true;
                                     } else {
                                       thekeyword.embed = false;
@@ -210,240 +191,244 @@ module.exports = {
 
                                     client.keyword.push(message.guild.id, thekeyword, "commands")
 
-                                    message.reply({embeds: [new Discord.MessageEmbed()
-                                      .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-keyword"]["variable16"]))
-                                      .setColor(es.color)
-                                      .setDescription(eval(client.la[ls]["cmds"]["setup"]["setup-keyword"]["variable17"]))
-                                      .setFooter(client.getFooter(es))
-                                    ]})
+                                    message.channel.send(new Discord.MessageEmbed()
+                                      .setTitle(`Success ${thekeyword.name} has successfully been created!`)
+                                      .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+                                      .setDescription(`This is how it will look like:`)
+                                      .setFooter(es.footertext, es.footericon)
+                                    )
 
-                                    if (reaction.emoji?.name == "✅") {
-                                      message.reply({embeds: [new Discord.MessageEmbed()
-                                        .setColor(es.color)
+                                    if (reaction.emoji.name == "✅") {
+                                      message.channel.send(new Discord.MessageEmbed()
+                                        .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
                                         .setDescription(thekeyword.output.replace("{member}", `<@${message.author.id}>`))
-                                        .setFooter(client.getFooter(es))
-                                      ]})
+                                        .setFooter(es.footertext, es.footericon)
+                                      )
                                     } else {
-                                      message.reply(thekeyword.output.replace("{member}", `<@${message.author.id}>`))
+                                      message.channel.send(thekeyword.output.replace("{member}", `<@${message.author.id}>`))
                                     }
 
 
                                   } else {
-                                    return message.reply( "you didn't ping a valid Channel")
+                                    throw "you didn't ping a valid Channel"
                                   }
                                 })
                                 .catch(e => {
-                                  console.log(e.stack ? String(e.stack).grey : String(e).grey)
-                                  return message.reply({embeds: [new Discord.MessageEmbed()
-                                    .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-keyword"]["variable18"]))
-                                    .setColor(es.wrongcolor)
-                                    .setDescription(`Cancelled the Operation!`.substr(0, 2000))
-                                    .setFooter(client.getFooter(es))
-                                  ]});
+                                  timeouterror = e;
                                 })
+                              if (timeouterror)
+                                return message.reply(new Discord.MessageEmbed()
+                                  .setTitle("<:cross:899255798142750770>  ERROR | Your Time ran out")
+                                  .setColor(es.wrongcolor)
+                                  .setDescription(`Cancelled the Operation!`.substr(0, 2000))
+                                  .setFooter(es.footertext, es.footericon)
+                                );
 
                             })
                             .catch(e => {
-                              console.log(e.stack ? String(e.stack).grey : String(e).grey)
-                              return message.reply({embeds: [new Discord.MessageEmbed()
-                                .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-keyword"]["variable19"]))
-                                .setColor(es.wrongcolor)
-                                .setDescription(`Cancelled the Operation!`.substr(0, 2000))
-                                .setFooter(client.getFooter(es))
-                              ]});
+                              timeouterror = e;
                             })
+                          if (timeouterror)
+                            return message.reply(new Discord.MessageEmbed()
+                              .setTitle("<:cross:899255798142750770>  ERROR | Your Time ran out")
+                              .setColor(es.wrongcolor)
+                              .setDescription(`Cancelled the Operation!`.substr(0, 2000))
+                              .setFooter(es.footertext, es.footericon)
+                            );
                         } else {
-                          return message.reply({embeds: [new Discord.MessageEmbed()
-                            .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-keyword"]["variable20"]))
-                            .setColor(es.wrongcolor)
-                            .setDescription(`Cancelled the Operation!`.substr(0, 2000))
-                            .setFooter(client.getFooter(es))
-                          ]});
+                          timeouterror = {
+                            message: "YOU DID NOT PING ANY CHANNELS"
+                          }
                         }
                       })
                       .catch(e => {
-                        console.log(e.stack ? String(e.stack).grey : String(e).grey)
-                        return message.reply({embeds: [new Discord.MessageEmbed()
-                          .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-keyword"]["variable20"]))
-                          .setColor(es.wrongcolor)
-                          .setDescription(`Cancelled the Operation!`.substr(0, 2000))
-                          .setFooter(client.getFooter(es))
-                        ]});
+                        timeouterror = e;
                       })
+                    if (timeouterror)
+                      return message.reply(new Discord.MessageEmbed()
+                        .setTitle("<:cross:899255798142750770>  ERROR | Your Time ran out")
+                        .setColor(es.wrongcolor)
+                        .setDescription(`Cancelled the Operation!`.substr(0, 2000))
+                        .setFooter(es.footertext, es.footericon)
+                      );
 
 
                   } else {
-                    return message.reply("you didn't ping a valid Channel")
+                    throw "you didn't ping a valid Channel"
                   }
                 })
                 .catch(e => {
-                  console.log(e.stack ? String(e.stack).grey : String(e).grey)
-                  return message.reply({embeds: [new Discord.MessageEmbed()
-                    .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-keyword"]["variable21"]))
-                    .setColor(es.wrongcolor)
-                    .setDescription(`Cancelled the Operation!`.substr(0, 2000))
-                    .setFooter(client.getFooter(es))
-                  ]});
+                  timeouterror = e;
                 })
+              if (timeouterror)
+                return message.reply(new Discord.MessageEmbed()
+                  .setTitle("<:cross:899255798142750770>  ERROR | Your Time ran out")
+                  .setColor(es.wrongcolor)
+                  .setDescription(`Cancelled the Operation!`.substr(0, 2000))
+                  .setFooter(es.footertext, es.footericon)
+                );
 
 
             } else {
-              return message.reply( "you didn't ping a valid Channel")
+              throw "you didn't ping a valid Channel"
             }
           })
           .catch(e => {
             timeouterror = e;
           })
         if (timeouterror)
-          return message.reply({embeds: [new Discord.MessageEmbed()
-            .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-keyword"]["variable22"]))
+          return message.reply(new Discord.MessageEmbed()
+            .setTitle("<:cross:899255798142750770>  ERROR | Your Time ran out")
             .setColor(es.wrongcolor)
             .setDescription(`Cancelled the Operation!`.substr(0, 2000))
-            .setFooter(client.getFooter(es))
-          ]});
+            .setFooter(es.footertext, es.footericon)
+          );
 
-          }break;
-          case "Delete Keyword": {
-            let cuc = client.keyword.get(message.guild.id, "commands");
-            if(!cuc || cuc.length < 1) return message.reply(":x: There are no Custom Commands")
-            let menuoptions = [
-            ]
-            cuc.forEach((cc, index)=>{
-              menuoptions.push({
-                value: `${cc.name}`.substr(0, 25),
-                description: `Delete ${cc.name} ${cc.embed ? "[✅ Embed]" : "[❌ Embed]"}`.substr(0, 50),
-                emoji: NumberEmojiIds[index + 1]
-              })
-            })
-            //define the selection
-            let Selection = new MessageSelectMenu()
-              .setCustomId('MenuSelection') 
-              .setMaxValues(cuc.length) //OPTIONAL, this is how many values you can have at each selection
-              .setMinValues(1) //OPTIONAL , this is how many values you need to have at each selection
-              .setPlaceholder('Select all Custom Commands which should get deleted') 
-              .addOptions(
-              menuoptions.map(option => {
-                let Obj = {
-                  label: option.label ? option.label.substr(0, 50) : option.value.substr(0, 50),
-                  value: option.value.substr(0, 50),
-                  description: option.description.substr(0, 50),
-                }
-              if(option.emoji) Obj.emoji = option.emoji;
-              return Obj;
-             }))
-            
-            //define the embed
-            let MenuEmbed = new Discord.MessageEmbed()
-            .setColor(es.color)
-            .setAuthor('Custom Command Setup', 'https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/120/google/298/flexed-biceps_1f4aa.png', 'https://discord.gg/milrato')
-            .setDescription(`**Select all \`Custom Commands\` which should get __deleted__**`)
-            //send the menu msg
-            let menumsg = await message.reply({embeds: [MenuEmbed], components: [new MessageActionRow().addComponents(Selection)]})
-            //Create the collector
-            const collector = menumsg.createMessageComponentCollector({ 
-              filter: i => i?.isSelectMenu() && i?.message.author.id == client.user.id && i?.user,
-              time: 90000
-            })
-            //Menu Collections
-            collector.on('collect', menu => {
-              if (menu?.user.id === cmduser.id) {
-                collector.stop();
-                for(const value of menu?.values){
-                  client.keyword.remove(message.guild.id, d => String(d.name).substr(0, 25).toLowerCase() == String(value).toLowerCase(), "commands")
-                }
-                return message.reply({embeds: [new Discord.MessageEmbed()
-                  .setTitle(`Deleted ${menu?.values.length} Keywords!`)
-                  .setDescription(`There are now \`${cuc.length - menu?.values.length} Keywords\` left!`)
-                  .setColor(es.color)
-                  .setFooter(client.getFooter(es))
-                ]});
-              }
-              else menu?.reply({content: `<:no:833101993668771842> You are not allowed to do that! Only: <@${cmduser.id}>`, ephemeral: true});
-            });
-            //Once the Collections ended edit the menu message
-            collector.on('end', collected => {
-              menumsg.edit({embeds: [menumsg.embeds[0].setDescription(`~~${menumsg.embeds[0].description}~~`)], components: [], content: `${collected && collected.first() && collected.first().values ? `<a:yes:833101995723194437> **Selected: \`${collected.first().values.length} Commands\`**` : "❌ **NOTHING SELECTED - CANCELLED**" }`})
-            });
-          }break;
-          case "Show Settings": {
-            let cuc = client.keyword.get(message.guild.id, "commands");
-            var embed = new Discord.MessageEmbed()
-            .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-customcommand"]["variable22"]))
-            .setColor(es.color)
-            .setFooter(ee.footertext, es.footericon && (es.footericon.includes("http://") || es.footericon.includes("https://")) ? es.footericon : client.user.displayAvatarURL())
-            var embed2 = new Discord.MessageEmbed()
-            .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-customcommand"]["variable22"]))
-            .setColor(es.color)
-            .setFooter(ee.footertext, es.footericon && (es.footericon.includes("http://") || es.footericon.includes("https://")) ? es.footericon : client.user.displayAvatarURL())
-            var sendembed2 = false;
-            for(let i = 0; i < cuc.length; i++){
-              try{
-                var string = `${cuc[i].output}`;
-                if(string.length > 250) string = string.substr(0, 250) + " ..."
-                if(i > 13){
-                  sendembed2 = true;
-                  embed2.addField(`<:arrow:832598861813776394> \`${cuc[i].name}\` | ${cuc[i].embed ? "✅ Embed" : "❌ Embed"}`, ">>> "+ string)
-                } else 
-                embed.addField(`<:arrow:832598861813776394> \`${cuc[i].name}\` | ${cuc[i].embed ? "✅ Embed" : "❌ Embed"}`, ">>> "+ string)
-              }catch (e){
-                console.log(e.stack ? String(e.stack).grey : String(e).grey)
-              }
-            }
-            if(sendembed2)
-              await message.reply({embeds: [embed, embed2]})
-            else
-              await message.reply({embeds: [embed]})
-          }break;
+      } else if (temptype == "remove") {
+        let cuc = client.keyword.get(message.guild.id, "commands");
+        var embed = new Discord.MessageEmbed()
+          .setTitle("Which Key Word do you wanna remove?")
+          .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+          .setFooter("REACT with the EMOJI for the RIGHT Command, you wanna REMOVE", es.footericon)
+        const emojis = {
+          "0": "1️⃣",
+          "1": "2️⃣",
+          "2": "3️⃣",
+          "3": "4️⃣",
+          "4": "5️⃣",
+          "5": "6️⃣",
+          "6": "7️⃣",
+          "7": "8️⃣",
+          "8": "9️⃣",
+          "9": "🔟",
         }
+        const emojisinverted = {
+          "1️⃣": "0",
+          "2️⃣": "1",
+          "3️⃣": "2",
+          "4️⃣": "3",
+          "5️⃣": "4",
+          "6️⃣": "5",
+          "7️⃣": "6",
+          "8️⃣": "7",
+          "9️⃣": "8",
+          "🔟": "9",
+        }
+        const emojiarray = [
+          "1️⃣",
+          "2️⃣",
+          "3️⃣",
+          "4️⃣",
+          "5️⃣",
+          "6️⃣",
+          "7️⃣",
+          "8️⃣",
+          "9️⃣",
+          "🔟",
+        ]
+        for (let i = 0; i < cuc.length; i++) {
+          try {
+            var string = `${cuc[i].output}`;
+            if (string.length > 250) string = string.substr(0, 250) + " ..."
+            embed.addField(`**${emojis[String(i)]}.** \`${cuc[i].name}\` | ${cuc[i].embed ? "✅ Embed" : "❌ Embed"}`, ">>> " + string)
+          } catch (e) {
+            console.log(e)
+          }
+        }
+
+        tempmsg = await tempmsg.edit({embed: embed})
+
+        for (let i = 0; i < cuc.length; i++) {
+          if (i < 3) continue;
+          await tempmsg.react(emojiarray[i])
+        }
+
+        await tempmsg.awaitReactions((reaction, user) => user.id == originalowner, {
+            max: 1,
+            time: 120000,
+            errors: ["time"]
+          })
+          .then(collected => {
+            var reaction = collected.first();
+            if (reaction) {
+              var thecmd = cuc[emojisinverted[reaction.emoji.name]]
+              try {
+                client.keyword.remove(message.guild.id, thecmd, "commands")
+                return message.reply(new Discord.MessageEmbed()
+                  .setTitle(`<:tick:899255869185855529> I successfully deleted \`${thecmd.name}\`!`)
+                  .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+                  .setFooter(es.footertext, es.footericon)
+                );
+              } catch (e) {
+                return message.reply(new Discord.MessageEmbed()
+                  .setTitle("<:cross:899255798142750770>  ERROR | Something went wrong, please contact: `S409™#9685`")
+                  .setColor(es.wrongcolor)
+                  .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``)
+                  .setFooter(es.footertext, es.footericon)
+                );
+              }
+            } else {
+              throw "you didn't ping a valid Channel"
+            }
+          })
+          .catch(e => {
+            timeouterror = e;
+          })
+        if (timeouterror)
+          return message.reply(new Discord.MessageEmbed()
+            .setTitle("<:cross:899255798142750770>  ERROR | Your Time ran out")
+            .setColor(es.wrongcolor)
+            .setDescription(`Cancelled the Operation!`.substr(0, 2000))
+            .setFooter(es.footertext, es.footericon)
+          );
+      } else if (temptype == "show") {
+        let cuc = client.keyword.get(message.guild.id, "commands");
+        var embed = new Discord.MessageEmbed()
+          .setTitle("Key Word Messages (5 Seconds SERVER Delay)")
+          .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+          .setFooter(ee.footertext, es.footericon)
+
+        for (let i = 0; i < cuc.length; i++) {
+          try {
+            var string = `${cuc[i].output}`;
+            
+            var aliases = `${cuc[i].aliases.map(a => `\`${a}\``).join(", ")}`
+            if (aliases.length > 100) aliases = aliases.substr(0, 100) + " ..."
+            var channels = cuc[i].channels.map(ch => `<#${ch}>`)
+            if(channels.length > 10) channels = channels.join(" ") + " ...";
+            else channels = channels.join(" ")
+
+            if (string.length > 100) string = string.substr(0, 100) + " ..."
+            embed.addField(`<:arrow:899324566927732746> \`${cuc[i].name}\` | ${cuc[i].embed ? "✅ Embed" : "❌ Embed"}`, ">>> <:arrow:899324566927732746> **__OUTPUT__**\n" + string + "\n<:arrow:899324566927732746> **__ALIASES__**\n" + aliases + "\n<:arrow:899324566927732746> **__CHANNELS__**\n" + channels)
+          } catch (e) {
+            console.log(e)
+          }
+        }
+        tempmsg = await tempmsg.edit({embed: embed})
+      } else {
+        return message.reply(new Discord.MessageEmbed()
+          .setTitle("<:cross:899255798142750770>  ERROR | PLEASE CONTACT `S409™#9685`")
+          .setColor(es.wrongcolor)
+          .setFooter(es.footertext, es.footericon)
+        );
       }
 
     } catch (e) {
-      console.log(String(e.stack).grey.bgRed)
-      return message.reply({embeds: [new MessageEmbed()
-        .setColor(es.wrongcolor).setFooter(client.getFooter(es))
-        .setTitle(client.la[ls].common.erroroccur)
-        .setDescription(eval(client.la[ls]["cmds"]["setup"]["setup-keyword"]["variable30"]))
-      ]});
+      console.log(String(e.stack).bgRed)
+      return message.channel.send(new MessageEmbed()
+        .setColor(es.wrongcolor).setFooter(es.footertext, es.footericon)
+        .setTitle(`<:cross:899255798142750770>  Something went Wrong`)
+        .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``)
+      );
     }
   },
 };
 /**
  * @INFO
- * Bot Coded by Tomato#6966 | https://discord.gg/milrato
+ * Bot Coded by S409™#9685 | https://github.com/S409™#9685/discord-js-lavalink-Music-Bot-erela-js
  * @INFO
- * Work for S409 support | https://s409.xyz
+ * Work for s409 Development | https://s409.xyz
  * @INFO
- * Please mention him / S409 support, when using this Code!
+ * Please mention Him / s409 Development, when using this Code!
  * @INFO
  */
-
- function getNumberEmojis() {
-  return [
-    "<:Number_0:843943149915078696>",
-    "<:Number_1:843943149902626846>",
-    "<:Number_2:843943149868023808>",
-    "<:Number_3:843943149914554388>",
-    "<:Number_4:843943149919535154>",
-    "<:Number_5:843943149759889439>",
-    "<:Number_6:843943150468857876>",
-    "<:Number_7:843943150179713024>",
-    "<:Number_8:843943150360068137>",
-    "<:Number_9:843943150443036672>",
-    "<:Number_10:843943150594031626>",
-    "<:Number_11:893173642022748230>",
-    "<:Number_12:893173642165383218>",
-    "<:Number_13:893173642274410496>",
-    "<:Number_14:893173642198921296>",
-    "<:Number_15:893173642182139914>",
-    "<:Number_16:893173642530271342>",
-    "<:Number_17:893173642538647612>",
-    "<:Number_18:893173642307977258>",
-    "<:Number_19:893173642588991488>",
-    "<:Number_20:893173642307977266>",
-    "<:Number_21:893173642274430977>",
-    "<:Number_22:893173642702250045>",
-    "<:Number_23:893173642454773782>",
-    "<:Number_24:893173642744201226>",
-    "<:Number_25:893173642727424020>"
-  ]
-}

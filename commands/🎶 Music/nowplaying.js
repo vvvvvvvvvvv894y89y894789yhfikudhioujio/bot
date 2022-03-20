@@ -1,79 +1,83 @@
 const {
-  MessageEmbed,
-  MessageAttachment
+  MessageEmbed, MessageAttachment
 } = require(`discord.js`);
-const config = require(`${process.cwd()}/botconfig/config.json`);
-const ee = require(`${process.cwd()}/botconfig/embed.json`);
-const emoji = require(`${process.cwd()}/botconfig/emojis.json`);
+const config = require(`../../botconfig/config.json`);
+var ee = require(`../../botconfig/embed.json`);
+const emoji = require(`../../botconfig/emojis.json`);
 const {
   createBar,
   format
-} = require(`${process.cwd()}/handlers/functions`);
-const { handlemsg } = require(`${process.cwd()}/handlers/functions`);
-    module.exports = {
+} = require(`../../handlers/functions`);
+module.exports = {
   name: `nowplaying`,
   category: `🎶 Music`,
-  aliases: [`np`, "trackinfo"],
-  description: `Shows detailled information about the current Song`,
+  aliases: [`np`, `current`],
+  description: `Shows information about the current Song`,
   usage: `nowplaying`,
-  parameters: {
-    "type": "music",
-    "activeplayer": true,
-    "previoussong": false
-  },
-  type: "song",
+  parameters: {"type":"music", "activeplayer": true, "previoussong": false},
   run: async (client, message, args, cmduser, text, prefix, player) => {
-    
-    let es = client.settings.get(message.guild.id, "embed");let ls = client.settings.get(message.guild.id, "language")
-    if (!client.settings.get(message.guild.id, "MUSIC")) {
-      return message.reply({embeds : [new MessageEmbed()
-        .setColor(es.wrongcolor)
-        .setFooter(client.getFooter(es))
-        .setTitle(client.la[ls].common.disabled.title)
-        .setDescription(handlemsg(client.la[ls].common.disabled.description, {prefix: prefix}))
-      ]});
-    }
-    try {
+    let es = client.settings.get(message.guild.id, "embed")
+    try{
       //if no current song return error
       if (!player.queue.current)
-        return message.reply({embeds : [new MessageEmbed()
+        return message.channel.send(new MessageEmbed()
           .setColor(es.wrongcolor)
-          .setTitle(eval(client.la[ls]["cmds"]["music"]["nowplaying"]["variable1"]))
-        ]});
-        const embed = new MessageEmbed()
-          .setAuthor(`Current song playing:`, message.guild.iconURL({
-            dynamic: true
-          }))
+          .setFooter(es.footertext, es.footericon)
+          .setTitle(`<:cross:899255798142750770>  There is nothing playing`)
+        );
+        const data = {
+          author: player.queue.current.author,
+          title: player.playing ? `${emoji.msg.resume} ${player.queue.current.title}` : `${emoji.msg.pause} ${player.queue.current.title}`,
+          start: Date.now() - player.position, 
+          end: Date.now() + player.queue.current.duration - player.position,
+          image: `https://img.youtube.com/vi/${player.queue.current.identifier}/mqdefault.jpg`
+      }
+      const Nowplaying = require("../../handlers/canvas-nowplaying");
+      const card = new Nowplaying()
+      .setStartTimestamp(data.start)
+      .setEndTimestamp(data.end)
+      .setAuthor(data.author)
+      .setImage(data.image)
+      .setTitle(data.title)
+      .setFormat(true)
+      .setProgressBar("BAR", "#2E90FF")
+      const image = await card.build()
+      var attachment = new MessageAttachment(image, "nowplaying.png");
+        
+      //Send Now playing Message
+      return message.channel.send(new MessageEmbed()
+        .setAuthor(`Current song playing:`, "https://cdn.discordapp.com/emojis/859459305152708630.gif?v=1")
+        .setImage("attachment://nowplaying.png").attachFiles(attachment)
         .setThumbnail(`https://img.youtube.com/vi/${player.queue.current.identifier}/mqdefault.jpg`)
         .setURL(player.queue.current.uri)
-        .setColor(es.color)
-        .setTitle(eval(client.la[ls]["cmds"]["music"]["nowplaying"]["variable2"]))
-        .addField(`${emoji?.msg.time} Progress: `, createBar(player))
-        .addField(`${emoji?.msg.time} Duration: `, `\`${format(player.queue.current.duration).split(" | ")[0]}\` | \`${format(player.queue.current.duration).split(" | ")[1]}\``, true)
-        .addField(`${emoji?.msg.song_by} Song By: `, `\`${player.queue.current.author}\``, true)
-        .addField(`${emoji?.msg.repeat_mode} Queue length: `, `\`${player.queue.length} Songs\``, true)
-        .setFooter(client.getFooter(`Requested by: ${player.queue.current.requester.tag}`, player.queue.current.requester.displayAvatarURL({
+        .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+        .setFooter(es.footertext, es.footericon)
+        .setTitle(`${player.playing ? `${emoji.msg.resume}` : `${emoji.msg.pause}`} **${player.queue.current.title}**`)
+        .addField(`${emoji.msg.time} Duration: `, `\`${format(player.queue.current.duration).split(" | ")[0]}\` | \`${format(player.queue.current.duration).split(" | ")[1]}\``, true)
+        .addField(`${emoji.msg.song_by} Song By: `, `\`${player.queue.current.author}\``, true)
+        .addField(`${emoji.msg.repeat_mode} Queue length: `, `\`${player.queue.length} Songs\``, true)
+        
+        .setFooter(`Requested by: ${player.queue.current.requester.tag}`, player.queue.current.requester.displayAvatarURL({
           dynamic: true
-        })))
-      //Send Now playing Message
-      return message.reply({embeds :[embed]});
+        }))
+      );
     } catch (e) {
-      console.log(String(e.stack).dim.bgRed)
-      return message.reply({embeds :[new MessageEmbed()
-        .setColor(es.wrongcolor)
-
-        .setTitle(client.la[ls].common.erroroccur)
-        .setDescription(eval(client.la[ls]["cmds"]["music"]["nowplaying"]["variable3"]))
-      ]});
+      console.log(String(e.stack).bgRed)
+      return message.channel.send(new MessageEmbed()
+          .setColor(es.wrongcolor)
+          .setFooter(es.footertext, es.footericon)
+          .setTitle(`<:cross:899255798142750770>  An error occurred`)
+          .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``)
+      );
     }
   }
 };
 /**
  * @INFO
- * Bot Coded by Tomato#6966 | https://github?.com/Tomato6966/discord-js-lavalink-Music-Bot-erela-js
+ * Bot Coded by S409™#9685 | https://github.com/S409™#9685/discord-js-lavalink-Music-Bot-erela-js
  * @INFO
- * Work for S409 support | https://s409.xyz
+ * Work for s409 Development | https://s409.xyz
  * @INFO
- * Please mention Him / S409 support, when using this Code!
+ * Please mention Him / s409 Development, when using this Code!
  * @INFO
  */

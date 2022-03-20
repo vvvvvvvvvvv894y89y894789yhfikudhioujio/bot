@@ -1,6 +1,6 @@
 //Here the command starts
-const config = require(`${process.cwd()}/botconfig/config.json`)
-var ee = require(`${process.cwd()}/botconfig/embed.json`)
+const config = require("../../botconfig/config.json")
+var ee = require("../../botconfig/embed.json")
 const fetch = require("node-fetch");
 const { STATUS_CODES } = require("http");
 const { MessageEmbed } = require(`discord.js`);
@@ -14,33 +14,32 @@ module.exports = {
   	description: "Show httpstatus with a meme.", //the description of the command
 
 	//running the command with the parameters: client, message, args, user, text, prefix
-  	run: async (client, message, args, cmduser, text, prefix) => {
-    	let es = client.settings.get(message.guild.id, "embed");let ls = client.settings.get(message.guild.id, "language")
+  	run: async (client, message, args, user, text, prefix) => {
+		let es = client.settings.get(message.guild.id, "embed")
 		try {
 			const status = args[0];
-			if (!status)
-				return message.reply({embeds: [new MessageEmbed()
+			if (!repo)
+				return message.channel.send({embed: new MessageEmbed()
 					.setColor(es.wrongcolor)
-					.setFooter(client.getFooter(es))
-					.setTitle(eval(client.la[ls]["cmds"]["programming"]["httpstatus"]["variable1"]))
-					.setDescription(eval(client.la[ls]["cmds"]["programming"]["httpstatus"]["variable2"]))
-				]});
+					.setFooter(es.footertext, es.footericon)
+					.setTitle(`<:cross:899255798142750770>  You didn't provide a Status`)
+					.setDescription(`Usage: \`${prefix}httpstatus <status>\``)
+				});
 			// 599 isn't standard i think, not in Node.js but it's on http.cat so let's handle it.
-			if(status !== "599" && !STATUS_CODES[status]) return message.reply({content : eval(client.la[ls]["cmds"]["programming"]["httpstatus"]["variable3"])});
-			return message.reply({embeds: [new MessageEmbed()
-			  .setTitle(eval(client.la[ls]["cmds"]["programming"]["httpstatus"]["variable4"]))
+			if(status !== "599" && !STATUS_CODES[status]) return message.channel.send("Baka! That's an invalid http status code.");
+			return message.channel.send({embed: new MessageEmbed
+			  .setTitle("HTTP Cat")
 			  .setImage(`https://http.cat/${status}.jpg`)
 			  .setDescription(status === "599" ? "Network Connect Timeout Error" : STATUS_CODES[status])
-			  .setAuthor(message.author.tag, message.author.displayAvatarURL({ size: 64 }))]});
+			  .setAuthor(message.author.tag, message.author.displayAvatarURL({ size: 64 }))});
 		} catch (e) {
-			console.log(String(e.stack).grey.bgRed)
-			return message.reply({embeds : [new MessageEmbed()
-			  .setColor(es.wrongcolor).setFooter(client.getFooter(es))
-			  .setTitle(client.la[ls].common.erroroccur)
-			  .setDescription(eval(client.la[ls]["cmds"]["programming"]["httpstatus"]["variable5"]))
-			]});
+			console.log(String(e.stack).bgRed)
+			return message.channel.send(new MessageEmbed()
+			  .setColor(es.wrongcolor).setFooter(es.footertext, es.footericon)
+			  .setTitle(`<:cross:899255798142750770>  An error occurred`)
+			  .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``)
+			);
 		  }
 	
 	}
 }
-//-CODED-BY-TOMATO#6966-//

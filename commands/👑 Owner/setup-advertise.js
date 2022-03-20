@@ -1,165 +1,122 @@
 var {
-  MessageEmbed,
-  MessageButton, 
-  MessageActionRow, 
-  MessageMenuOption, 
-  MessageSelectMenu,
+  MessageEmbed
 } = require(`discord.js`);
 var Discord = require(`discord.js`);
-var config = require(`${process.cwd()}/botconfig/config.json`);
-var ee = require(`${process.cwd()}/botconfig/embed.json`);
-var emoji = require(`${process.cwd()}/botconfig/emojis.json`);
+var config = require(`../../botconfig/config.json`);
+var ee = require(`../../botconfig/embed.json`);
+var emoji = require(`../../botconfig/emojis.json`);
 const fs = require('fs');
 var {
   databasing,
   isValidURL
-} = require(`${process.cwd()}/handlers/functions`);
+} = require(`../../handlers/functions`);
 module.exports = {
   name: "setup-advertise",
   category: "👑 advertise",
   aliases: ["setup-advert", "setupadvertise", "setupadvert"],
   cooldown: 5,
   usage: "setup-advertise  -->  Follow the Steps",
-  type: "bot",
   description: "Changes if the Advertisement of BERO-HOST.de Should be there or NOT",
   run: async (client, message, args, cmduser, text, prefix) => {
-    
-    let es = client.settings.get(message.guild.id, "embed");let ls = client.settings.get(message.guild.id, "language")
+    let es = client.settings.get(message.guild.id, "embed")
     if (!config.ownerIDS.some(r => r.includes(message.author.id)))
-      return message.channel.send({embeds: [new MessageEmbed()
-        .setColor(es.wrongcolor).setFooter(client.getFooter(es))
-        .setTitle(eval(client.la[ls]["cmds"]["owner"]["setup-advertise"]["variable1"]))
-        .setDescription(eval(client.la[ls]["cmds"]["owner"]["setup-advertise"]["variable2"]))
-      ]});
+      return message.channel.send({embed: new MessageEmbed()
+        .setColor(es.wrongcolor).setFooter(es.footertext, es.footericon)
+        .setTitle(`<:cross:899255798142750770>  You are not allowed to run this Command`)
+        .setDescription(`You need to be one of those guys: ${config.ownerIDS.map(id => `<@${id}>`)}`)
+      });
     try {
       
+      var timeouterror = false;
+      var filter = (reaction, user) => {
+        return user.id === message.author.id;
+      };
+      var temptype = ""
+      var tempmsg;
 
-      first_layer()
-      async function first_layer(){
-        let menuoptions = [
-          {
-            value: `${client.ad.enabled? "Disable" : "Enable"} Advertisement`,
-            description: `${client.ad.enabled? "Disables the Ads from Bero-Host and Milrato" : "Enables the Ads from Bero-Host and Milrato"}`,
-            emoji: client.ad.enabled? emoji?.react.ERROR : emoji?.react.SUCCESS
-          },
-          {
-            value: "Settings",
-            description: `Show the current Settings`,
-            emoji: "📑"
-          },
-          {
-            value: "Cancel",
-            description: `Cancel and stop the Advertisement Setup!`,
-            emoji: "833101993668771842"
-          }
-        ]
-        //define the selection
-        let Selection = new MessageSelectMenu()
-          .setCustomId('MenuSelection') 
-          .setMaxValues(1) //OPTIONAL, this is how many values you can have at each selection
-          .setMinValues(1) //OPTIONAL , this is how many values you need to have at each selection
-          .setPlaceholder('Click me to setup the Advertising System!')
-          .addOptions(menuoptions.map(option => {
-            let Obj = {
-              label: option.label ? option.label.substr(0, 50) : option.value.substr(0, 50),
-              value: option.value.substr(0, 50),
-              description: option.description.substr(0, 50),
-            }
-          if(option.emoji) Obj.emoji = option.emoji;
-          return Obj;
-        }))
-        
-        //define the embed
-        let MenuEmbed = new Discord.MessageEmbed()
+      tempmsg = await message.channel.send({embed: new MessageEmbed()
+        .setTitle("What do you want to do?")
         .setColor(es.color)
-        .setAuthor('Advertising Setup', 'https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/120/apple/285/prohibited_1f6ab?.png',  'https://discord.gg/milrato')
-        .setDescription(eval(client.la[ls]["cmds"]["owner"]["setup-advertise"]["variable4"]))
-        let used1 = false;
-        //send the menu msg
-        let menumsg = await message.channel.send({embeds : [MenuEmbed], components: [new MessageActionRow().addComponents([Selection])]})
-        //function to handle the menuselection
-        function menuselection(menu) {
-          let menuoptiondata = menuoptions.find(v => v.value == menu?.values[0])
-          let menuoptionindex = menuoptions.findIndex(v => v.value == menu?.values[0])
-          if(menu?.values[0] == "Cancel") return menu?.reply(eval(client.la[ls]["cmds"]["owner"]["setup-advertise"]["variable5"]))
-          menu?.deferUpdate();
-          used1 = true;
-          handle_the_picks(menuoptionindex, menuoptiondata)
-        }
-        //Event
-        client.on('interactionCreate',  (menu) => {
-          if (menu?.message.id === menumsg.id) {
-            if (menu?.user.id === cmduser.id) {
-              if(used1) return menu?.reply({content : `<:no:833101993668771842> You already selected something, this Selection is now disabled!`}, {ephermal : true});
-              menuselection(menu);
-            }
-            else menu?.reply({content : `<:no:833101993668771842> You are not allowed to do that! Only: <@${cmduser.id}>`}, {ephermal : true});
-          }
+        .setDescription(`1️⃣ **== ${client.adenabled ? "`❌ Disable`" : "`✔️ Enable`"} Advertisement**\n\n📑 **== Show Settings**\n\n**NOTE:**\n> *You can't remove a Owner, which means you need to get in touch with: \`S409™#9685\` to do so!*\n*On every Bot Restart, it will be enabled again*\n\n\n\n*React with the Right Emoji according to the Right action*`).setFooter(es.footertext, es.footericon)
+      })
+
+      try {
+        tempmsg.react("1️⃣")
+        tempmsg.react("📑")
+      } catch (e) {
+        return message.reply({embed: new MessageEmbed()
+          .setTitle("<:cross:899255798142750770>  ERROR | Missing Permissions to add Reactions")
+          .setColor(es.wrongcolor)
+          .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``.substr(0, 2000))
+          .setFooter(es.footertext, es.footericon)
+        });
+      }
+      await tempmsg.awaitReactions(filter, {
+          max: 1,
+          time: 90000,
+          errors: ["time"]
+        })
+        .then(collected => {
+          var reaction = collected.first()
+          reaction.users.remove(message.author.id)
+          if (reaction.emoji.name === "1️⃣") temptype = "toggle"
+          else if (reaction.emoji.name === "📑") temptype = "thesettings"
+          else throw "You reacted with a wrong emoji"
+
+        })
+        .catch(e => {
+          timeouterror = e;
+        })
+      if (timeouterror)
+        return message.reply({embed: new MessageEmbed()
+          .setTitle("<:cross:899255798142750770>  ERROR | Your Time ran out")
+          .setColor(es.wrongcolor)
+          .setDescription(`\`\`\`${String(JSON.stringify(timeouterror)).substr(0, 2000)}\`\`\``.substr(0, 2000))
+          .setFooter(es.footertext, es.footericon)
+        });
+
+        const d2p = (bool) => bool ? "`✔️ Enabled`" : "`❌ Disabled`"; 
+
+        if (temptype == "toggle") {
+          client.adenabled = !client.adenabled;
+          return message.reply(new Discord.MessageEmbed()
+            .setTitle(`<:tick:899255869185855529> The Bero-Host Advertisement System is now ${d2p(client.adenabled)}!`)
+            .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+            .setFooter(es.footertext, es.footericon)
+          );
+        } else if (temptype == "thesettings") {
+          
+          var embed = new MessageEmbed()
+          .setTitle(`📑 Settings of the Bero-Host Advertisement System`)
+          .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+          .setDescription(`It is on: ${d2p(client.adenabled)}\n\n*On every Bot Restart, it will be enabled again*`.substr(0, 2048))
+          .setFooter(es.footertext, es.footericon)
+  
+          return message.reply({embed: embed});
+        } else {
+        return message.reply({embed: new MessageEmbed()
+          .setTitle("<:cross:899255798142750770>  ERROR | PLEASE CONTACT `S409™#9685`")
+          .setColor(es.wrongcolor)
+          .setFooter(es.footertext, es.footericon)
         });
       }
 
-      const d2p = (bool) => bool ? "`✔️ Enabled`" : "`❌ Disabled`"; 
-      const d2p2 = (bool) => bool ? "`✔️ Yes`" : "`❌ Nope`"; 
-
-      async function handle_the_picks(menuoptionindex, menuoptiondata) {
-        switch (menuoptionindex) {
-          case 0:
-            {
-              let advertisement = require("../../botconfig/advertisement.json");
-            advertisement.adenabled = !advertisement.adenabled;
-            fs.writeFile(`./botconfig/advertisement.json`, JSON.stringify(advertisement, null, 3), (e) => {
-              if (e) {
-                console.log(e.stack ? String(e.stack).dim : String(e).dim);
-                return message.channel.send({embedq: [new MessageEmbed()
-                  .setFooter(client.getFooter(es))
-                  .setColor(es.wrongcolor)
-                  .setTitle(eval(client.la[ls]["cmds"]["owner"]["setup-advertise"]["variable6"]))
-                  .setDescription(eval(client.la[ls]["cmds"]["owner"]["setup-advertise"]["variable7"]))
-                ]})
-              }
-            let advertisement = require("../../botconfig/advertisement.json");
-            client.ad.enabled = advertisement.adenabled;
-            client.ad.statusad = advertisement.statusad
-            client.ad.spacedot = advertisement.spacedot;
-            client.ad.textad = advertisement.textad;
-            return message.channel.send({embeds: [new MessageEmbed()
-              .setFooter(client.getFooter(es))
-              .setColor(es.color)
-              .setTitle(eval(client.la[ls]["cmds"]["owner"]["setup-advertise"]["variable8"]))
-            ]})
-          });
-            }
-            break;
-          case 1: {
-            var embed = new MessageEmbed()
-            .setTitle(eval(client.la[ls]["cmds"]["owner"]["setup-advertise"]["variable9"]))
-            .setColor(es.color).setThumbnail(es.thumb ? es.footericon && (es.footericon.includes("http://") || es.footericon.includes("https://")) ? es.footericon : client.user.displayAvatarURL() : null)
-            .setDescription(`**Enabled:** ${d2p2(client.ad.enabled)}\n**Statusad:** \`${client.ad.statusad.name}\`\n**Textad:** \`${client.ad.textad}\`\n**Space Dot:** \`${client.ad.spacedot}\``.substr(0, 2048))
-            .setFooter(client.getFooter(es))
-  
-          return message.channel.send({embeds: [embed]});
-          } break;
-          default:
-            break;
-        }
-      }
-
     } catch (e) {
-      console.log(String(e.stack).dim.bgRed)
-      return message.channel.send({embeds: [new MessageEmbed()
-        .setColor(es.wrongcolor).setFooter(client.getFooter(es))
-        .setTitle(client.la[ls].common.erroroccur)
-        .setDescription(eval(client.la[ls]["cmds"]["owner"]["setup-advertise"]["variable10"]))
-      ]});
+      console.log(String(e.stack).bgRed)
+      return message.channel.send({embed: new MessageEmbed()
+        .setColor(es.wrongcolor).setFooter(es.footertext, es.footericon)
+        .setTitle(`<:cross:899255798142750770>  Something went Wrong`)
+        .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``)
+      });
     }
   },
 };
 /**
  * @INFO
- * Bot Coded by Tomato#6966 | https://discord.gg/milrato
+ * Bot Coded by S409™#9685 | https://github.com/S409™#9685/discord-js-lavalink-Music-Bot-erela-js
  * @INFO
- * Work for S409 support | https://s409.xyz
+ * Work for s409 Development | https://s409.xyz
  * @INFO
- * Please mention him / S409 support, when using this Code!
+ * Please mention Him / s409 Development, when using this Code!
  * @INFO
  */

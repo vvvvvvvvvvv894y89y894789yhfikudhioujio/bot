@@ -1,7 +1,7 @@
 module.exports = client => {
-    client.on("messageCreate", async message => {
+    client.on("message", async message => {
         try{
-            if (!message.guild || message.guild.available === false || !message.channel || message.author.bot) return;
+            if (!message.guild || !message.channel || message.author.bot) return;
             client.settings.ensure(message.guild.id, {
                 validcode: false,
             });
@@ -30,7 +30,7 @@ module.exports = client => {
                     message.content.includes("```py") 
                 )) message.react("858405056238714930").catch(() => {})
             } catch (e) {
-                console.log(String(e.stack).grey.bgRed)
+                console.log(String(e.stack).bgRed)
             }
         }catch{}
     })

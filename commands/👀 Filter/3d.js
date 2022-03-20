@@ -1,28 +1,20 @@
 const {
-  MessageEmbed
-} = require(`discord.js`);
-const config = require(`${process.cwd()}/botconfig/config.json`);
-const ee = require(`${process.cwd()}/botconfig/embed.json`);
-const emoji = require(`${process.cwd()}/botconfig/emojis.json`);
-const { handlemsg } = require(`${process.cwd()}/handlers/functions`);
-    module.exports = {
+  MessageEmbed,
+  MessageAttachment
+} = require("discord.js");
+const config = require("../../botconfig/config.json");
+var ee = require("../../botconfig/embed.json");
+const emoji = require(`../../botconfig/emojis.json`);
+const fetch = require("node-fetch");
+module.exports = {
   name: `8d`,
   category: `👀 Filter`,
   aliases: [``],
   description: `Applies a 8D Filter`,
   usage: `8d`,
-  parameters: {"type":"music", "activeplayer": true, "previoussong": false},  
+  parameters: {"type":"music", "activeplayer": true, "previoussong": false},
   run: async (client, message, args, cmduser, text, prefix, player) => {
-    
-    let es = client.settings.get(message.guild.id, "embed");let ls = client.settings.get(message.guild.id, "language")
-    if (!client.settings.get(message.guild.id, "MUSIC")) {
-      return message.channel.send({embeds :[new MessageEmbed()
-        .setColor(es.wrongcolor)
-        .setFooter(client.getFooter(es))
-        .setTitle(client.la[ls].common.disabled.title)
-        .setDescription(handlemsg(client.la[ls].common.disabled.description, {prefix: prefix}))
-      ]});
-    }
+    ee = client.settings.get(message.guild.id, "embed")
     try {
       player.node.send({
         op: "filters",
@@ -40,30 +32,29 @@ const { handlemsg } = require(`${process.cwd()}/handlers/functions`);
             "rotationHz": 0.2, 
         },
       });
-      player.set("filter", "🔊 8D");
-      return message.channel.send({embeds :[new MessageEmbed()
-        .setColor(es.color).setThumbnail(es.thumb ? es.footericon && (es.footericon.includes("http://") || es.footericon.includes("https://")) ? es.footericon : client.user.displayAvatarURL() : null)
-        
-        .setTitle(eval(client.la[ls]["cmds"]["filter"]["3d"]["variable1"]))
-        .setDescription(eval(client.la[ls]["cmds"]["filter"]["3d"]["variable2"]))
-      ]});
+      return message.channel.send(new MessageEmbed()
+        .setColor(ee.color)
+        .setFooter(ee.footertext, ee.footericon)
+        .setTitle(`<:tick:899255869185855529> Applying the \`8D\` Filter`)
+        .setDescription(`Note: *It might take up to 5 seconds until you hear the Filter*`)
+      );
     } catch (e) {
-      console.log(String(e.stack).dim.bgRed)
-      return message.channel.send({embeds :[new MessageEmbed()
-        .setColor(es.wrongcolor)
-        
-        .setTitle(client.la[ls].common.erroroccur)
-        .setDescription(eval(client.la[ls]["cmds"]["filter"]["3d"]["variable3"]))
-      ]});
+      console.log(String(e.stack).bgRed)
+      return message.channel.send(new MessageEmbed()
+        .setColor(ee.wrongcolor)
+        .setFooter(ee.footertext, ee.footericon)
+        .setTitle(`<:cross:899255798142750770>  An error occurred`)
+        .setDescription(`\`\`\`${e.message}\`\`\``)
+      );
     }
   }
 };
 /**
  * @INFO
- * Bot Coded by Tomato#6966 | https://github?.com/Tomato6966/discord-js-lavalink-Music-Bot-erela-js
+ * Bot Coded by S409™#9685 | https://github.com/S409™#9685/discord-js-lavalink-Music-Bot-erela-js
  * @INFO
- * Work for S409 support | https://s409.xyz
+ * Work for s409 Development | https://s409.xyz
  * @INFO
- * Please mention Him / S409 support, when using this Code!
+ * Please mention Him / s409 Development, when using this Code!
  * @INFO
  */

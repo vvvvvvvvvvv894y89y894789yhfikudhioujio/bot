@@ -1,17 +1,17 @@
 var {
     Manager
   } = require("erela.js"), {
-      MessageEmbed, MessageButton, MessageActionRow
+      MessageEmbed
     } = require("discord.js"),
     ms = require("ms"),
 
-    config = require(`${process.cwd()}/botconfig/config.json`),
+    config = require("../../botconfig/config.json"),
     emoji = require("../../botconfig/emojis.json"),
-    ee = require(`${process.cwd()}/botconfig/embed.json`),
+    ee = require("../../botconfig/embed.json"),
 
     {
       databasing,
-    } = require(`${process.cwd()}/handlers/functions`);
+    } = require("../../handlers/functions");
   module.exports = (client) => {
 
       client.once("ready", () => {
@@ -23,7 +23,7 @@ var {
       //Log if a Channel gets deleted, and the Bot was in, then delete the player if the player exists!
       client.on("channelDelete", async channel => {
         try {
-          if (channel.type === "GUILD_VOICE") {
+          if (channel.type === "voice") {
             if (channel.members.has(client.user.id)) {
               var player = client.manager.players.get(channel.guild.id);
               if (!player) return;
@@ -46,41 +46,85 @@ var {
           }
         } catch {
           /* */ }
-      })      
-      client.on("voiceStateUpdate", async (oS, nS) => {
-        if (nS.channelId && nS.channel.type == "GUILD_STAGE_VOICE" && nS.guild.me.voice.suppress) {
-            try {
-                await nS.guild.me.voice.setSuppressed(false);
-            } catch (e) {
-                console.log(e.stack ? String(e.stack).grey : String(e).grey)
-            }
-        }
       })
-      client.on("voiceStateUpdate", async (oS, nS) => {
-        if (oS.channelId && (!nS.channelId || nS.channelId)) {
-          var player = client.manager.players.get(nS.guild.id);
-          if (player && oS.channelId == player.voiceChannel) {
-            if ((!oS.streaming && nS.streaming) || (oS.streaming && !nS.streaming) ||
-              (!oS.serverDeaf && nS.serverDeaf) || (oS.serverDeaf && !nS.serverDeaf) ||
-              (!oS.serverMute && nS.serverMute) || (oS.serverMute && !nS.serverMute) ||
-              (!oS.selfDeaf && nS.selfDeaf) || (oS.selfDeaf && !nS.selfDeaf) ||
-              (!oS.selfMute && nS.selfMute) || (oS.selfMute && !nS.selfMute) ||
-              (!oS.selfVideo && nS.selfVideo) || (oS.selfVideo && !nS.selfVideo)) return; //not the right voicestate
-            //if player exist, but not connected or channel got empty (for no bots)
-            if (player && (!oS.guild.me.voice.channel || oS.channel.members.filter(m => !m.user.bot).size < 1)){
-              try{ player.destroy(); } catch(e){ }
+      client.on("voiceStateUpdate", async (oldState, newState) => {
+        // LEFT V12
+        if (oldState.channelID && !newState.channelID) {
+          //if bot left
+          try {
+            if (oldState.member.user.id === client.user.id) {
+              var player = client.manager.players.get(oldState.guild.id);
+              if (!player) return;
+              //destroy
+              player.destroy();
             }
+          } catch {}
+        }
+        var player = client.manager.players.get(newState.guild.id);
+        if (!player) return;
+        databasing(client, player.guild, player.get("playerauthor"));
+        if (config.settings.leaveOnEmpty_Channel.enabled && oldState && oldState.channel) {
+          player = client.manager.players.get(oldState.guild.id);
+          //if not connect return player.destroy()
+          if (!oldState.guild.me.voice.channel) {
+            return player.destroy();
+          }
+          //wait some time...
+          if (player && oldState.guild.channels.cache.get(player.voiceChannel).members.size === 1) {
+            setTimeout(async () => {
+              try {
+                player = client.manager.players.get(oldState.guild.id);
+                //if not connect return player.destroy()
+                if (!oldState.guild.me.voice.channel && player) {
+                  return player.destroy();
+                }
+                //wait some time...
+                var vc = oldState.guild.channels.cache.get(player.voiceChannel)
+                if (player && vc && vc.members.size === 1) {
+                  var embed = new MessageEmbed()
+                    .setTitle(`${emoji.msg.ERROR} Queue has ended | Channel Empty`)
+                    .setDescription(`I left the Channel: ${client.channels.cache.get(player.voiceChannel).name} because the Channel was empty for: ${ms(config.settings.leaveOnEmpty_Channel.time_delay, { long: true })}`)
+                    .setColor(ee.wrongcolor)
+                    .setFooter(ee.footertext, ee.footericon);
+                  //if        player afk                              or      guild afk     is enbaled return and not destroy the PLAYER
+                  if (player.get(`afk-${player.get("playerauthor")}`) || player.get(`afk-${player.guild}`))
+                    return client.channels.cache.get(player.textChannel).send(embed.setDescription(`I will not Leave the Channel, cause afk is ✔️ Enabled`)).then(msg => {
+                      try {
+                        msg.delete({
+                          timeout: 4000
+                        }).catch(e => console.log("couldn't delete message this is a catch to prevent a crash".grey));
+                      } catch {
+                        /* */ }
+                    });
+                  client.channels.cache.get(player.textChannel).send(embed).then(msg => {
+                    try {
+                      msg.delete({
+                        timeout: 4000
+                      }).catch(e => console.log("couldn't delete message this is a catch to prevent a crash".grey));
+                    } catch {
+                      /* */ }
+                  });
+                  try {
+                    client.channels.cache
+                      .get(player.textChannel)
+                      .messages.fetch(player.get("playermessage")).then(msg => {
+                        try {
+                          msg.delete({
+                            timeout: 4000
+                          }).catch(e => console.log("couldn't delete message this is a catch to prevent a crash".grey));
+                        } catch {
+                          /* */ }
+                      });
+                  } catch (e) {
+                    console.log(String(e.stack).yellow);
+                  }
+                  player.destroy();
+                }
+              } catch (e) {
+                console.log(String(e.stack).yellow);
+              }
+            }, config.settings.leaveOnEmpty_Channel.time_delay);
           }
         }
       });
   };
-  /**
-   * @INFO
-   * Bot Coded by s409 | https://github?.com/Tomato6966/discord-js-lavalink-Music-Bot-erela-js
-   * @INFO
-   * Work for S409 support | https://s409.xyz
-   * @INFO
-   * Please mention Him / S409 support, when using this Code!
-   * @INFO
-   */
-  

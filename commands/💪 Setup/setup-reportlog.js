@@ -2,17 +2,12 @@ var {
   MessageEmbed
 } = require(`discord.js`);
 var Discord = require(`discord.js`);
-var config = require(`${process.cwd()}/botconfig/config.json`);
-var ee = require(`${process.cwd()}/botconfig/embed.json`);
-var emoji = require(`${process.cwd()}/botconfig/emojis.json`);
+var config = require(`../../botconfig/config.json`);
+var ee = require(`../../botconfig/embed.json`);
+var emoji = require(`../../botconfig/emojis.json`);
 var {
   databasing
-} = require(`${process.cwd()}/handlers/functions`);
-const {
-  MessageButton,
-  MessageActionRow,
-  MessageSelectMenu
-} = require('discord.js')
+} = require(`../../handlers/functions`);
 module.exports = {
   name: "setup-reportlog",
   category: "💪 Setup",
@@ -21,166 +16,129 @@ module.exports = {
   usage: "setup-reportlog  -->  Follow the Steps",
   description: "This Setup allows you to send logs into a specific Channel, when someone enters a the Command: report",
   memberpermissions: ["ADMINISTRATOR"],
-  type: "security",
   run: async (client, message, args, cmduser, text, prefix) => {
-
-    let es = client.settings.get(message.guild.id, "embed");
-    let ls = client.settings.get(message.guild.id, "language")
+    var es = client.settings.get(message.guild.id, "embed")
     try {
+      var adminroles = client.settings.get(message.guild.id, "adminroles")
 
-      first_layer()
-      async function first_layer() {
-        let menuoptions = [{
-            value: "Enable Report",
-            description: `Define the Report Channel`,
-            emoji: "✅"
-          },
-          {
-            value: "Disable Report",
-            description: `Disable the Report System`,
-            emoji: "❌"
-          },
-          {
-            value: "Cancel",
-            description: `Cancel and stop the Report-Setup!`,
-            emoji: "862306766338523166"
-          }
-        ]
-        //define the selection
-        let Selection = new MessageSelectMenu()
-          .setCustomId('MenuSelection')
-          .setMaxValues(1) //OPTIONAL, this is how many values you can have at each selection
-          .setMinValues(1) //OPTIONAL , this is how many values you need to have at each selection
-          .setPlaceholder('Click me to setup the Report-System')
-          .addOptions(
-            menuoptions.map(option => {
-              let Obj = {
-                label: option.label ? option.label.substr(0, 50) : option.value.substr(0, 50),
-                value: option.value.substr(0, 50),
-                description: option.description.substr(0, 50),
-              }
-              if (option.emoji) Obj.emoji = option.emoji;
-              return Obj;
-            }))
+      var timeouterror = false;
+      var filter = (reaction, user) => {
+        return user.id === message.author.id;
+      };
+      var temptype = ""
+      var tempmsg;
 
-        //define the embed
-        let MenuEmbed = new MessageEmbed()
-          .setColor(es.color)
-          .setAuthor('Report Log Setup', 'https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/120/apple/285/bookmark_1f516.png', 'https://discord.gg/milrato')
-          .setDescription(eval(client.la[ls]["cmds"]["setup"]["setup-ticket"]["variable2"]))
-        //send the menu msg
-        let menumsg = await message.reply({
-          embeds: [MenuEmbed],
-          components: [new MessageActionRow().addComponents(Selection)]
-        })
-        //Create the collector
-        const collector = menumsg.createMessageComponentCollector({
-          filter: i => i?.isSelectMenu() && i?.message.author.id == client.user.id && i?.user,
-          time: 90000
-        })
-        //Menu Collections
-        collector.on('collect', menu => {
-          if (menu?.user.id === cmduser.id) {
-            collector.stop();
-            let menuoptiondata = menuoptions.find(v => v.value == menu?.values[0])
-            if (menu?.values[0] == "Cancel") return menu?.reply(eval(client.la[ls]["cmds"]["setup"]["setup-ticket"]["variable3"]))
-            menu?.deferUpdate();
-            let SetupNumber = menu?.values[0].split(" ")[0]
-            handle_the_picks(menu?.values[0], SetupNumber, menuoptiondata)
-          } else menu?.reply({
-            content: `<:no:833101993668771842> You are not allowed to do that! Only: <@${cmduser.id}>`,
-            ephemeral: true
-          });
-        });
-        //Once the Collections ended edit the menu message
-        collector.on('end', collected => {
-          menumsg.edit({
-            embeds: [menumsg.embeds[0].setDescription(`~~${menumsg.embeds[0].description}~~`)],
-            components: [],
-            content: `${collected && collected.first() && collected.first().values ? `<a:yes:833101995723194437> **Selected: \`${collected ? collected.first().values[0] : "Nothing"}\`**` : "❌ **NOTHING SELECTED - CANCELLED**" }`
-          })
-        });
+      tempmsg = await message.channel.send(new Discord.MessageEmbed()
+        .setTitle("What do you want to do? | REPORT LOG")
+        .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+        .setDescription(`1️⃣ **== \`✔️ Enable\` / Set** Channel\n\n2️⃣ **== \`❌ Disable\`** Log\n\n\n\n*React with the Right Emoji according to the Right action*`).setFooter(es.footertext, es.footericon)
+      )
+
+      try {
+        tempmsg.react("1️⃣")
+        tempmsg.react("2️⃣")
+      } catch (e) {
+        return message.reply(new Discord.MessageEmbed()
+          .setTitle("<:cross:899255798142750770>  ERROR | Missing Permissions to add Reactions")
+          .setColor(es.wrongcolor)
+          .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``.substr(0, 2000))
+          .setFooter(es.footertext, es.footericon)
+        );
       }
+      await tempmsg.awaitReactions(filter, {
+          max: 1,
+          time: 90000,
+          errors: ["time"]
+        })
+        .then(collected => {
+          var reaction = collected.first()
+          reaction.users.remove(message.author.id)
+          if (reaction.emoji.name === "1️⃣") temptype = "set"
+          else if (reaction.emoji.name === "2️⃣") temptype = "disable"
+          else throw "You reacted with a wrong emoji"
 
-      async function handle_the_picks(optionhandletype, SetupNumber, menuoptiondata) {
-        switch (optionhandletype) {
-          case "Enable Report": {
-            var tempmsg = await message.reply({
-              embeds: [new Discord.MessageEmbed()
-                .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-reportlog"]["variable5"]))
-                .setColor(es.color)
-                .setDescription(eval(client.la[ls]["cmds"]["setup"]["setup-reportlog"]["variable6"])).setFooter(client.getFooter(es))
-              ]
-            })
-            await tempmsg.channel.awaitMessages({
-                filter: m => m.author.id == message.author.id,
-                max: 1,
-                time: 90000,
-                errors: ["time"]
-              })
-              .then(async collected => {
-                var message = collected.first();
-                if (!message) throw "NO MESSAGE SENT";
-                if (message.mentions.channels.filter(ch => ch.guild.id == message.guild.id).first()) {
-                  client.settings.set(message.guild.id, message.mentions.channels.filter(ch => ch.guild.id == message.guild.id).first().id, `reportlog`)
-                  return message.reply({
-                    embeds: [new Discord.MessageEmbed()
-                      .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-reportlog"]["variable7"]))
-                      .setColor(es.color)
-                      .setDescription(`If someone executes the Report Command, a Log Information will be sent in that Channel`.substr(0, 2048))
-                      .setFooter(client.getFooter(es))
-                    ]
-                  });
-                } else {
-                  throw "NO CHANNEL PINGED";
-                }
-              })
-              .catch(e => {
-                console.log(e.stack ? String(e.stack).grey : String(e).grey)
-                return message.reply({
-                  embeds: [new Discord.MessageEmbed()
-                    .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-reportlog"]["variable8"]))
-                    .setColor(es.wrongcolor)
-                    .setDescription(`Cancelled the Operation!`.substr(0, 2000))
-                    .setFooter(client.getFooter(es))
-                  ]
-                });
-              })
+        })
+        .catch(e => {
+          timeouterror = e;
+        })
+      if (timeouterror)
+        return message.reply(new Discord.MessageEmbed()
+          .setTitle("<:cross:899255798142750770>  ERROR | Your Time ran out")
+          .setColor(es.wrongcolor)
+          .setDescription(`Cancelled the Operation!`.substr(0, 2000))
+          .setFooter(es.footertext, es.footericon)
+        );
+
+      if(temptype == "set"){
+        tempmsg = await tempmsg.edit({embed: new Discord.MessageEmbed()
+        .setTitle("Which Channel do you wanna use?")
+        .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+        .setDescription(`*Just ping the channel with #channel in the Chat*`).setFooter(es.footertext, es.footericon)
+      })
+      var thecmd;
+      await tempmsg.channel.awaitMessages(m=>m.author.id == message.author.id, {
+          max: 1,
+          time: 90000,
+          errors: ["time"]
+        })
+        .then(async collected => {
+          var message = collected.first();
+          if(!message) throw "NO MESSAGE SENT";
+          if(message.mentions.channels.filter(ch=>ch.guild.id==message.guild.id).first()){
+            client.settings.set(message.guild.id, message.mentions.channels.filter(ch=>ch.guild.id==message.guild.id).first().id, `reportlog`)
+            return message.reply(new Discord.MessageEmbed()
+              .setTitle(`<:tick:899255869185855529> The Channel: \`${message.mentions.channels.filter(ch=>ch.guild.id==message.guild.id).first().name}\` is now registered as the Admin logger`)
+              .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+              .setDescription(`If someone executes an Admin Command, an Information will be sent in that Channel`.substr(0, 2048))
+              .setFooter(es.footertext, es.footericon)
+            );
           }
-          break;
-        case "Disable Report": {
+          else{
+            throw "NO CHANNEL PINGED";
+          }
+        })
+        .catch(e => {
+          timeouterror = e;
+        })
+      if (timeouterror)
+        return message.reply(new Discord.MessageEmbed()
+          .setTitle("<:cross:899255798142750770>  ERROR | Your Time ran out")
+          .setColor(es.wrongcolor)
+          .setDescription(`Cancelled the Operation!`.substr(0, 2000))
+          .setFooter(es.footertext, es.footericon)
+        );
+      } else if (temptype == "disable") {
           client.settings.set(message.guild.id, "no", `reportlog`)
-          return message.reply({
-            embeds: [new Discord.MessageEmbed()
-              .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-reportlog"]["variable9"]))
-              .setColor(es.color)
-              .setDescription(`If someone executes an Admin Command, **no** Information will be sent`.substr(0, 2048))
-              .setFooter(client.getFooter(es))
-            ]
-          });
-        }
-        break;
-        }
+          return message.reply(new Discord.MessageEmbed()
+            .setTitle(`<:tick:899255869185855529> Disabled the Admin logger`)
+            .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+            .setDescription(`If someone executes an Admin Command, **no** Information will be sent`.substr(0, 2048))
+            .setFooter(es.footertext, es.footericon)
+          );
+      } else {
+        return message.reply(new Discord.MessageEmbed()
+          .setTitle("<:cross:899255798142750770>  ERROR | PLEASE CONTACT `S409™#9685`")
+          .setColor(es.wrongcolor)
+          .setFooter(es.footertext, es.footericon)
+        );
       }
 
     } catch (e) {
-      console.log(String(e.stack).grey.bgRed)
-      return message.reply({
-        embeds: [new MessageEmbed()
-          .setColor(es.wrongcolor).setFooter(client.getFooter(es))
-          .setTitle(client.la[ls].common.erroroccur)
-          .setDescription(eval(client.la[ls]["cmds"]["setup"]["setup-reportlog"]["variable11"]))
-        ]
-      });
+      console.log(String(e.stack).bgRed)
+      return message.channel.send(new MessageEmbed()
+        .setColor(es.wrongcolor).setFooter(es.footertext, es.footericon)
+        .setTitle(`<:cross:899255798142750770>  Something went Wrong`)
+        .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``)
+      );
     }
   },
 };
 /**
  * @INFO
- * Bot Coded by Tomato#6966 | https://discord.gg/milrato
+ * Bot Coded by S409™#9685 | https://github.com/S409™#9685/discord-js-lavalink-Music-Bot-erela-js
  * @INFO
- * Work for S409 support | https://s409.xyz
+ * Work for s409 Development | https://s409.xyz
  * @INFO
- * Please mention him / S409 support, when using this Code!
+ * Please mention Him / s409 Development, when using this Code!
  * @INFO
  */

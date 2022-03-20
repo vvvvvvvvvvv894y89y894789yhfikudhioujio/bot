@@ -1,15 +1,15 @@
 //import the config.json file
-const config = require(`${process.cwd()}/botconfig/config.json`)
+const config = require("../botconfig/config.json")
 var {
     MessageEmbed
 } = require(`discord.js`);
-const {escapeRegex} = require(`${process.cwd()}/handlers/functions`)
+const {escapeRegex} = require("../handlers/functions")
 const map = new Map()
 module.exports = client => {
 
-    client.on("messageCreate", async message => {
+    client.on("message", async message => {
         if (!message.guild || !message.channel || message.author.bot) return;
-        let es = client.settings.get(message.guild.id, "embed");
+        let es = client.settings.get(message.guild.id, "embed")
         let args = message.content.split(" ");
         let prefix = client.settings.get(message.guild.id, "prefix");
         //if not in the database for some reason use the default prefix
@@ -31,11 +31,11 @@ module.exports = client => {
                         if(cmd.embed){
                             //if its not that then return
                             if (prefixRegex.test(message.content) && !cmd.name.startsWith(prefix)) return;
-                            message.channel.send({embeds: [new MessageEmbed()
-                                .setColor(es.color).setThumbnail(es.thumb ? es.footericon && (es.footericon.includes("http://") || es.footericon.includes("https://")) ? es.footericon : client.user.displayAvatarURL() : null)
-                                .setFooter(client.getFooter(es))
+                            message.channel.send(new MessageEmbed()
+                                .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+                                .setFooter(es.footertext, es.footericon)
                                 .setDescription(cmd.output.replace("{member}", `<@${message.author.id}>`))
-                            ]});
+                            );
                             continue;
                         }else{
                             //if its not that then return

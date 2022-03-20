@@ -5,86 +5,86 @@ const {
   MessageEmbed,
   MessageAttachment
 } = require("discord.js");
-const config = require(`${process.cwd()}/botconfig/config.json`);
-var ee = require(`${process.cwd()}/botconfig/embed.json`);
-const emoji = require(`${process.cwd()}/botconfig/emojis.json`);
-const { duration } = require('../../handlers/functions');
+const config = require("../../botconfig/config.json");
+var ee = require("../../botconfig/embed.json");
+const emoji = require(`../../botconfig/emojis.json`);
 module.exports = {
   name: "remind",
   aliases: ["remindme"],
   category: "🏫 School Commands",
   description: "Reminds you at a specific day for something",
   usage: "remind TIME ++ TEXT",
-  type: "time",
   run: async (client, message, args, cmduser, text, prefix) => {
-    
-    let es = client.settings.get(message.guild.id, "embed");let ls = client.settings.get(message.guild.id, "language")
+    let es = client.settings.get(message.guild.id, "embed")
     if(!client.settings.get(message.guild.id, "SCHOOL")){
-      return message.reply({embeds: [new MessageEmbed()
+      return message.channel.send(new MessageEmbed()
         .setColor(es.wrongcolor)
-        .setFooter(client.getFooter(es))
-        .setTitle(client.la[ls].common.disabled.title)
-        .setDescription(require(`${process.cwd()}/handlers/functions`).handlemsg(client.la[ls].common.disabled.description, {prefix: prefix}))
-      ]});
+        .setFooter(es.footertext, es.footericon)
+        .setTitle(`<:cross:899255798142750770>  THIS COMMAND IS CURRENTLY DISABLED`)
+        .setDescription(`An Admin can enable it with: \`${prefix}setup-commands\``)
+      );
     }
     if(!args[0])
-    return message.reply({embeds: [new MessageEmbed()
+    return message.channel.send(new MessageEmbed()
       .setColor(es.wrongcolor)
-      .setFooter(client.getFooter(es))
-      .setTitle(eval(client.la[ls]["cmds"]["schoolcommands"]["remind"]["variable1"]))
-      .setDescription(eval(client.la[ls]["cmds"]["schoolcommands"]["remind"]["variable2"]))
-    ]});
+      .setFooter(es.footertext, es.footericon)
+      .setTitle(`<:cross:899255798142750770>  please add a TIME!`)
+      .setDescription(` Usage: \`${prefix}remind <Time+Format(e.g: 10m)> ++ TEXT\`\n\nExample: \`${prefix}remind 10m 32s ++ Remind me!!\``)
+    );
     let newargs = args.join(" ").split("++")
     let time = 0;
       try {
         const timeargs = newargs[0].trim().split(" ")
-        for(const t of timeargs){
+        console.log(timeargs)
+        for(const t of timeargs)
           time += ms(t);
-          console.log(t, ms(t))
-        }
+        console.log(time)
       } catch (e) {
-        return message.reply({embeds: [new MessageEmbed()
+        return message.channel.send(new MessageEmbed()
           .setColor(es.wrongcolor)
-          .setFooter(client.getFooter(es))
-          .setTitle(eval(client.la[ls]["cmds"]["schoolcommands"]["remind"]["variable3"]))
-          .setDescription(eval(client.la[ls]["cmds"]["schoolcommands"]["remind"]["variable4"]))
-        ]});
+          .setFooter(es.footertext, es.footericon)
+          .setTitle(`<:cross:899255798142750770>  please add a valid TIME!`)
+          .setDescription(` Usage: \`${prefix}remind <Time+Format(e.g: 10m)> ++ TEXT\`\n\nExample: \`${prefix}remind 10m 32s ++ Remind me!!\``)
+        );
       }
     let content = newargs.slice(1).join(" ");
-    if (!content) return message.reply(eval(client.la[ls]["cmds"]["schoolcommands"]["remind"]["variable5"]))
+    if (!content) return message.reply("No content added")
     // Based off the delimiter, sets the time
     let returntime = time;
-    if (returntime > 2073600000) return message.reply({embeds: [new MessageEmbed()
+    if (returntime > 2073600000) return message.channel.send(new MessageEmbed()
       .setColor(es.wrongcolor)
-      .setFooter(client.getFooter(es))
-      .setTitle(eval(client.la[ls]["cmds"]["schoolcommands"]["remind"]["variable6"]))
-      .setDescription(eval(client.la[ls]["cmds"]["schoolcommands"]["remind"]["variable7"]))
-    ]});
-    if (returntime == 0) return message.reply({embeds: [new MessageEmbed()
+      .setFooter(es.footertext, es.footericon)
+      .setTitle(`<:cross:899255798142750770>  The time limit is 24 Days!`)
+      .setDescription(` Usage: \`${prefix}remind <Time+Format(e.g: 10m)> ++ TEXT\`\n\nExample: \`${prefix}remind 10m 32s ++ Remind me!!\``)
+    );
+    if (returntime == 0) return message.channel.send(new MessageEmbed()
       .setColor(es.wrongcolor)
-      .setFooter(client.getFooter(es))
-      .setTitle(eval(client.la[ls]["cmds"]["schoolcommands"]["remind"]["variable8"]))
-      .setDescription(eval(client.la[ls]["cmds"]["schoolcommands"]["remind"]["variable9"]))
-    ]});
+      .setFooter(es.footertext, es.footericon)
+      .setTitle(`<:cross:899255798142750770>  please add a TIME!`)
+      .setDescription(` Usage: \`${prefix}remind <Time+Format(e.g: 10m)> ++ TEXT\`\n\nExample: \`${prefix}remind 10m 32s ++ Remind me!!\``)
+    );
     const now = new Date();
-    let string_of_time = duration(returntime).map(i=>`\`${i}\``).join(", ");
-    message.reply({embeds: [new MessageEmbed()
-      .setColor(es.color).setThumbnail(es.thumb ? es.footericon && (es.footericon.includes("http://") || es.footericon.includes("https://")) ? es.footericon : client.user.displayAvatarURL() : null)
-      .setFooter(client.getFooter(es))
-      .setTitle(eval(client.la[ls]["cmds"]["schoolcommands"]["remind"]["variable10"]))
-      .setDescription(eval(client.la[ls]["cmds"]["schoolcommands"]["remind"]["variable11"]))
-    ]});
-    client.afkDB.push("REMIND", 
-    {
-      at: moment().format("DD/MM/YYYY HH:mm"),
-      time: returntime,
-      timestamp: Date.now(),
-      content: content,
-      channel: message.channel.id,
-      guild: message.guild.id,
-      user: message.author.id,
-      string_of_time: string_of_time,
-    }, "REMIND")
+    let string_of_time = "";
+    if(returntime >= 1000 * 60 * 60 * 24) string_of_time = `\`${moment(returntime).format("DD")} Days\`, \`${moment(returntime).format("HH")} Hours\`, \`${moment(returntime).format("mm")} Minutes\`, \`${moment(returntime).format("ss")} Seconds\``
+    else string_of_time = `\`${moment(returntime).format("HH")} Hours\`, \`${moment(returntime).format("mm")} Minutes\`, \`${moment(returntime).format("ss")} Seconds\` `
+    message.reply(new MessageEmbed()
+      .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+      .setFooter(es.footertext, es.footericon)
+      .setTitle(`${emoji.msg.SUCCESS} I will remind you in:\n${string_of_time}`)
+      .setDescription(`Message will come to your DMS!`)
+    );
+    
+    let olddate = Date();
+    client.setTimeout(function () {
+      message.author.send(new MessageEmbed()
+        .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+        .setFooter(es.footertext, es.footericon)
+        .setTitle(`${emoji.msg.SUCCESS} I reminded you after:\n${string_of_time}`)
+        .addField(`Created in **(${message.guild.name})**`, `<#${message.channel.id}> `)
+        .addField("Created at:", `\`${olddate}\``)
+        .setDescription(content)
+      );
+    }, returntime)
   }
 
 };

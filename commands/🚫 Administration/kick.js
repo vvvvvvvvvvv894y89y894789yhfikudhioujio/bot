@@ -1,29 +1,26 @@
 const {
-  MessageEmbed,
-  Permissions
+  MessageEmbed
 } = require(`discord.js`);
-const config = require(`${process.cwd()}/botconfig/config.json`);
-var ee = require(`${process.cwd()}/botconfig/embed.json`);
-const emoji = require(`${process.cwd()}/botconfig/emojis.json`);
+const config = require(`../../botconfig/config.json`);
+var ee = require(`../../botconfig/embed.json`);
+const emoji = require(`../../botconfig/emojis.json`);
 const {
   databasing
-} = require(`${process.cwd()}/handlers/functions`);
+} = require("../../handlers/functions");
 module.exports = {
   name: `kick`,
   category: `🚫 Administration`,
   aliases: [``],
   description: `Kicks a Member from a Guild`,
   usage: `kick @User [Reason]`,
-  type: "member",
   run: async (client, message, args, cmduser, text, prefix) => {
-    
-    let es = client.settings.get(message.guild.id, "embed");let ls = client.settings.get(message.guild.id, "language")
+    let es = client.settings.get(message.guild.id, "embed")
     try {
-      if(!message.guild.me.permissions.has([Permissions.FLAGS.KICK_MEMBERS]))      
-      return message.reply({embeds : [new MessageEmbed()
-        .setColor(es.wrongcolor).setFooter(client.getFooter(es))
-        .setTitle(eval(client.la[ls]["cmds"]["administration"]["kick"]["variable1"]))
-      ]})
+      if(!message.guild.me.hasPermission("KICK_MEMBERS"))      
+      return message.channel.send(new Discord.MessageEmbed()
+        .setColor(es.wrongcolor).setFooter(es.footertext, es.footericon)
+        .setTitle("<:cross:899255798142750770>  I am missing the permission to `KICK MEMBERS`!")
+      )
       let adminroles = client.settings.get(message.guild.id, "adminroles")
       let cmdroles = client.settings.get(message.guild.id, "cmdadminroles.kick")
       var cmdrole = []
@@ -36,27 +33,27 @@ module.exports = {
               cmdrole.push(` | <@${r}>`)
             }
             else {
-              
-              //console.log(r)
+              console.log("F")
+              console.log(r)
               client.settings.remove(message.guild.id, r, `cmdadminroles.kick`)
             }
           }
         }
-      if (([...message.member.roles.cache.values()] && !message.member.roles.cache.some(r => cmdroles.includes(r.id))) && !cmdroles.includes(message.author.id) && ([...message.member.roles.cache.values()] && !message.member.roles.cache.some(r => adminroles.includes(r ? r.id : r))) && !Array(message.guild.ownerId, config.ownerid).includes(message.author.id) && !message.member.permissions.has([Permissions.FLAGS.ADMINISTRATOR]))
-        return message.reply({embeds :[new MessageEmbed()
+      if ((message.member.roles.cache.array() && !message.member.roles.cache.some(r => cmdroles.includes(r.id))) && !cmdroles.includes(message.author.id) && (message.member.roles.cache.array() && !message.member.roles.cache.some(r => adminroles.includes(r.id))) && !Array(message.guild.owner.id, config.ownerid).includes(message.author.id) && !message.member.hasPermission("ADMINISTRATOR"))
+        return message.channel.send(new MessageEmbed()
           .setColor(es.wrongcolor)
-          .setFooter(client.getFooter(es))
-          .setTitle(eval(client.la[ls]["cmds"]["administration"]["kick"]["variable2"]))
-          .setDescription(eval(client.la[ls]["cmds"]["administration"]["kick"]["variable3"]))
-        ]});
-      let kickmember = message.mentions.members.filter(member=>member.guild.id==message.guild.id).first() || message.guild.members.cache.get(args[0] ? args[0] : ``) || await message.guild.members.fetch(args[0] ? args[0] : ``).catch(() => {}) || false;
+          .setFooter(es.footertext, es.footericon)
+          .setTitle(`<:cross:899255798142750770>  You are not allowed to run this Command`)
+          .setDescription(`${adminroles.length > 0 ? "You need one of those Roles: " + adminroles.map(role => `<@&${role}>`).join(" | ") + cmdrole.join("")  : `No Admin Roles Setupped yet! Do it with: \`${prefix}setup-admin\``}`)
+        );
+      let kickmember = message.mentions.members.filter(member=>member.guild.id==message.guild.id).first() || message.guild.members.cache.get(args[0] ? args[0] : ``);
       if (!kickmember)
-        return message.reply({embeds :[new MessageEmbed()
+        return message.channel.send(new MessageEmbed()
           .setColor(es.wrongcolor)
-          .setFooter(client.getFooter(es))
-          .setTitle(eval(client.la[ls]["cmds"]["administration"]["kick"]["variable4"]))
-          .setDescription(eval(client.la[ls]["cmds"]["administration"]["kick"]["variable5"]))
-        ]});
+          .setFooter(es.footertext, es.footericon)
+          .setTitle(`<:cross:899255798142750770>  Please add a Member you want to kick!`)
+          .setDescription(`Useage: \`${prefix}kick @User [Reason]\``)
+        );
 
       let reason = args.slice(1).join(` `);
       if (!reason) {
@@ -66,81 +63,78 @@ module.exports = {
       const memberPosition = kickmember.roles.highest.position;
       const moderationPosition = message.member.roles.highest.position;
       if (moderationPosition <= memberPosition)
-        return message.reply({embeds : [new MessageEmbed()
+        return message.channel.send(new MessageEmbed()
           .setColor(es.wrongcolor)
-          .setFooter(client.getFooter(es))
-          .setTitle(eval(client.la[ls]["cmds"]["administration"]["kick"]["variable6"]))
-        ]});
+          .setFooter(es.footertext, es.footericon)
+          .setTitle(`<:cross:899255798142750770>  I cannot kick someone, who is above/equal you`)
+        );
 
       if (!kickmember.kickable)
-        return message.reply({embeds :[new MessageEmbed()
+        return message.channel.send(new MessageEmbed()
           .setColor(es.wrongcolor)
-          .setFooter(client.getFooter(es))
-          .setTitle(eval(client.la[ls]["cmds"]["administration"]["kick"]["variable7"]))
-        ]});
+          .setFooter(es.footertext, es.footericon)
+          .setTitle(`<:cross:899255798142750770>  The Member is not kickable, sorry!`)
+        );
 
         try{
-          if(!kickmember.user.bot){
-            kickmember.user.send({embeds : [new MessageEmbed()
-              .setColor(es.color).setThumbnail(es.thumb ? es.footericon && (es.footericon.includes("http://") || es.footericon.includes("https://")) ? es.footericon : client.user.displayAvatarURL() : null)
-              .setFooter(client.getFooter(es))
-              .setTitle(eval(client.la[ls]["cmds"]["administration"]["kick"]["variable8"]))
-              .setDescription(eval(client.la[ls]["cmds"]["administration"]["kick"]["variable9"]))
-            ]});
-          }
-        } catch (e){
-          console.log(e.stack ? String(e.stack).grey : String(e).grey)
-          return message.reply({embeds :[new MessageEmbed()
+          kickmember.send(new MessageEmbed()
+            .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+            .setFooter(es.footertext, es.footericon)
+            .setTitle(`<:tick:899255869185855529> You got kicked by \`${message.author.tag}\` from \`${message.guild.name}\` for ${days === 0 ? `Infinite Days` : `${days} Days`}`)
+            .setDescription(`Reason:\n> ${reason}`)
+          );
+        } catch{
+          return message.channel.send(new MessageEmbed()
             .setColor(es.wrongcolor)
-            .setFooter(client.getFooter(es))
-            .setTitle(eval(client.la[ls]["cmds"]["administration"]["kick"]["variable10"]))
-            .setDescription(eval(client.la[ls]["cmds"]["administration"]["kick"]["variable11"]))
-          ]});
+            .setFooter(es.footertext, es.footericon)
+            .setTitle(`<:cross:899255798142750770>  Could not DM the Reason to: \`${kickmember.user.tag}\``)
+            .setDescription(`${kickmember.user}`)
+          );
         }
       try {
         kickmember.kick({
           reason: reason
         }).then(() => {
           client.stats.push(message.guild.id+message.author.id, new Date().getTime(), "kick"); 
-          message.reply({embeds :[new MessageEmbed()
-            .setColor(es.color).setThumbnail(es.thumb ? es.footericon && (es.footericon.includes("http://") || es.footericon.includes("https://")) ? es.footericon : client.user.displayAvatarURL() : null)
-            .setFooter(client.getFooter(es))
-            .setTitle(eval(client.la[ls]["cmds"]["administration"]["kick"]["variable12"]))
-            .setDescription(eval(client.la[ls]["cmds"]["administration"]["kick"]["variable13"]))
-          ]});
+          message.channel.send(new MessageEmbed()
+            .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+            .setFooter(es.footertext, es.footericon)
+            .setTitle(`<:tick:899255869185855529> Kicked ${kickmember.user.tag}`)
+            .setDescription(`Reason:\n> ${reason}`)
+          );
           if(client.settings.get(message.guild.id, `adminlog`) != "no"){
             try{
               var channel = message.guild.channels.cache.get(client.settings.get(message.guild.id, `adminlog`))
               if(!channel) return client.settings.set(message.guild.id, "no", `adminlog`);
-              channel.send({embeds :[new MessageEmbed()
-                .setColor(es.color).setThumbnail(es.thumb ? es.footericon && (es.footericon.includes("http://") || es.footericon.includes("https://")) ? es.footericon : client.user.displayAvatarURL() : null).setFooter(client.getFooter(es))
+              channel.send(new MessageEmbed()
+                .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null).setFooter(es.footertext, es.footericon)
                 .setAuthor(`${require("path").parse(__filename).name} | ${message.author.tag}`, message.author.displayAvatarURL({dynamic: true}))
-                .setDescription(eval(client.la[ls]["cmds"]["administration"]["kick"]["variable14"]))
-                .addField(eval(client.la[ls]["cmds"]["administration"]["ban"]["variablex_15"]), eval(client.la[ls]["cmds"]["administration"]["ban"]["variable15"]))
-               .addField(eval(client.la[ls]["cmds"]["administration"]["ban"]["variablex_16"]), eval(client.la[ls]["cmds"]["administration"]["ban"]["variable16"]))
-                .setTimestamp().setFooter(client.getFooter("ID: " + message.author.id, message.author.displayAvatarURL({dynamic: true})))
-              ]})
+                .setDescription(`\`\`\`${String(message.content).substr(0, 2000)}\`\`\``)
+                .addField(`Executed in: `, `<#${message.channel.id}> \`${message.channel.name}\``)
+                .addField(`Executed by: `, `<@${message.author.id}> (${message.author.tag})\n\`${message.author.tag}\``)
+                .setTimestamp().setFooter("ID: " + message.author.id)
+              )
             }catch (e){
-              console.log(e.stack ? String(e.stack).grey : String(e).grey)
+              console.log(e)
             }
           } 
         });
       } catch (e) {
-        console.log(e.stack ? String(e.stack).grey : String(e).grey);
-        return message.reply({embeds : [new MessageEmbed()
+        console.log(String(e.stack).red);
+        return message.channel.send(new MessageEmbed()
           .setColor(es.wrongcolor)
-          .setFooter(client.getFooter(es))
-          .setTitle(client.la[ls].common.erroroccur)
-          .setDescription(eval(client.la[ls]["cmds"]["administration"]["kick"]["variable17"]))
-        ]});
+          .setFooter(es.footertext, es.footericon)
+          .setTitle(`<:cross:899255798142750770>  An error occurred`)
+          .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``)
+        );
       }
     } catch (e) {
-      console.log(String(e.stack).grey.bgRed)
-      return message.reply({embeds : [new MessageEmbed()
-        .setColor(es.wrongcolor).setFooter(client.getFooter(es))
-        .setTitle(eval(client.la[ls]["cmds"]["administration"]["kick"]["variable18"]))
-        .setDescription(eval(client.la[ls]["cmds"]["administration"]["kick"]["variable19"]))
-      ]});
+      console.log(String(e.stack).bgRed)
+      return message.channel.send(new MessageEmbed()
+        .setColor(es.wrongcolor).setFooter(es.footertext, es.footericon)
+        .setTitle(`<:cross:899255798142750770>  An error occurred`)
+        .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``)
+      );
     }
   }
 };

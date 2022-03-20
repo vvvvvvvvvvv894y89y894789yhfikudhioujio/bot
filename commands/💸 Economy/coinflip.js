@@ -1,29 +1,27 @@
 const {MessageEmbed} = require("discord.js");
-const config = require(`${process.cwd()}/botconfig/config.json`);
-var ee = require(`${process.cwd()}/botconfig/embed.json`);
-const emoji = require(`${process.cwd()}/botconfig/emojis.json`);
-const { parseMilliseconds, duration, GetUser, nFormatter, ensure_economy_user } = require(`${process.cwd()}/handlers/functions`)
+const config = require(`../../botconfig/config.json`);
+var ee = require(`../../botconfig/embed.json`);
+const emoji = require(`../../botconfig/emojis.json`);
+const { parseMilliseconds, duration, GetUser, nFormatter, ensure_economy_user } = require("../../handlers/functions")
 module.exports = {
   name: "coinflip",
   category: "💸 Economy",
   description: "Earn your Coinflip cash",
   usage: "coinflip <roll-result> <Gamble-Amount>",
-  type: "game",
   run: async (client, message, args, cmduser, text, prefix) => {
-    
-    let es = client.settings.get(message.guild.id, "embed");let ls = client.settings.get(message.guild.id, "language")
+    let es = client.settings.get(message.guild.id, "embed")
         if(!client.settings.get(message.guild.id, "ECONOMY")){
-          return message.reply({embeds: [new MessageEmbed()
+          return message.channel.send(new MessageEmbed()
             .setColor(es.wrongcolor)
-            .setFooter(client.getFooter(es))
-            .setTitle(client.la[ls].common.disabled.title)
-            .setDescription(require(`${process.cwd()}/handlers/functions`).handlemsg(client.la[ls].common.disabled.description, {prefix: prefix}))
-          ]});
+            .setFooter(es.footertext, es.footericon)
+            .setTitle(`<:cross:899255798142750770>  THIS COMMAND IS CURRENTLY DISABLED`)
+            .setDescription(`An Admin can enable it with: \`${prefix}setup-commands\``)
+          );
         }
     try {
       //command
       var user = message.author
-      if(user.bot) return message.reply(eval(client.la[ls]["cmds"]["economy"]["coinflip"]["variable1"]))
+      if(user.bot) return message.reply("<:cross:899255798142750770>  **A Discord Bot can not have Economy!**")
       
       //ensure the economy data
       ensure_economy_user(client, message.guild.id, user.id)
@@ -34,29 +32,24 @@ module.exports = {
       var amount = args[1] //Coins to gamble
   
       if (!flip || !['heads', 'tails'].includes(flip)) 
-        return message.reply({embeds: [new MessageEmbed()
+        return message.reply(new MessageEmbed()
           .setColor(es.wrongcolor)
-          .setFooter(client.getFooter(es))
-          .setTitle(eval(client.la[ls]["cmds"]["economy"]["coinflip"]["variable2"]))
-          .setDescription(eval(client.la[ls]["cmds"]["economy"]["coinflip"]["variable3"]))
-          ]});
+          .setFooter(es.footertext, es.footericon)
+          .setTitle(`<:cross:899255798142750770>  Specify the \`flip-result\`, it should be a number between \`heads\`-\`tails\``)
+          .setDescription(`Usage: \`${prefix}coinflip <roll-result> <Gamble-Amount>\`\n\n\Example: \`${prefix}coinflip heads 100\``)
+          );
       if (!amount) 
-        return message.reply({embeds: [new MessageEmbed()
+        return message.reply(new MessageEmbed()
           .setColor(es.wrongcolor)
-          .setFooter(client.getFooter(es))
-          .setTitle(eval(client.la[ls]["cmds"]["economy"]["coinflip"]["variable4"]))
-          .setDescription(eval(client.la[ls]["cmds"]["economy"]["coinflip"]["variable5"]))
-        ]});
-      if (amount <= 0) 
-        return message.reply({embeds: [new MessageEmbed()
-          .setColor(es.wrongcolor).setFooter(user.tag, user.displayAvatarURL({dynamic: true}))
-          .setDescription(eval(client.la[ls]["cmds"]["economy"]["coinflip"]["variable6"]))
-        ]});
-      if (data.balance < amount) return message.reply({embeds: [new MessageEmbed()
+          .setFooter(es.footertext, es.footericon)
+          .setTitle(`<:cross:899255798142750770>  Specify the **amount of \`Coins 💸\`** you want to gamble!`)
+          .setDescription(`Usage: \`${prefix}coinflip <roll-result> <Gamble-Amount>\`\n\n\Example: \`${prefix}coinflip heads 100\``)
+        );
+      if (data.balance < amount) return message.reply(new MessageEmbed()
         .setColor(es.wrongcolor)
-        .setFooter(client.getFooter(es))
-        .setTitle(eval(client.la[ls]["cmds"]["economy"]["coinflip"]["variable7"]))
-      ]});
+        .setFooter(es.footertext, es.footericon)
+        .setTitle(`<:cross:899255798142750770>  You can't gamble more Money than you have in your **👛 Pocket (\`${data.balance} 💸\`)**`)
+      );
       var valid_Numbers = ['heads', 'tails'];
       var result = valid_Numbers[Math.floor((Math.random() * valid_Numbers.length))]
       let win = false;
@@ -69,39 +62,39 @@ module.exports = {
         //get the latest data
         data = client.economy.get(`${message.guild.id}-${message.author.id}`);
         //send the Information Message
-        message.reply({embeds: [new MessageEmbed()
-          .setTitle(eval(client.la[ls]["cmds"]["economy"]["coinflip"]["variable8"]))
-          .setDescription(eval(client.la[ls]["cmds"]["economy"]["coinflip"]["variable9"]))
-          .setColor(es.color).setThumbnail(es.thumb ? es.footericon && (es.footericon.includes("http://") || es.footericon.includes("https://")) ? es.footericon : client.user.displayAvatarURL() : null).setFooter(user.tag, user.displayAvatarURL({dynamic: true}))
-        ]})
+        message.channel.send(new MessageEmbed()
+          .setTitle(`<:tick:899255869185855529> You've won \`${amount} 💸\``)
+          .setDescription(`**The Coin Flipped: \`${result}\`**\n\n👛 You now have \`${nFormatter(Math.floor(data.balance))} 💸\` in your Pocket`)
+          .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null).setFooter(user.tag, user.displayAvatarURL({dynamic: true}))
+        )
       } else {
         //write the DB
         client.economy.math(`${message.guild.id}-${message.author.id}`, "-", amount, "balance")
         //get the latest data
         data = client.economy.get(`${message.guild.id}-${message.author.id}`)
         //send the Information Message
-        message.reply({embeds: [new MessageEmbed()
-          .setTitle(eval(client.la[ls]["cmds"]["economy"]["coinflip"]["variable10"]))
-          .setDescription(eval(client.la[ls]["cmds"]["economy"]["coinflip"]["variable11"]))
+        message.channel.send(new MessageEmbed()
+          .setTitle(`<:cross:899255798142750770>  You've lost \`${amount} 💸\``)
+          .setDescription(`**The Coin Flipped: \`${result}\`**\n\n👛 You now have \`${nFormatter(Math.floor(data.balance))} 💸\` in your Pocket`)
           .setColor(es.wrongcolor).setFooter(user.tag, user.displayAvatarURL({dynamic: true}))
-        ]})
+        )
       }
     } catch (e) {
-      console.log(String(e.stack).grey.bgRed)
-      return message.reply({embeds: [new MessageEmbed()
-        .setColor(es.wrongcolor).setFooter(client.getFooter(es))
-        .setTitle(client.la[ls].common.erroroccur)
-        .setDescription(eval(client.la[ls]["cmds"]["economy"]["coinflip"]["variable12"]))
-      ]});
+      console.log(String(e.stack).bgRed)
+      return message.channel.send(new MessageEmbed()
+        .setColor(es.wrongcolor).setFooter(es.footertext, es.footericon)
+        .setTitle(`<:cross:899255798142750770>  An error occurred`)
+        .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``)
+      );
     }
   }
 };
 /**
  * @INFO
- * Bot Coded by Tomato#6966 | https://discord.gg/milrato
+ * Bot Coded by S409™#9685 | https://github.com/S409™#9685/discord-js-lavalink-Music-Bot-erela-js
  * @INFO
- * Work for S409 support | https://s409.xyz
+ * Work for s409 Development | https://s409.xyz
  * @INFO
- * Please mention him / S409 support, when using this Code!
+ * Please mention Him / s409 Development, when using this Code!
  * @INFO
  */

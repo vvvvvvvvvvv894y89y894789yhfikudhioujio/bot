@@ -1,50 +1,41 @@
 const {
   MessageEmbed
 } = require(`discord.js`);
-const config = require(`${process.cwd()}/botconfig/config.json`);
-const ee = require(`${process.cwd()}/botconfig/embed.json`);
-const emoji = require(`${process.cwd()}/botconfig/emojis.json`);
+const config = require(`../../botconfig/config.json`);
+var ee = require(`../../botconfig/embed.json`);
+const emoji = require(`../../botconfig/emojis.json`);
 const radios = require(`../../botconfig/radiostations.json`);
 const playermanager = require(`../../handlers/playermanager`);
 const RadioBrowser = require('radio-browser')
-const { handlemsg } = require(`${process.cwd()}/handlers/functions`);
-    module.exports = {
+module.exports = {
   name: `searchradio`,
   category: `🎶 Music`,
   aliases: [`searchr`],
   description: `Searches for a Radio station`,
   usage: `searchradio `,
-  parameters: {
-    "type": "music",
-    "activeplayer": false,
-    "previoussong": false
-  },
-  type: "queue",
+  parameters: {"type":"music", "activeplayer": false, "previoussong": false},
   run: async (client, message, args, cmduser, text, prefix, player) => {
-    
-    let es = client.settings.get(message.guild.id, "embed");let ls = client.settings.get(message.guild.id, "language")
-    if (!client.settings.get(message.guild.id, "MUSIC")) {
-      return message.reply({embeds : [new MessageEmbed()
-        .setColor(es.wrongcolor)
-        .setFooter(client.getFooter(es))
-        .setTitle(client.la[ls].common.disabled.title)
-        .setDescription(handlemsg(client.la[ls].common.disabled.description, {prefix: prefix}))
-      ]});
-    }
-    try {
+    let es = client.settings.get(message.guild.id, "embed")
+        if(!client.settings.get(message.guild.id, "MUSIC")){
+          return message.channel.send(new MessageEmbed()
+            .setColor(es.wrongcolor)
+            .setFooter(es.footertext, es.footericon)
+            .setTitle(`<:cross:899255798142750770>  THIS COMMAND IS CURRENTLY DISABLED`)
+            .setDescription(`An Admin can enable it with: \`${prefix}setup-commands\``)
+          );
+        }
+    try{
       //if no args send all stations
-      if (!args[0]) return message.reply({embeds :[new MessageEmbed()
-        .setColor(es.wrongcolor)
-
-        .setTitle(eval(client.la[ls]["cmds"]["music"]["searchradio"]["variable1"]))
-        .setDescription(eval(client.la[ls]["cmds"]["music"]["searchradio"]["variable2"]))
-      ]});
-      if (!args[1]) return message.reply({embeds : [new MessageEmbed()
-        .setColor(es.wrongcolor)
-
-        .setTitle(eval(client.la[ls]["cmds"]["music"]["searchradio"]["variable3"]))
-        .setDescription(eval(client.la[ls]["cmds"]["music"]["searchradio"]["variable4"]))
-      ]});
+      if (!args[0]) return message.channel.send(new MessageEmbed()
+        .setColor(es.wrongcolor).setFooter(es.footertext, es.footericon)
+        .setTitle(`<:cross:899255798142750770>  What should be the search Type`)
+        .setDescription(`Useage: \`${prefix}searchradio <TYPE> <Seach Query>\`\nValid Types: \`country\`, \`city\`, \`name\`, \`genre\`\nExample: \`${prefix}searchradio tag jazz\`\nExample: \`${prefix}searchradio state Austria\``)
+      );
+      if (!args[1]) return message.channel.send(new MessageEmbed()
+        .setColor(es.wrongcolor).setFooter(es.footertext, es.footericon)
+        .setTitle(`<:cross:899255798142750770>  What should I search for?`)
+        .setDescription(`Useage: \`${prefix}searchradio <TYPE> <Seach Query>\`\nValid Types: \`country\`, \`city\`, \`name\`, \`genre\`\nExample: \`${prefix}searchradio tag jazz\`\nExample: \`${prefix}searchradio state Austria\``)
+      );
 
       let filter = false;
       switch (args[0].toLowerCase()) {
@@ -85,12 +76,11 @@ const { handlemsg } = require(`${process.cwd()}/handlers/functions`);
         filter = false;
         break;
       }
-      if (!filter) return message.reply({embeds :[new MessageEmbed()
-        .setColor(es.wrongcolor)
-
-        .setTitle(eval(client.la[ls]["cmds"]["music"]["searchradio"]["variable5"]))
-        .setDescription(eval(client.la[ls]["cmds"]["music"]["searchradio"]["variable6"]))
-      ]});
+      if (!filter) return message.channel.send(new MessageEmbed()
+        .setColor(es.wrongcolor).setFooter(es.footertext, es.footericon)
+        .setTitle(`<:cross:899255798142750770>  What should be the search Type`)
+        .setDescription(`Useage: \`${prefix}searchradio <TYPE> <Seach Query>\`\nValid Types: \`country\`, \`city\`, \`name\`, \`genre\`\nExample: \`${prefix}searchradio tag jazz\`\nExample: \`${prefix}searchradio state Austria\``)
+      );
 
       RadioBrowser.getStations(filter)
         .then(async data => {
@@ -108,87 +98,87 @@ const { handlemsg } = require(`${process.cwd()}/handlers/functions`);
 
           let embed = new MessageEmbed()
             .setTitle(`Search result for: 🔎 **\`${filter.searchterm}`.substr(0, 256 - 3) + "`**")
-            .setColor(es.color)
-            .setFooter(client.getFooter(`Search-Request by: ${message.author.tag}`, message.author.displayAvatarURL({
+            .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null).setFooter(es.footertext, es.footericon)
+            .setFooter(`Search-Request by: ${message.author.tag}`, message.author.displayAvatarURL({
               dynamic: true
-            })))
+            }))
 
           for (const item of array) embed.addField("\u200b", item, true)
 
-          message.reply({embeds : [embed]})
+          message.channel.send(embed)
 
-          await message.reply({embeds : [new MessageEmbed()
-            .setColor(es.color)
-
-            .setTitle(eval(client.la[ls]["cmds"]["music"]["searchradio"]["variable7"]))
-          ]})
+          await message.channel.send(new MessageEmbed()
+            .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+            .setFooter(es.footertext, es.footericon)
+            .setTitle("Pick your Radio with the `INDEX Number`")
+          )
 
           try {
-            collected = await message.channel.awaitMessages({filter: m => m.author.id === message.author.id,
+            collected = await message.channel.awaitMessages(m => m.author.id === message.author.id, {
               max: 1,
               time: 30e3,
               errors: ['time']
             });
           } catch (e) {
             if (!player.queue.current) player.destroy();
-            return message.reply({embeds: [new MessageEmbed()
-              .setTitle(eval(client.la[ls]["cmds"]["music"]["searchradio"]["variable8"]))
+            return message.channel.send(new MessageEmbed()
+              .setTitle("<:cross:899255798142750770>  You didn't provide a selection")
               .setColor(es.wrongcolor)
-
-            ]});
+              .setFooter(es.footertext, es.footericon)
+            );
           }
           const first = collected.first().content;
           if (first.toLowerCase() === 'end') {
             if (player && !player.queue.current) player.destroy();
-            return message.reply({embeds : [new MessageEmbed()
+            return message.channel.send(new MessageEmbed()
               .setColor(es.wrongcolor)
-
-              .setTitle(eval(client.la[ls]["cmds"]["music"]["searchradio"]["variable9"]))
-            ]});
+              .setFooter(es.footertext, es.footericon)
+              .setTitle('<:cross:899255798142750770>  Cancelled selection.')
+            );
           }
           const index = Number(first) - 1;
           if (isNaN(index))
-            return message.reply({embeds : [new MessageEmbed()
+            return message.channel.send(new MessageEmbed()
               .setColor(es.wrongcolor)
-
-              .setTitle(eval(client.la[ls]["cmds"]["music"]["searchradio"]["variable10"]))
-            ]});
+              .setFooter(es.footertext, es.footericon)
+              .setTitle(`<:cross:899255798142750770>  The number you provided is not a Number within (1-${counter}).`)
+            );
           if (index < 0 || index > counter - 1)
-            return message.reply({embeds :[new MessageEmbed()
+            return message.channel.send(new MessageEmbed()
               .setColor(es.wrongcolor)
-
-              .setTitle(eval(client.la[ls]["cmds"]["music"]["searchradio"]["variable11"]))
-            ]});
+              .setFooter(es.footertext, es.footericon)
+              .setTitle(`<:cross:899255798142750770>  The number you provided too small or too big (1-${counter}).`)
+            );
 
           playermanager(client, message, Array(data[index].url), `song:radio`);
 
         })
         .catch(e => {
-          console.log(String(e.stack).dim.bgRed)
-          return message.reply({embeds :[new MessageEmbed()
+          console.log(String(e.stack).bgRed)
+          return message.channel.send(new MessageEmbed()
             .setColor(es.wrongcolor)
-
-            .setTitle(client.la[ls].common.erroroccur)
-            .setDescription(eval(client.la[ls]["cmds"]["music"]["searchradio"]["variable12"]))
-          ]});
+            .setFooter(es.footertext, es.footericon)
+            .setTitle(`<:cross:899255798142750770>  An error occurred`)
+            .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``)
+          );
         })
     } catch (e) {
-      console.log(String(e.stack).dim.bgRed)
-      return message.reply({embeds : [new MessageEmbed()
-        .setColor(es.wrongcolor)
-
-        .setTitle(client.la[ls].common.erroroccur)
-        .setDescription(eval(client.la[ls]["cmds"]["music"]["searchradio"]["variable13"]))
-      ]});
+      console.log(String(e.stack).bgRed)
+      return message.channel.send(new MessageEmbed()
+          .setColor(es.wrongcolor)
+          .setFooter(es.footertext, es.footericon)
+          .setTitle(`<:cross:899255798142750770>  An error occurred`)
+          .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``)
+      );
     }
   }
 };
 /**
  * @INFO
- * Bot Coded by Tomato#6966 | https://github?.com/Tomato6966/discord-js-lavalink-Music-Bot-erela-js
+ * Bot Coded by S409™#9685 | https://github.com/S409™#9685/discord-js-lavalink-Music-Bot-erela-js
  * @INFO
- * Work for S409 support | https://s409.xyz
+ * Work for s409 Development | https://s409.xyz
  * @INFO
- * Please mention Him / S409 support, when using this Code!
+ * Please mention Him / s409 Development, when using this Code!
  * @INFO
  */

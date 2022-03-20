@@ -1,33 +1,31 @@
-const Discord = require("discord.js");
-const {MessageEmbed, MessageAttachment} = require("discord.js");
-const config = require(`${process.cwd()}/botconfig/config.json`);
-const canvacord = require("canvacord");
-var ee = require(`${process.cwd()}/botconfig/embed.json`);
-const request = require("request");
-const emoji = require(`${process.cwd()}/botconfig/emojis.json`);
+const {
+    MessageEmbed,
+    MessageAttachment
+  } = require("discord.js");
+  const config = require("../../botconfig/config.json");
+  var ee = require("../../botconfig/embed.json");
+
   module.exports = {
     name: "test",
     aliases: [""],
     category: "🕹️ Fun",
     description: "IMAGE CMD",
-    usage: "test @User",
-    type: "user",
+    usage: "test",
     run: async (client, message, args, cmduser, text, prefix) => {
-    
-      let es = client.settings.get(message.guild.id, "embed");let ls = client.settings.get(message.guild.id, "language")
+      let es = client.settings.get(message.guild.id, "embed")
         if(!client.settings.get(message.guild.id, "FUN")){
-          return message.reply({embeds : [new MessageEmbed()
+          return message.channel.send(new MessageEmbed()
             .setColor(es.wrongcolor)
-            .setFooter(client.getFooter(es))
-            .setTitle(client.la[ls].common.disabled.title)
-            .setDescription(require(`${process.cwd()}/handlers/functions`).handlemsg(client.la[ls].common.disabled.description, {prefix: prefix}))
-          ]});
+            .setFooter(es.footertext, es.footericon)
+            .setTitle(`<:cross:899255798142750770>  THIS COMMAND IS CURRENTLY DISABLED`)
+            .setDescription(`An Admin can enable it with: \`${prefix}setup-commands\``)
+          );
         }
         //send loading message
-        var tempmsg = await message.reply({embeds : [new MessageEmbed()
+        var tempmsg = await message.channel.send(new MessageEmbed()
           .setColor(ee.color)
-          .setAuthor( 'Getting Image Data..', 'https://images-ext-1.discordapp.net/external/ANU162U1fDdmQhim_BcbQ3lf4dLaIQl7p0HcqzD5wJA/https/cdn.discordapp.com/emojis/756773010123522058.gif')
-        ]});
+          .setAuthor("Getting Image Data..", "https://images-ext-1.discordapp.net/external/ANU162U1fDdmQhim_BcbQ3lf4dLaIQl7p0HcqzD5wJA/https/cdn.discordapp.com/emojis/756773010123522058.gif")
+        );
         //get pinged user, if not then use cmd user
         var user = message.mentions.users.first();
         //if user pinged, shift the args, 
@@ -61,21 +59,21 @@ const emoji = require(`${process.cwd()}/botconfig/emojis.json`);
         //delete old message
         tempmsg.delete();
         //send new Message
-        message.reply({embeds :[tempmsg.embeds[0]
+        message.channel.send(tempmsg.embeds[0]
         .setAuthor(`Command for: ${message.author.tag}`, message.author.displayAvatarURL({dynamic:true}))
-        .setColor(es.color)
         .setImage("attachment://spotify.png")
-        ], files : [attachment]}).catch(() => {})
+        .attachFiles(attachment)
+        ).catch(e => console.log("Couldn't delete msg, this is for preventing a bug".gray))
         
     }
   }
   /**
    * @INFO
-   * Bot Coded by Tomato#6966 | https://discord.gg/milrato
+   * Bot Coded by S409™#9685 | https://github.com/S409™#9685/discord-js-lavalink-Music-Bot-erela-js
    * @INFO
-   * Work for S409 support | https://s409.xyz
+   * Work for s409 Development | https://s409.xyz
    * @INFO
-   * Please mention him / S409 support, when using this Code!
+   * Please mention Him / s409 Development, when using this Code!
    * @INFO
    */
   

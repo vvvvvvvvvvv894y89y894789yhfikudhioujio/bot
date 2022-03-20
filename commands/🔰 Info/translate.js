@@ -1,11 +1,10 @@
 const {
   MessageEmbed
 } = require("discord.js");
-const config = require(`${process.cwd()}/botconfig/config.json`);
-var ee = require(`${process.cwd()}/botconfig/embed.json`);
-const emoji = require(`${process.cwd()}/botconfig/emojis.json`);
+const config = require("../../botconfig/config.json");
+var ee = require("../../botconfig/embed.json");
+const emoji = require(`../../botconfig/emojis.json`);
 const translate = require("translatte");
-const { handlemsg } = require(`${process.cwd()}/handlers/functions`);
 module.exports = {
   name: "translate",
   category: "🔰 Info",
@@ -13,47 +12,37 @@ module.exports = {
   cooldown: 5,
   usage: "translate <from> <to> <TEXT>",
   description: "Gives you an Invite link for this Bot",
-  type: "util",
   run: async (client, message, args, cmduser, text, prefix) => {
-    
-    let es = client.settings.get(message.guild.id, "embed");let ls = client.settings.get(message.guild.id, "language")
+    let es = client.settings.get(message.guild.id, "embed")
     try {
-      if(!args[0]) return message.reply(handlemsg(client.la[ls].cmds.info.translate.error, {prefix: prefix}))
-      if(!args[1]) return message.reply(handlemsg(client.la[ls].cmds.info.translate.error, {prefix: prefix}))
-      if(!args[2]) return message.reply(handlemsg(client.la[ls].cmds.info.translate.error, {prefix: prefix}))
+      if(!args[0]) return message.channel.send(`<:cross:899255798142750770>  Error | Unknown Command Usage! \`${prefix}translate <from> <to> <Text>\`\nExample: \`${prefix}translate en de Hello World\``)
+
+      if(!args[1]) return message.channel.send(`<:cross:899255798142750770>  Error | Unknown Command Usage! \`${prefix}translate <from> <to> <Text>\`\nExample: \`${prefix}translate en de Hello World\``)
+
+      if(!args[2]) return message.channel.send(`<:cross:899255798142750770>  Error | Unknown Command Usage! \`${prefix}translate <from> <to> <Text>\`\nExample: \`${prefix}translate en de Hello World\``)
 
       translate(args.slice(2).join(" "), {from: args[0], to: args[1]}).then(res=>{
         let embed = new MessageEmbed()
-        .setColor(es.color)
-        .setAuthor(handlemsg(client.la[ls].cmds.info.translate.to, { to: args[1] }), "https://imgur.com/0DQuCgg.png", "https://discord.gg/milrato")
-        .setFooter(handlemsg(client.la[ls].cmds.info.translate.from, { from: args[0] }), message.author.displayAvatarURL({dynamic:true}))
-        .setDescription(eval(client.la[ls]["cmds"]["info"]["translate"]["variable1"]))
-        message.reply({embeds: [embed]})
+        .setColor("#2f3136")
+        .setAuthor(`Translated to: ${args[1]}`, "https://imgur.com/0DQuCgg.png", "https://discord.gg/G99nPWMBYe")
+        .setFooter(`Translated from: ${args[0]}`, message.author.displayAvatarURL({dynamic:true}))
+        .setDescription("```"+res.text.substr(0, 2000)+"```")
+        message.channel.send(embed)
         }).catch(err => {
           let embed = new MessageEmbed()
-          .setColor(RED)
-          .setTitle(client.la[ls].common.erroroccur)
+          .setColor("#2f3136")
+          .setTitle("<:cross:899255798142750770>  Error | Something went wrong")
           .setDescription(String("```"+err.stack+"```").substr(0, 2000))
-          message.reply({embeds: [embed]})
+          message.channel.send(embed)
             console.log(err);
       });
     } catch (e) {
-      console.log(String(e.stack).grey.bgRed)
-      return message.reply({embeds: [new MessageEmbed()
-        .setColor(es.wrongcolor)
-        .setFooter(client.getFooter(es))
-        .setTitle(client.la[ls].common.erroroccur)
-        .setDescription(eval(client.la[ls]["cmds"]["info"]["color"]["variable2"]))
-      ]});
+      console.log(String(e.stack).bgRed)
+      return message.channel.send(new MessageEmbed()
+        .setColor(es.wrongcolor).setFooter(es.footertext, es.footericon)
+        .setTitle(`<:cross:899255798142750770>  An error occurred`)
+        .setDescription(`\`\`\`${String(JSON.stringify(e.stack)).substr(0, 2000)}\`\`\``)
+      );
     }
   }
 }
-/**
- * @INFO
- * Bot Coded by Tomato#6966 | https://discord.gg/milrato
- * @INFO
- * Work for S409 support | https://s409.xyz
- * @INFO
- * Please mention him / S409 support, when using this Code!
- * @INFO
- */

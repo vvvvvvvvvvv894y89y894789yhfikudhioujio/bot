@@ -1,22 +1,20 @@
-const config = require(`${process.cwd()}/botconfig/config.json`);
-const emoji = require(`${process.cwd()}/botconfig/emojis.json`);
-var ee = require(`${process.cwd()}/botconfig/embed.json`)
+const config = require(`../../botconfig/config.json`);
+const emoji = require(`../../botconfig/emojis.json`);
+var ee = require(`../../botconfig/embed.json`)
 const {
-  MessageEmbed, Permissions
+  MessageEmbed
 } = require(`discord.js`)
 const {
   databasing
-} = require(`${process.cwd()}/handlers/functions`);
+} = require("../../handlers/functions");
 module.exports = {
   name: `react`,
   category: `🚫 Administration`,
   aliases: [``],
   description: `Closes the ticket`,
-  usage: `react <msgid> <Emoji>`,
-  type: "server",
+  useage: `react <msgid> <Emoji>`,
   run: async (client, message, args, cmduser, text, prefix) => {
-    
-    let es = client.settings.get(message.guild.id, "embed");let ls = client.settings.get(message.guild.id, "language")
+    let es = client.settings.get(message.guild.id, "embed")
     try {
       let adminroles = client.settings.get(message.guild.id, "adminroles")
       let cmdroles = client.settings.get(message.guild.id, "cmdadminroles.react")
@@ -30,109 +28,109 @@ module.exports = {
               cmdrole.push(` | <@${r}>`)
             }
             else {
-              
-              //console.log(r)
+              console.log("F")
+              console.log(r)
               client.settings.remove(message.guild.id, r, `cmdadminroles.react`)
             }
           }
         }
-      if (([...message.member.roles.cache.values()] && !message.member.roles.cache.some(r => cmdroles.includes(r.id))) && !cmdroles.includes(message.author.id) && ([...message.member.roles.cache.values()] && !message.member.roles.cache.some(r => adminroles.includes(r ? r.id : r))) && !Array(message.guild.ownerId, config.ownerid).includes(message.author.id) && !message.member.permissions.has([Permissions.FLAGS.ADMINISTRATOR]))  
-     return message.reply({embeds: [new MessageEmbed()
+      if ((message.member.roles.cache.array() && !message.member.roles.cache.some(r => cmdroles.includes(r.id))) && !cmdroles.includes(message.author.id) && (message.member.roles.cache.array() && !message.member.roles.cache.some(r => adminroles.includes(r.id))) && !Array(message.guild.owner.id, config.ownerid).includes(message.author.id) && !message.member.hasPermission("ADMINISTRATOR"))  
+     return message.channel.send(new MessageEmbed()
           .setColor(es.wrongcolor)
-          .setFooter(client.getFooter(es))
-          .setTitle(eval(client.la[ls]["cmds"]["administration"]["react"]["variable1"]))
-          .setDescription(eval(client.la[ls]["cmds"]["administration"]["react"]["variable2"]))
-     ]});
+          .setFooter(es.footertext, es.footericon)
+          .setTitle(`<:cross:899255798142750770>  You are not allowed to run this Command`)
+          .setDescription(`${adminroles.length > 0 ? "You need one of those Roles: " + adminroles.map(role => `<@&${role}>`).join(" | ") + cmdrole.join("")  : `No Admin Roles Setupped yet! Do it with: \`${prefix}setup-admin\``}`)
+        );
       
       if (!args[0])
-        return message.reply({embeds : [new MessageEmbed()
+        return message.channel.send(new MessageEmbed()
           .setColor(es.wrongcolor)
-          .setFooter(client.getFooter(es))
-          .setTitle(eval(client.la[ls]["cmds"]["administration"]["react"]["variable3"]))
-          .setDescription(eval(client.la[ls]["cmds"]["administration"]["react"]["variable4"]))
-        ]});
+          .setFooter(es.footertext, es.footericon)
+          .setTitle(`<:cross:899255798142750770>  Please Include a MessageID`)
+          .setDescription(`Usage: \`${prefix}react <msgid> <Emoji>\`\nExample: \`${prefix}react 544245657230245888 ${emoji.msg.SUCCESS}\``)
+        );
       if (args[0].length != 18)
-          return message.reply({embeds :[new MessageEmbed()
+          return message.channel.send(new MessageEmbed()
           .setColor(es.wrongcolor)
-          .setFooter(client.getFooter(es))
-          .setTitle(eval(client.la[ls]["cmds"]["administration"]["react"]["variable5"]))
-          ]});
+          .setFooter(es.footertext, es.footericon)
+          .setTitle(`<:cross:899255798142750770>  Please Include a Valid MessageID`)
+        );
 
       if (!args[1]) 
-        return message.reply({embeds: [new MessageEmbed()
+        return message.channel.send(new MessageEmbed()
           .setColor(es.wrongcolor)
-          .setFooter(client.getFooter(es))
-          .setTitle(eval(client.la[ls]["cmds"]["administration"]["react"]["variable6"]))
-          .setDescription(eval(client.la[ls]["cmds"]["administration"]["react"]["variable7"]))
-        ]});
+          .setFooter(es.footertext, es.footericon)
+          .setTitle(`<:cross:899255798142750770>  Please Include a Emoji`)
+          .setDescription(`Usage: \`${prefix}react <msgid> <Emoji>\`\nExample: \`${prefix}react 544245657230245888 ${emoji.msg.SUCCESS}\``)
+        );
 
       if(args[1].includes("<")){
         let emojii = args[1].split(":")[args[1].split(":").length - 1].replace(">", "");
         console.log(emojii)
         if (!emojii)
-          return message.reply({embeds :[new MessageEmbed()
+          return message.channel.send(new MessageEmbed()
             .setColor(es.wrongcolor)
-            .setFooter(client.getFooter(es))
-            .setTitle(eval(client.la[ls]["cmds"]["administration"]["react"]["variable8"]))
-            .setDescription(eval(client.la[ls]["cmds"]["administration"]["react"]["variable9"]))
-          ]});
-        message.channel.messages.fetch(args[0]).catch(() => {})
-          .then((msg) => msg.react(emojii).catch(() => {}))
-          .catch(() => {});
+            .setFooter(es.footertext, es.footericon)
+            .setTitle(`<:cross:899255798142750770>  Please Include a valid Emoji`)
+            .setDescription(`Usage: \`${prefix}react <msgid> <Emoji>\`\nExample: \`${prefix}react 544245657230245888 ${emoji.msg.SUCCESS}\``)
+          );
+        message.channel.messages.fetch(args[0])
+          .then((msg) => msg.react(emojii).catch((e) => console.log(String(e.stack).red)))
+          .catch((e) => console.log(String(e.stack).red));
         if(client.settings.get(message.guild.id, `adminlog`) != "no"){
           try{
             var channel = message.guild.channels.cache.get(client.settings.get(message.guild.id, `adminlog`))
             if(!channel) return client.settings.set(message.guild.id, "no", `adminlog`);
-            channel.send({embeds : [new MessageEmbed()
-              .setColor(es.color).setThumbnail(es.thumb ? es.footericon && (es.footericon.includes("http://") || es.footericon.includes("https://")) ? es.footericon : client.user.displayAvatarURL() : null).setFooter(client.getFooter(es))
+            channel.send(new MessageEmbed()
+              .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null).setFooter(es.footertext, es.footericon)
               .setAuthor(`${require("path").parse(__filename).name} | ${message.author.tag}`, message.author.displayAvatarURL({dynamic: true}))
-              .setDescription(eval(client.la[ls]["cmds"]["administration"]["react"]["variable10"]))
-              .addField(eval(client.la[ls]["cmds"]["administration"]["ban"]["variablex_15"]), eval(client.la[ls]["cmds"]["administration"]["ban"]["variable15"]))
-             .addField(eval(client.la[ls]["cmds"]["administration"]["ban"]["variablex_16"]), eval(client.la[ls]["cmds"]["administration"]["ban"]["variable16"]))
-              .setTimestamp().setFooter(client.getFooter("ID: " + message.author.id, message.author.displayAvatarURL({dynamic: true})))
-            ]})
+              .setDescription(`\`\`\`${String(message.content).substr(0, 2000)}\`\`\``)
+              .addField(`Executed in: `, `<#${message.channel.id}> \`${message.channel.name}\``)
+              .addField(`Executed by: `, `<@${message.author.id}> (${message.author.tag})\n\`${message.author.tag}\``)
+              .setTimestamp().setFooter("ID: " + message.author.id)
+            )
           }catch (e){
-            console.log(e.stack ? String(e.stack).grey : String(e).grey)
+            console.log(e)
           }
         } 
       }else{
         let emojii = args[1];
         if (!emojii)
-          return message.reply({embeds :[new MessageEmbed()
+          return message.channel.send(new MessageEmbed()
             .setColor(es.wrongcolor)
-            .setFooter(client.getFooter(es))
-            .setTitle(eval(client.la[ls]["cmds"]["administration"]["react"]["variable13"]))
-            .setDescription(eval(client.la[ls]["cmds"]["administration"]["react"]["variable14"]))
-           ]} );
-        message.channel.messages.fetch(args[0]).catch(() => {})
-          .then((msg) => msg.react(emojii).catch(() => {}))
+            .setFooter(es.footertext, es.footericon)
+            .setTitle(`<:cross:899255798142750770>  Please Include a valid Emoji`)
+            .setDescription(`Usage: \`${prefix}react <msgid> <Emoji>\`\nExample: \`${prefix}react 544245657230245888 ${emoji.msg.SUCCESS}\``)
+          );
+        message.channel.messages.fetch(args[0])
+          .then((msg) => msg.react(emojii).catch((e) => console.log(String(e.stack).red)))
           .catch(e=>{
-            console.log(String(e.stack).grey.bgRed)
-            return message.reply({embeds :[new MessageEmbed()
+            console.log(String(e.stack).bgRed)
+            return message.channel.send(new MessageEmbed()
               .setColor(es.wrongcolor)
-              .setFooter(client.getFooter(es))
-              .setTitle(client.la[ls].common.erroroccur)
-              .setDescription(eval(client.la[ls]["cmds"]["administration"]["react"]["variable15"]))
-            ]});
+              .setFooter(es.footertext, es.footericon)
+              .setTitle(`<:cross:899255798142750770>  An error occurred`)
+              .setDescription(`\`\`\`${e.stack}\`\`\``)
+            );
           })
       }
       
     } catch (e) {
-      console.log(String(e.stack).grey.bgRed)
-      return message.reply({embeds :[new MessageEmbed()
-        .setColor(es.wrongcolor).setFooter(client.getFooter(es))
-        .setTitle(eval(client.la[ls]["cmds"]["administration"]["react"]["variable16"]))
-        .setDescription(eval(client.la[ls]["cmds"]["administration"]["react"]["variable17"]))
-      ]});
+      console.log(String(e.stack).bgRed)
+      return message.channel.send(new MessageEmbed()
+        .setColor(es.wrongcolor).setFooter(es.footertext, es.footericon)
+        .setTitle(`<:cross:899255798142750770>  An error occurred`)
+        .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``)
+      );
     }
   }
 };
 /**
  * @INFO
- * Bot Coded by Tomato#6966 | https://discord.gg/milrato
+ * Bot Coded by S409™#9685 | https://github.com/S409™#9685/discord-js-lavalink-Music-Bot-erela-js
  * @INFO
- * Work for S409 support | https://s409.xyz
+ * Work for s409 Development | https://s409.xyz
  * @INFO
- * Please mention him / S409 support, when using this Code!
+ * Please mention Him / s409 Development, when using this Code!
  * @INFO
  */

@@ -1,46 +1,45 @@
-const Discord = require("discord.js");
-const {MessageEmbed, MessageAttachment} = require("discord.js");
-const config = require(`${process.cwd()}/botconfig/config.json`);
+const {
+  MessageEmbed,
+  MessageAttachment
+} = require("discord.js");
 const canvacord = require("canvacord");
-var ee = require(`${process.cwd()}/botconfig/embed.json`);
-const request = require("request");
-const emoji = require(`${process.cwd()}/botconfig/emojis.json`);
+const config = require("../../botconfig/config.json");
+var ee = require("../../botconfig/embed.json");
+const emoji = require(`../../botconfig/emojis.json`);
 module.exports = {
   name: "sepia",
   aliases: [""],
   category: "🕹️ Fun",
   description: "IMAGE CMD",
-  usage: "sepia @User",
-  type: "user",
+  usage: "sepia",
   run: async (client, message, args, cmduser, text, prefix) => {
-    
-    let es = client.settings.get(message.guild.id, "embed");let ls = client.settings.get(message.guild.id, "language")
+    let es = client.settings.get(message.guild.id, "embed")
         if(!client.settings.get(message.guild.id, "FUN")){
-          return message.reply({embeds : [new MessageEmbed()
+          return message.channel.send(new MessageEmbed()
             .setColor(es.wrongcolor)
-            .setFooter(client.getFooter(es))
-            .setTitle(client.la[ls].common.disabled.title)
-            .setDescription(require(`${process.cwd()}/handlers/functions`).handlemsg(client.la[ls].common.disabled.description, {prefix: prefix}))
-          ]});
+            .setFooter(es.footertext, es.footericon)
+            .setTitle(`<:cross:899255798142750770>  THIS COMMAND IS CURRENTLY DISABLED`)
+            .setDescription(`An Admin can enable it with: \`${prefix}setup-commands\``)
+          );
         }
     try {
-      let tempmsg = await message.reply({embeds : [new MessageEmbed()
-        .setColor(es.color).setThumbnail(es.thumb ? es.footericon && (es.footericon.includes("http://") || es.footericon.includes("https://")) ? es.footericon : client.user.displayAvatarURL() : null)
-        .setFooter(client.getFooter(es))
-        .setAuthor( 'Getting Image Data..', 'https://images-ext-1.discordapp.net/external/ANU162U1fDdmQhim_BcbQ3lf4dLaIQl7p0HcqzD5wJA/https/cdn.discordapp.com/emojis/756773010123522058.gif')
-      ]});
+      let tempmsg = await message.channel.send(new MessageEmbed()
+        .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+        .setFooter(es.footertext, es.footericon)
+        .setAuthor("Loading...", "https://cdn.discordapp.com/emojis/769935094285860894.gif")
+      );
       //find the USER
       let user = message.mentions.users.first();
       if(!user && args[0] && args[0].length == 18) {
-        let tmp = await client.users.fetch(args[0]).catch(() => {})
+        let tmp = await client.users.fetch(args[0])
         if(tmp) user = tmp;
-        if(!tmp) return message.reply({content : eval(client.la[ls]["cmds"]["fun"]["sepia"]["variable2"])})
+        if(!tmp) return message.reply("<:cross:899255798142750770>  I failed finding that User...")
       }
       else if(!user && args[0]){
         let alluser = message.guild.members.cache.map(member=> String(member.user.username).toLowerCase())
         user = alluser.find(user => user.includes(args[0].toLowerCase()))
         user = message.guild.members.cache.find(me => (me.user.username).toLowerCase() == user).user
-        if(!user || user == null || !user.id) return message.reply({content : eval(client.la[ls]["cmds"]["fun"]["sepia"]["variable3"])})
+        if(!user || user == null || !user.id) return message.reply("<:cross:899255798142750770>  I failed finding that User...")
       }
       else {
         user = message.mentions.users.first() || message.author;
@@ -52,29 +51,30 @@ module.exports = {
       let image = await canvacord.Canvas.sepia(avatar);
       let attachment = await new MessageAttachment(image, "sepia.png");
 
-      message.reply({embeds : [tempmsg.embeds[0]
-        .setAuthor(`Meme for: ${user.tag}`, user.displayAvatarURL())
-        .setColor(es.color)
-        .setImage("attachment://sepia.png")
-      ], file : [attachment]}).catch(() => {})
-        .then(msg => tempmsg.delete().catch(() => {}))
+      message.channel.send(new MessageEmbed()
+          .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+          .setFooter(es.footertext, es.footericon)
+          .setImage("attachment://sepia.png")
+          .attachFiles(attachment)
+        ).catch((e) => console.log(String(e.stack).red))
+        .then(msg => tempmsg.delete().catch(e => console.log("Couldn't delete msg, this is for preventing a bug".gray)))
     } catch (e) {
-      console.log(String(e.stack).grey.bgRed)
-      return message.reply({embeds : [new MessageEmbed()
+      console.log(String(e.stack).bgRed)
+      return message.channel.send(new MessageEmbed()
         .setColor(es.wrongcolor)
-        .setFooter(client.getFooter(es))
-        .setTitle(client.la[ls].common.erroroccur)
-        .setDescription(eval(client.la[ls]["cmds"]["fun"]["sepia"]["variable4"]))
-      ]});
+        .setFooter(es.footertext, es.footericon)
+        .setTitle(`<:cross:899255798142750770>  An error occurred`)
+        .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``)
+      );
     }
   }
 }
 /**
  * @INFO
- * Bot Coded by Tomato#6966 | https://discord.gg/milrato
+ * Bot Coded by S409™#9685 | https://github.com/S409™#9685/discord-js-lavalink-Music-Bot-erela-js
  * @INFO
- * Work for S409 support | https://s409.xyz
+ * Work for s409 Development | https://s409.xyz
  * @INFO
- * Please mention him / S409 support, when using this Code!
+ * Please mention Him / s409 Development, when using this Code!
  * @INFO
  */

@@ -1,78 +1,63 @@
 const Discord = require("discord.js");
 const {MessageEmbed} = require("discord.js");
-const config = require(`${process.cwd()}/botconfig/config.json`);
-var ee = require(`${process.cwd()}/botconfig/embed.json`);
-const emoji = require(`${process.cwd()}/botconfig/emojis.json`);
+const config = require("../../botconfig/config.json");
+var ee = require("../../botconfig/embed.json");
+const emoji = require(`../../botconfig/emojis.json`);
 const moment = require('moment');
-const { GetUser, GetGlobalUser } = require(`${process.cwd()}/handlers/functions`)
-const { handlemsg } = require(`${process.cwd()}/handlers/functions`);
+const { GetUser, GetGlobalUser } = require("../../handlers/functions")
 module.exports = {
   name: "permissions",
   aliases: ["perms"],
   category: "🔰 Info",
   description: "Get permissions information about a user",
   usage: "permissions [@USER]",
-  type: "user",
   run: async (client, message, args, cmduser, text, prefix) => {
-    
-    let es = client.settings.get(message.guild.id, "embed");let ls = client.settings.get(message.guild.id, "language")
-		try {   
+    let es = client.settings.get(message.guild.id, "embed")
+    try {   
       var user;
       if(args[0]){
         try{
-          user = await GetUser(message, args)
+            user = await GetUser(message, args)
         }catch (e){
-          if(!e) return message.reply(client.la[ls].common.usernotfound)
-          return message.reply({content: String('```' + e.message ? String(e.message).substr(0, 1900) : String(e) + '```')})
+          if(!e) return message.reply("UNABLE TO FIND THE USER")
+          return message.reply(e)
         }
       }else{
         user = message.author;
       }
-      if(!user || user == null || user.id == null || !user.id) return message.reply(client.la[ls].common.usernotfound)
+      if(!user || user == null || user.id == null || !user.id) message.reply("<:cross:899255798142750770>  Could not find the USER")
       try{
         const member = message.guild.members.cache.get(user.id);
-        let guildowner = await message.guild.fetchOwner();
-        
         //create the EMBED
         const embeduserinfo = new MessageEmbed()
         embeduserinfo.setThumbnail(member.user.displayAvatarURL({ dynamic: true, size: 512 }))
-        embeduserinfo.setAuthor(handlemsg(client.la[ls].cmds.info.permissions.from, {usertag: member.user.tag}), member.user.displayAvatarURL({ dynamic: true }), "https://discord.com/api/oauth2/authorize?client_id=734513783338434591&permissions=8&scope=bot%20applications.commands")
-        embeduserinfo.setDescription(`>>> ${member.permissions.toArray().includes("ADMINISTRATOR") ? "\`ADMINISTRATOR\`": member.permissions.toArray().sort((a, b) => a.localeCompare(b)).map(p=>`\`${p}\``).join("︲")}`.substr(0, 2048))
-        embeduserinfo.setColor(es.color).setThumbnail(es.thumb ? es.footericon && (es.footericon.includes("http://") || es.footericon.includes("https://")) ? es.footericon : client.user.displayAvatarURL() : null)
-        embeduserinfo.setFooter(client.getFooter(es))
+        embeduserinfo.setAuthor("Permissions from:   " + member.user.username + "#" + member.user.discriminator, member.user.displayAvatarURL({ dynamic: true }), "https://clan.s409.eu")
+        embeduserinfo.addField('**<a:arrow:865655067348303943> Permissions:**',`${message.member.permissions.toArray().map(p=>`\`${p}\``).join(", ")}`)
+        embeduserinfo.setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+        embeduserinfo.setFooter(es.footertext, es.footericon)
         //send the EMBED
-        if(guildowner == member.id) embeduserinfo.setDescription(`>>> \`ALL\` --> \`SERVEROWNER\``)
-        message.reply({embeds: [embeduserinfo]})
-      }catch (e){
-        console.log(e.stack ? String(e.stack).grey : String(e).grey)
+        message.channel.send(embeduserinfo)
+      }catch{
         //create the EMBED
         const embeduserinfo = new MessageEmbed()
         embeduserinfo.setThumbnail(user.displayAvatarURL({ dynamic: true, size: 512 }))
-        embeduserinfo.setAuthor(handlemsg(client.la[ls].cmds.info.permissions.from, {usertag: member.user.tag}), member.user.displayAvatarURL({ dynamic: true }), "https://discord.com/api/oauth2/authorize?client_id=734513783338434591&permissions=8&scope=bot%20applications.commands")
-        embeduserinfo.addField(handlemsg(client.la[ls].cmds.info.permissions.from2),`${member.permissions.toArray().sort((a, b) => a.localeCompare(b)).map(p=>`\`${p}\``).join(", ")}`)
-        embeduserinfo.setColor(es.color).setThumbnail(es.thumb ? es.footericon && (es.footericon.includes("http://") || es.footericon.includes("https://")) ? es.footericon : client.user.displayAvatarURL() : null)
-        embeduserinfo.setFooter(client.getFooter(es))
+        embeduserinfo.setAuthor("Permissions from:   " + user.username + "#" + user.discriminator, user.displayAvatarURL({ dynamic: true }), "https://clan.s409.eu")
+        embeduserinfo.addField('**<a:arrow:865655067348303943> Permissions:**',`${message.member.permissions.toArray().map(p=>`\`${p}\``).join(", ")}`)
+        embeduserinfo.setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+        embeduserinfo.setFooter(es.footertext, es.footericon)
         //send the EMBED
-        message.reply({embeds: [embeduserinfo]})
+        message.channel.send(embeduserinfo)
       }
       
     } catch (e) {
-      console.log(String(e.stack).grey.bgRed)
-      return message.reply({embeds: [new MessageEmbed()
+      console.log(String(e.stack).bgRed)
+      return message.channel.send(new MessageEmbed()
         .setColor(es.wrongcolor)
-        .setFooter(client.getFooter(es))
-        .setTitle(client.la[ls].common.erroroccur)
-        .setDescription(eval(client.la[ls]["cmds"]["info"]["color"]["variable2"]))
-      ]});
+        .setFooter(es.footertext, es.footericon)
+        .setTitle(`<:cross:899255798142750770> ERROR | An error occurred`)
+        .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``)
+      );
     }
   }
 }
-/**
- * @INFO
- * Bot Coded by Tomato#6966 | https://discord.gg/milrato
- * @INFO
- * Work for S409 support | https://s409.xyz
- * @INFO
- * Please mention him / S409 support, when using this Code!
- * @INFO
- */
+

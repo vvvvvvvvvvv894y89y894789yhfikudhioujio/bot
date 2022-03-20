@@ -1,64 +1,46 @@
-﻿const Discord = require("discord.js");
-const {MessageEmbed, MessageAttachment} = require("discord.js");
-const config = require(`${process.cwd()}/botconfig/config.json`);
+const {
+  MessageEmbed
+} = require('discord.js');
+const Discord = require(`discord.js`);
+const config = require("../../botconfig/config.json")
+const ee = require("../../botconfig/embed.json")
+const emoji = require(`../../botconfig/emojis.json`);
 const canvacord = require("canvacord");
-var ee = require(`${process.cwd()}/botconfig/embed.json`);
-const request = require("request");
-const emoji = require(`${process.cwd()}/botconfig/emojis.json`);
+const path = require("path");
 module.exports = {
-  name: "shit",
-  aliases: [""],
+  name: path.parse(__filename).name,
   category: "🕹️ Fun",
-  description: "IMAGE CMD",
-  usage: "shit <TEXT>",
-  type: "text",
+  useage: `${path.parse(__filename).name} [@User]`,
+  description: "*Image cmd in the style:* " + path.parse(__filename).name,
   run: async (client, message, args, cmduser, text, prefix) => {
-    
-    let es = client.settings.get(message.guild.id, "embed");let ls = client.settings.get(message.guild.id, "language")
-        if(!client.settings.get(message.guild.id, "FUN")){
-          return message.reply({embeds : [new MessageEmbed()
-            .setColor(es.wrongcolor)
-            .setFooter(client.getFooter(es))
-            .setTitle(client.la[ls].common.disabled.title)
-            .setDescription(require(`${process.cwd()}/handlers/functions`).handlemsg(client.la[ls].common.disabled.description, {prefix: prefix}))
-          ]});
-        }
-      //send loading message
-      var tempmsg = await message.reply({embeds : [new MessageEmbed()
+    try {
+      let tempmsg = await message.channel.send(new MessageEmbed()
         .setColor(ee.color)
-        .setAuthor( 'Getting Image Data..', 'https://images-ext-1.discordapp.net/external/ANU162U1fDdmQhim_BcbQ3lf4dLaIQl7p0HcqzD5wJA/https/cdn.discordapp.com/emojis/756773010123522058.gif')
-      ]});
-      //get the additional text
-      var text = args.join(" ");
-      //If no text added, return error
-      if(!text) return tempmsg.edit({embeds : [tempmsg.embeds[0]
-        .setTitle(eval(client.la[ls]["cmds"]["fun"]["shit"]["variable2"]))
-        .setColor("RED")
-        .setDescription(eval(client.la[ls]["cmds"]["fun"]["shit"]["variable3"]))
-      ]}).catch(() => {})
-      
-      //get the memer image
-      client.memer.shit(text).then(image => {
-        //make an attachment
-        var attachment = new MessageAttachment(image, "shit.png");
-        //delete old message
-        tempmsg.delete();
-        //send new Message
-        message.reply({embeds : [tempmsg.embeds[0]
-          .setAuthor(`Meme for: ${message.author.tag}`, message.author.displayAvatarURL())
-          .setColor(es.color)
-          .setImage("attachment://shit.png")
-        ], files : [attachment]}).catch(() => {})
-      })
-      
+        .setFooter(ee.footertext, ee.footericon)
+        .setAuthor("Loading...", "https://cdn.discordapp.com/emojis/769935094285860894.gif")
+      );
+      let user = message.mentions.users.first() || message.author;
+      let avatar = user.displayAvatarURL({
+        dynamic: false,
+        format: 'png'
+      });
+      let image = await canvacord.Canvas.shit(avatar);
+      let attachment = await new Discord.MessageAttachment(image, "shit.png");
+      let fastembed2 = new Discord.MessageEmbed()
+        .setColor(ee.color)
+        .setFooter(ee.footertext, ee.footericon)
+        .setImage("attachment://shit.png")
+        .attachFiles(attachment)
+      await message.channel.send(fastembed2);
+      await tempmsg.delete().catch(e => console.log("Couldn't delete msg, this is for preventing a bug".gray))
+    } catch (e) {
+      console.log(String(e.stack).bgRed)
+      return message.channel.send(new MessageEmbed()
+        .setColor(ee.wrongcolor)
+        .setFooter(ee.footertext, ee.footericon)
+        .setTitle(`${emoji.msg.ERROR} ERROR | An error occurred`)
+        .setDescription(`\`\`\`${e.message}\`\`\``)
+      );
+    }
   }
 }
-/**
- * @INFO
- * Bot Coded by Tomato#6966 | https://discord.gg/milrato
- * @INFO
- * Work for S409 support | https://s409.xyz
- * @INFO
- * Please mention him / S409 support, when using this Code!
- * @INFO
- */

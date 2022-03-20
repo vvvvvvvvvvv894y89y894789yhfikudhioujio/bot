@@ -1,15 +1,15 @@
 const { fail } = require("assert");
 const {
-  MessageEmbed,
-  Permissions
+  MessageEmbed
 } = require("discord.js");
-const config = require(`${process.cwd()}/botconfig/config.json`);
-var ee = require(`${process.cwd()}/botconfig/embed.json`);
+const config = require("../../botconfig/config.json");
+var ee = require("../../botconfig/embed.json");
 const emoji = require("../../botconfig/emojis.json");
 const ms = require("ms")
 const {
   databasing, delay
-} = require(`${process.cwd()}/handlers/functions`);
+} = require("../../handlers/functions");
+const { memberpermissions } = require("../💪 Setup/setup-twitter");
 module.exports = {
   name: "dm",
   category: "🚫 Administration",
@@ -17,86 +17,83 @@ module.exports = {
   cooldown: 2,
   usage: "dm <@User/@Role> <MESSAGE>",
   description: "Allows you to DM a USER or every USER of a ROLE",
-  type: "memberrole",
   run: async (client, message, args, cmduser, text, prefix) => {
-    
-    let es = client.settings.get(message.guild.id, "embed");let ls = client.settings.get(message.guild.id, "language")
+    let es = client.settings.get(message.guild.id, "embed")
     try {
-      return message.reply({content : eval(client.la[ls]["cmds"]["administration"]["dm"]["variable1"])})
-      if (!message.member.permissions.has([Permissions.FLAGS.ADMINISTRATOR]))
-        return message.reply({embeds  :[new MessageEmbed()
+      if (!message.member.hasPermission("ADMINISTRATOR"))
+        return message.channel.send(new MessageEmbed()
           .setColor(es.wrongcolor)
-          .setFooter(client.getFooter(es))
-          .setTitle(eval(client.la[ls]["cmds"]["administration"]["dm"]["variable2"]))
-          .setDescription(eval(client.la[ls]["cmds"]["administration"]["dm"]["variable3"]))
-        ]});
+          .setFooter(es.footertext, es.footericon)
+          .setTitle(`<:cross:899255798142750770>  You are not allowed to run this Command`)
+          .setDescription(`You need to be a Server Administrator`)
+        );
       let member = message.mentions.members.filter(member=>member.guild.id==message.guild.id).first();
       let role = message.mentions.roles.filter(role=>role.guild.id==message.guild.id).first();
       if(member){
         if (!args[1])
-        return message.reply({embeds : [new MessageEmbed()
+        return message.channel.send(new MessageEmbed()
           .setColor(es.wrongcolor)
-          .setFooter(client.getFooter(es))
-          .setTitle(eval(client.la[ls]["cmds"]["administration"]["dm"]["variable4"]))
-          .setDescription(eval(client.la[ls]["cmds"]["administration"]["dm"]["variable5"]))
-        ]});
+          .setFooter(es.footertext, es.footericon)
+          .setTitle(`<:cross:899255798142750770>  You didn't provide a Text`)
+          .setDescription(`Usage: \`${prefix}dm <@USER/@ROLE> <Your Text>\``)
+        );
         message.delete().catch(e => console.log("Couldn't delete msg, this is a catch to prevent crash"))
         try{
-          member.send({embeds : [new MessageEmbed()
-            .setColor(es.color).setThumbnail(es.thumb ? es.footericon && (es.footericon.includes("http://") || es.footericon.includes("https://")) ? es.footericon : client.user.displayAvatarURL() : null)
-            .setFooter(client.getFooter(es))
-            .setAuthor(`Message from: ${message.author.username}`, message.author.displayAvatarURL({dynamic:true}), "https://discord.gg/milrato")
+          member.send(new MessageEmbed()
+            .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+            .setFooter(es.footertext, es.footericon)
+            .setAuthor(`Message from: ${message.author.username}`, message.author.displayAvatarURL({dynamic:true}), "https://discord.gg/FQGXbypRf8")
             .setDescription(args.slice(1).join(" ").substr(0, 2048))
-          ]})
-          message.reply({embeds : [new MessageEmbed()
-            .setColor(es.color).setThumbnail(es.thumb ? es.footericon && (es.footericon.includes("http://") || es.footericon.includes("https://")) ? es.footericon : client.user.displayAvatarURL() : null)
-            .setFooter(client.getFooter(es))
-            .setTitle(eval(client.la[ls]["cmds"]["administration"]["dm"]["variable6"]))
-          ]})
+          )
+          message.channel.send(new MessageEmbed()
+            .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+            .setFooter(es.footertext, es.footericon)
+            .setTitle(`<:tick:899255869185855529> Successfully Dmed ${member.user.username}`)
+          )
         }catch{
-          message.reply({embeds : [new MessageEmbed()
+          message.channel.send(new MessageEmbed()
             .setColor(es.wrongcolor)
-            .setFooter(client.getFooter(es))
-            .setTitle(eval(client.la[ls]["cmds"]["administration"]["dm"]["variable7"]))
-          ]})
+            .setFooter(es.footertext, es.footericon)
+            .setTitle("<:cross:899255798142750770>  Unable to Dm this User, this is probably because he either blocked me or turned his Dms off!")
+          )
         }
       }
       else if(role){
-        await message.guild.members.fetch().catch(() => {});
+        await message.guild.members.fetch();
         if (!args[1])
-          return message.reply({embeds : [new MessageEmbed()
+          return message.channel.send(new MessageEmbed()
             .setColor(es.wrongcolor)
-            .setFooter(client.getFooter(es))
-            .setTitle(eval(client.la[ls]["cmds"]["administration"]["dm"]["variable8"]))
-            .setDescription(eval(client.la[ls]["cmds"]["administration"]["dm"]["variable9"]))
-          ]});
-        var members = message.guild.members.cache.filter(member=> member.roles.cache.has(role.id) && !member.user.bot).map(this_Code_is_by_Tomato_6966 => this_Code_is_by_Tomato_6966);  
+            .setFooter(es.footertext, es.footericon)
+            .setTitle(`<:cross:899255798142750770>  You didn't provide a Text`)
+            .setDescription(`Usage: \`${prefix}dm <@USER/@ROLE> <Your Text>\``)
+          );
+        var members = message.guild.members.cache.filter(member=> member.roles.cache.has(role.id) && !member.user.bot).array();  
         var failed = [];
         var succeeded = [];
         message.delete().catch(e => console.log("Couldn't delete msg, this is a catch to prevent crash"))
         if (!members || members == null || members.length == null || members.length == 0)
-          return message.reply({embeds :[new MessageEmbed()
+          return message.channel.send(new MessageEmbed()
             .setColor(es.wrongcolor)
-            .setFooter(client.getFooter(es))
-            .setTitle(eval(client.la[ls]["cmds"]["administration"]["dm"]["variable10"]))
-            .setDescription(eval(client.la[ls]["cmds"]["administration"]["dm"]["variable11"]))
-          ]});
+            .setFooter(es.footertext, es.footericon)
+            .setTitle(`<:cross:899255798142750770>  Found no Members!`)
+            .setDescription(`Most of the Times this means, no one has this ROLE! But you can retry..`)
+          );
         let seconds = Number(members.length) * 1500;
-        await message.reply({embeds :[new MessageEmbed()
-          .setColor(es.color).setThumbnail(es.thumb ? es.footericon && (es.footericon.includes("http://") || es.footericon.includes("https://")) ? es.footericon : client.user.displayAvatarURL() : null)
-          .setFooter(client.getFooter(es))
+        await message.channel.send(new MessageEmbed()
+          .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+          .setFooter(es.footertext, es.footericon)
           .setAuthor(`Dming ${members.length} Members...`, "https://images-ext-1.discordapp.net/external/ANU162U1fDdmQhim_BcbQ3lf4dLaIQl7p0HcqzD5wJA/https/cdn.discordapp.com/emojis/756773010123522058.gif", "https://discord.gg/2dKrZQyaC4")
-          .setDescription(eval(client.la[ls]["cmds"]["administration"]["dm"]["variable12"]))
-        ]});
+          .setDescription(`This will take ${ms(seconds, {long: true})} in ideal conditions. Please be patient.`)
+        );
         for(const member of members) {
           try{
             var failedd = false
-            await member.send({embeds : [new MessageEmbed()
-              .setColor(es.color).setThumbnail(es.thumb ? es.footericon && (es.footericon.includes("http://") || es.footericon.includes("https://")) ? es.footericon : client.user.displayAvatarURL() : null)
-              .setFooter(client.getFooter(es))
-              .setAuthor(`Message from: ${message.author.username}`, message.author.displayAvatarURL({dynamic:true}), "https://discord.gg/milrato")
+            await member.send(new MessageEmbed()
+              .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+              .setFooter(es.footertext, es.footericon)
+              .setAuthor(`Message from: ${message.author.username}`, message.author.displayAvatarURL({dynamic:true}), "https://discord.gg/FQGXbypRf8")
               .setDescription(args.slice(1).join(" ").substr(0, 2048))
-            ]}).catch(e=>{
+            ).catch(e=>{
               failedd = true
             })
             if(failedd){
@@ -109,53 +106,53 @@ module.exports = {
           }
           await delay(1500);
         }
-        await message.reply({content: `<@${message.author.id}>`, embeds: [new MessageEmbed()
-          .setColor(es.color).setThumbnail(es.thumb ? es.footericon && (es.footericon.includes("http://") || es.footericon.includes("https://")) ? es.footericon : client.user.displayAvatarURL() : null)
-          .setFooter(client.getFooter(es))
-          .setTitle(eval(client.la[ls]["cmds"]["administration"]["dm"]["variable13"]))
+        await message.channel.send({content: `<@${message.author.id}>`, embed: new MessageEmbed()
+          .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+          .setFooter(es.footertext, es.footericon)
+          .setTitle(`<:tick:899255869185855529> SUCCESS, send a Dm to \`${succeeded.length}\` / \`${failed.length + succeeded.length}\` Members`)
           .setDescription(failed.length > 0 ? `**FAILED MEMBERS:**\n> ${failed.map(r => `\`${r}\``).join("\n")}`.substr(0, 2048) : "**FAILED MEMBERS:**\n> No one Failed")
-          .addField(eval(client.la[ls]["cmds"]["administration"]["dm"]["variablex_14"]), eval(client.la[ls]["cmds"]["administration"]["dm"]["variable14"]))
-        ]})
+          .addField("\u200b", "*If a Member is Failed it probably is because he either blocked me or turned his Dms off*")
+        })
       }
       else {
-        return message.reply({embeds : [new MessageEmbed()
-        .setColor(es.wrongcolor).setFooter(client.getFooter(es))
-        .setTitle(eval(client.la[ls]["cmds"]["administration"]["dm"]["variable15"]))
-        .setDescription(eval(client.la[ls]["cmds"]["administration"]["dm"]["variable16"]))
-        ]});
+        return message.channel.send(new MessageEmbed()
+        .setColor(es.wrongcolor).setFooter(es.footertext, es.footericon)
+        .setTitle(`<:cross:899255798142750770>  You need to ping a ROLE or a MEMBER`)
+        .setDescription(`Useage: ${prefix}dm <@USER/@ROLE> <TEXT>`)
+      );
       }
       if(client.settings.get(message.guild.id, `adminlog`) != "no"){
         try{
           var channel = message.guild.channels.cache.get(client.settings.get(message.guild.id, `adminlog`))
           if(!channel) return client.settings.set(message.guild.id, "no", `adminlog`);
-          channel.send({embeds : [new MessageEmbed()
-            .setColor(es.color).setThumbnail(es.thumb ? es.footericon && (es.footericon.includes("http://") || es.footericon.includes("https://")) ? es.footericon : client.user.displayAvatarURL() : null).setFooter(client.getFooter(es))
+          channel.send(new MessageEmbed()
+            .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null).setFooter(es.footertext, es.footericon)
             .setAuthor(`${require("path").parse(__filename).name} | ${message.author.tag}`, message.author.displayAvatarURL({dynamic: true}))
-            .setDescription(eval(client.la[ls]["cmds"]["administration"]["dm"]["variable17"]))
-            .addField(eval(client.la[ls]["cmds"]["administration"]["ban"]["variablex_15"]), eval(client.la[ls]["cmds"]["administration"]["ban"]["variable15"]))
-           .addField(eval(client.la[ls]["cmds"]["administration"]["ban"]["variablex_16"]), eval(client.la[ls]["cmds"]["administration"]["ban"]["variable16"]))
-            .setTimestamp().setFooter(client.getFooter("ID: " + message.author.id, message.author.displayAvatarURL({dynamic: true})))
-          ]})
+            .setDescription(`\`\`\`${String(message.content).substr(0, 2000)}\`\`\``)
+            .addField(`Executed in: `, `<#${message.channel.id}> \`${message.channel.name}\``)
+            .addField(`Executed by: `, `<@${message.author.id}> (${message.author.tag})\n\`${message.author.tag}\``)
+            .setTimestamp().setFooter("ID: " + message.author.id)
+          )
         }catch (e){
-          console.log(e.stack ? String(e.stack).grey : String(e).grey)
+          console.log(e)
         }
       } 
     } catch (e) {
-      console.log(String(e.stack).grey.bgRed)
-      return message.reply({embeds : [new MessageEmbed()
-        .setColor(es.wrongcolor).setFooter(client.getFooter(es))
-        .setTitle(client.la[ls].common.erroroccur)
-        .setDescription(eval(client.la[ls]["cmds"]["administration"]["dm"]["variable20"]))
-      ]});
+      console.log(String(e.stack).bgRed)
+      return message.channel.send(new MessageEmbed()
+        .setColor(es.wrongcolor).setFooter(es.footertext, es.footericon)
+        .setTitle(`<:cross:899255798142750770>  An error occurred`)
+        .setDescription(`\`\`\`${String(e).substr(0, 2048)}\`\`\``)
+      );
     }
   }
 }
 /**
  * @INFO
- * Bot Coded by Tomato#6966 | https://github?.com/Tomato6966/Discord-Js-Handler-Template
+ * Bot Coded by S409™#9685 | https://github.com/S409™#9685/Discord-Js-Handler-Template
  * @INFO
- * Work for S409 support | https://s409.xyz
+ * Work for s409 Development | https://s409.xyz
  * @INFO
- * Please mention him / S409 support, when using this Code!
+ * Please mention Him / s409 Development, when using this Code!
  * @INFO
  */

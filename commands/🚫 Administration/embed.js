@@ -1,12 +1,11 @@
 const {
-  MessageEmbed, MessageAttachment,
-  Permissions
+  MessageEmbed
 } = require("discord.js");
-const config = require(`${process.cwd()}/botconfig/config.json`);
-var ee = require(`${process.cwd()}/botconfig/embed.json`);
+const config = require("../../botconfig/config.json");
+var ee = require("../../botconfig/embed.json");
 const {
   databasing
-} = require(`${process.cwd()}/handlers/functions`);
+} = require("../../handlers/functions");
 module.exports = {
   name: "embed",
   category: "🚫 Administration",
@@ -14,10 +13,8 @@ module.exports = {
   cooldown: 2,
   usage: "embed <TITLE> ++ <DESCRIPTION>",
   description: "Resends a message from u as an Embed\n\n To have forexample no title do that:  embed ++ This is what an Embed without Image Looks like",
-  type: "server",
   run: async (client, message, args, cmduser, text, prefix) => {
-    
-    let es = client.settings.get(message.guild.id, "embed");let ls = client.settings.get(message.guild.id, "language")
+    let es = client.settings.get(message.guild.id, "embed")
     try {
       let adminroles = client.settings.get(message.guild.id, "adminroles")
       let cmdroles = client.settings.get(message.guild.id, "cmdadminroles.embed")
@@ -31,26 +28,26 @@ module.exports = {
               cmdrole.push(` | <@${r}>`)
             }
             else {
-              
-              //console.log(r)
+              console.log("F")
+              console.log(r)
               client.settings.remove(message.guild.id, r, `cmdadminroles.embed`)
             }
           }
         }
-      if (([...message.member.roles.cache.values()] && !message.member.roles.cache.some(r => cmdroles.includes(r.id))) && !cmdroles.includes(message.author.id) && ([...message.member.roles.cache.values()] && !message.member.roles.cache.some(r => adminroles.includes(r ? r.id : r))) && !Array(message.guild.ownerId, config.ownerid).includes(message.author.id) && !message.member.permissions.has([Permissions.FLAGS.ADMINISTRATOR]))
-        return message.reply({embeds : [new MessageEmbed()
+      if ((message.member.roles.cache.array() && !message.member.roles.cache.some(r => cmdroles.includes(r.id))) && !cmdroles.includes(message.author.id) && (message.member.roles.cache.array() && !message.member.roles.cache.some(r => adminroles.includes(r.id))) && !Array(message.guild.owner.id, config.ownerid).includes(message.author.id) && !message.member.hasPermission("ADMINISTRATOR"))
+        return message.channel.send(new MessageEmbed()
           .setColor(es.wrongcolor)
-          .setFooter(client.getFooter(es))
-          .setTitle(eval(client.la[ls]["cmds"]["administration"]["embed"]["variable1"]))
-          .setDescription(eval(client.la[ls]["cmds"]["administration"]["embed"]["variable2"]))
-        ]});
+          .setFooter(es.footertext, es.footericon)
+          .setTitle(`<:cross:899255798142750770>  You are not allowed to run this Command`)
+          .setDescription(`${adminroles.length > 0 ? "You need one of those Roles: " + adminroles.map(role => `<@&${role}>`).join(" | ") + cmdrole.join("")  : `No Admin Roles Setupped yet! Do it with: \`${prefix}setup-admin\``}`)
+        );
       if (!args[0])
-        return message.reply({embeds :[new MessageEmbed()
+        return message.channel.send(new MessageEmbed()
           .setColor(es.wrongcolor)
-          .setFooter(client.getFooter(es))
-          .setTitle(eval(client.la[ls]["cmds"]["administration"]["embed"]["variable3"]))
-          .setDescription(eval(client.la[ls]["cmds"]["administration"]["embed"]["variable4"]))
-        ]});
+          .setFooter(es.footertext, es.footericon)
+          .setTitle(`<:cross:899255798142750770>  You Didn't Provide a Title, Nor a Description`)
+          .setDescription(`Usage: \`${prefix}embed <TITLE> ++ <DESCRIPTION>\``)
+        );
       let userargs = args.join(" ").split("++");
       let title = userargs[0];
       let desc = userargs.slice(1).join(" ")
@@ -72,48 +69,42 @@ module.exports = {
       }
       message.delete().catch(e => console.log("Couldn't delete msg, this is a catch to prevent crash"))
       let sendembed = new MessageEmbed()
-        .setColor(es.color).setThumbnail(es.thumb ? es.footericon && (es.footericon.includes("http://") || es.footericon.includes("https://")) ? es.footericon : client.user.displayAvatarURL() : null)
-        .setFooter(client.getFooter(es))
-        .setTitle(title && desc ? title.substr(0, 256) : "")
-        .setDescription(desc ? desc : title ? title.substr(0, 2048) : "")
+      .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+      .setFooter(es.footertext, es.footericon)
+      .setTitle(title && desc ? title.substr(0, 256) : "")
+      .setDescription(desc ? desc : title ? title.substr(0, 2048) : "")
       if(attachment) {
         sendembed.setImage("attachment://" + name)
+        sendembed.attachFiles(attachment)
       }
-      let sendData = {embeds: [sendembed]};
-
-      if(attachment){
-        sendData.files = [attachment]
-      }
-      message.channel.send(sendData).then(d=>{
-        var ee = "Here is your Command, if you wanna use it again!";
-        if(message.content.length > 2000){
-          ee = "Here is your Command"
-        }
-        if(message.content.length > 2020){
-          ee = ""
-        }
-        if(client.settings.get(message.author.id, "dm"))
-          message.author.send({content : `${ee}\`\`\`${message.content}`.substr(0, 2040) + "\`\`\`"}).catch(e => console.log("Couldn't Dm Him this log prevents a crash"))
-      }).catch(e=>{
-        return message.reply({content : `${e.message ? String(e.message).substr(0, 1900) : String(e).grey.substr(0, 1900)}`, code: "js"});
-      })
+      message.channel.send({embed: sendembed })
       
       client.stats.push(message.guild.id+message.author.id, new Date().getTime(), "says"); 
       
+      var ee = "Here is your Command, if you wanna use it again!";
+      if(message.content.length > 2000){
+        ee = "Here is your Command"
+      }
+      if(message.content.length > 2020){
+        ee = ""
+      }
+      if(client.settings.get(message.author.id, "dm"))
+      message.author.send(`${ee}\`\`\`${message.content}`.substr(0, 2040) + "\`\`\`").catch(e => console.log("Couldn't Dm Him this log prevents a crash"))
+    
       if(client.settings.get(message.guild.id, `adminlog`) != "no"){
         try{
           var channel = message.guild.channels.cache.get(client.settings.get(message.guild.id, `adminlog`))
           if(!channel) return client.settings.set(message.guild.id, "no", `adminlog`);
-          channel.send({embeds : [new MessageEmbed()
-            .setColor(es.color).setThumbnail(es.thumb ? es.footericon && (es.footericon.includes("http://") || es.footericon.includes("https://")) ? es.footericon : client.user.displayAvatarURL() : null).setFooter(client.getFooter(es))
+          channel.send(new MessageEmbed()
+            .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null).setFooter(es.footertext, es.footericon)
             .setAuthor(`${require("path").parse(__filename).name} | ${message.author.tag}`, message.author.displayAvatarURL({dynamic: true}))
-            .setDescription(eval(client.la[ls]["cmds"]["administration"]["embed"]["variable5"]))
-            .addField(eval(client.la[ls]["cmds"]["administration"]["ban"]["variablex_15"]), eval(client.la[ls]["cmds"]["administration"]["ban"]["variable15"]))
-           .addField(eval(client.la[ls]["cmds"]["administration"]["ban"]["variablex_16"]), eval(client.la[ls]["cmds"]["administration"]["ban"]["variable16"]))
-            .setTimestamp().setFooter(client.getFooter("ID: " + message.author.id, message.author.displayAvatarURL({dynamic: true})))
-          ]})
+            .setDescription(`\`\`\`${String(message.content).substr(0, 2000)}\`\`\``)
+            .addField(`Executed in: `, `<#${message.channel.id}> \`${message.channel.name}\``)
+            .addField(`Executed by: `, `<@${message.author.id}> (${message.author.tag})\n\`${message.author.tag}\``)
+            .setTimestamp().setFooter("ID: " + message.author.id)
+          )
         }catch (e){
-          console.log(e.stack ? String(e.stack).grey : String(e).grey)
+          console.log(e)
         }
       } 
 
@@ -130,21 +121,21 @@ module.exports = {
         return url.indexOf("gif", url.length - "gif".length /*or 3*/ ) !== -1;
       }
     } catch (e) {
-      console.log(String(e.stack).grey.bgRed)
-      return message.reply({embeds : [new MessageEmbed()
-        .setColor(es.wrongcolor).setFooter(client.getFooter(es))
-        .setTitle(client.la[ls].common.erroroccur)
-        .setDescription(eval(client.la[ls]["cmds"]["administration"]["embed"]["variable8"]))
-      ]});
+      console.log(String(e.stack).bgRed)
+      return message.channel.send(new MessageEmbed()
+        .setColor(es.wrongcolor).setFooter(es.footertext, es.footericon)
+        .setTitle(`<:cross:899255798142750770>  An error occurred`)
+        .setDescription(`\`\`\`${e.stack}\`\`\``)
+      );
     }
   }
 }
 /**
  * @INFO
- * Bot Coded by Tomato#6966 | https://github?.com/Tomato6966/Discord-Js-Handler-Template
+ * Bot Coded by S409™#9685 | https://github.com/S409™#9685/Discord-Js-Handler-Template
  * @INFO
- * Work for S409 support | https://s409.xyz
+ * Work for s409 Development | https://s409.xyz
  * @INFO
- * Please mention him / S409 support, when using this Code!
+ * Please mention Him / s409 Development, when using this Code!
  * @INFO
  */

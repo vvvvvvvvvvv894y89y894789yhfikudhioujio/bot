@@ -1,50 +1,34 @@
 const {
   MessageEmbed
 } = require(`discord.js`);
-const config = require(`${process.cwd()}/botconfig/config.json`);
-const ee = require(`${process.cwd()}/botconfig/embed.json`);
-const emoji = require(`${process.cwd()}/botconfig/emojis.json`);
+const config = require(`../../botconfig/config.json`);
+const ee = require(`../../botconfig/embed.json`);
+const emoji = require(`../../botconfig/emojis.json`);
 const playermanager = require(`../../handlers/playermanager`);
-const { handlemsg } = require(`${process.cwd()}/handlers/functions`);
-    module.exports = {
+module.exports = {
   name: `playtop`,
-  category: `Song`,
+  category: `🎶 Music`,
   aliases: [`ptop`, `pt`],
   description: `Adds a song with the given name/url on the top of the queue`,
   usage: `playtop <link/query>`,
-  parameters: {
-    "type": "music",
-    "activeplayer": true,
-    "check_dj": true,
-    "previoussong": false
-  },
-  type: "queue",
+  parameters: {"type":"music", "activeplayer": true, "previoussong": false},
   run: async (client, message, args, cmduser, text, prefix, player) => {
-    
-    let es = client.settings.get(message.guild.id, "embed");let ls = client.settings.get(message.guild.id, "language")
-    if (!client.settings.get(message.guild.id, "MUSIC")) {
-      return message.reply({embeds :[new MessageEmbed()
-        .setColor(es.wrongcolor)
-        .setFooter(client.getFooter(es))
-        .setTitle(client.la[ls].common.disabled.title)
-        .setDescription(handlemsg(client.la[ls].common.disabled.description, {prefix: prefix}))
-      ]});
-    }
-    //if no args added return error message if allowed to send an embed
-    if (!args[0])
-      return message.reply({embeds : [new MessageEmbed()
-        .setColor(es.wrongcolor)
-        .setTitle(eval(client.la[ls]["cmds"]["music"]["playtop"]["variable1"]))
-      ]});
+    let es = client.settings.get(message.guild.id, "embed")
+    if (!args[0]) 
+    return message.channel.send(new MessageEmbed()
+          .setColor(es.wrongcolor)
+          .setFooter(es.footertext, es.footericon)
+          .setTitle(`<:cross:899255798142750770>  You need to give me a URL or a Search term.`)
+        );
     return playermanager(client, message, args, `playtop:youtube`);
   }
 };
 /**
  * @INFO
- * Bot Coded by Tomato#6966 | https://github?.com/Tomato6966/discord-js-lavalink-Music-Bot-erela-js
+ * Bot Coded by S409™#9685 | https://github.com/S409™#9685/discord-js-lavalink-Music-Bot-erela-js
  * @INFO
- * Work for S409 support | https://s409.xyz
+ * Work for s409 Development | https://s409.xyz
  * @INFO
- * Please mention Him / S409 support, when using this Code!
+ * Please mention Him / s409 Development, when using this Code!
  * @INFO
  */

@@ -1,49 +1,31 @@
-const { ChaosWords } = require('weky')
-const { MessageEmbed } = require("discord.js");
-const config = require(`${process.cwd()}/botconfig/config.json`);
-var ee = require(`${process.cwd()}/botconfig/embed.json`);
+const TicTacToe = require("discord-tictactoe");
+const game = new TicTacToe()
 module.exports = {
     name: "chaoswords",
     category: "🎮 MiniGames",
     description: "Plays a Game",
-    usage: "chaoswords [wordcount] --> Play the Game",
-    type: "buttons",
+    usage: "chaoswords --> Play the Game",
     run: async (client, message, args, cmduser, text, prefix) => {
-        let es = client.settings.get(message.guild.id, "embed");let ls = client.settings.get(message.guild.id, "language")
-        //executes if fun commands are disabled
+        let es = client.settings.get(message.guild.id, "embed")
         if(!client.settings.get(message.guild.id, "MINIGAMES")){
-          return message.reply(new MessageEmbed()
+          return message.channel.send(new MessageEmbed()
             .setColor(es.wrongcolor)
-            .setFooter(client.getFooter(es))
-            .setTitle(client.la[ls].common.disabled.title)
-            .setDescription(require(`${process.cwd()}/handlers/functions`).handlemsg(client.la[ls].common.disabled.description, {prefix: prefix}))
+            .setFooter(es.footertext, es.footericon)
+            .setTitle(`<:cross:899255798142750770>  THIS COMMAND IS CURRENTLY DISABLED`)
+            .setDescription(`An Admin can enable it with: \`${prefix}setup-commands\``)
           );
         }
+        const { ChaosWords } = require("weky")
         var randomWords = require('random-words');
-        const words = randomWords(args[0] && !isNaN(args[0]) && Number(args[0]) > 0 ? Number(args[0]) : 3) // generating 3 words
-        await ChaosWords({
-          message: message,
-          embed: {
-              title: 'ChaosWords',
-              footer: es.footertext,
-              description: 'You have **{{time}}** to find the hidden words in the below sentence.',
-              color: es.color,
-              field1: 'Sentence:',
-              field2: 'Words Found/Remaining Words:',
-              field3: 'Words found:',
-              field4: 'Words:',
-              timestamp: true
-          },
-          winMessage: 'GG, You won! You made it in **{{time}}**.',
-          loseMessage: 'Better luck next time!',
-          wrongWordMessage: 'Wrong Guess! You have **{{remaining_tries}}** tries left.',
-          correctWordMessage: 'GG, **{{word}}** was correct! You have to find **{{remaining}}** more word(s).',
-          time: 60000,
-          words: words,
-          charGenerated: 17,
-          maxTries: 10,
-          buttonText: 'Cancel',
-          othersMessage: 'Only <@{{author}}> can use the buttons!'
-      });
+        const words = randomWords(2) // generating 2 words
+        await new ChaosWords({
+            message: message,
+            maxTries: 5, //max number  of user's tries (ends when reach limit)
+            charGenerated: 20, //length of sentence (small length might throw error)
+            words: words, //words (array) => ['word']
+            embedTitle: 'Chaos words!', //understable
+            embedFooter: 'Find the words in the sentence!',
+            embedColor: 'RANDOM'
+            }).start()
     }
   }

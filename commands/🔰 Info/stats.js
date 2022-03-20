@@ -1,12 +1,12 @@
 const {
   MessageEmbed
 } = require("discord.js");
-const config = require(`${process.cwd()}/botconfig/config.json`);
-var ee = require(`${process.cwd()}/botconfig/embed.json`);
-const emoji = require(`${process.cwd()}/botconfig/emojis.json`);
+const config = require("../../botconfig/config.json");
+var ee = require("../../botconfig/embed.json");
+const emoji = require(`../../botconfig/emojis.json`);
 const {
-  getRandomInt, handlemsg
-} = require(`${process.cwd()}/handlers/functions`)
+  getRandomInt
+} = require("../../handlers/functions")
 module.exports = {
   name: "stats",
   category: "🔰 Info",
@@ -14,40 +14,59 @@ module.exports = {
   cooldown: 10,
   usage: "stats",
   description: "Shows music Stats, like amount of Commands and played Songs etc.",
-  type: "server",
   run: async (client, message, args, cmduser, text, prefix) => {
-    
-    let es = client.settings.get(message.guild.id, "embed");let ls = client.settings.get(message.guild.id, "language")
+    let es = client.settings.get(message.guild.id, "embed")
     try {
       
       let global = client.stats.get("global");
       let guild = client.stats.get(message.guild.id);
-      
-      message.reply({embeds: [new MessageEmbed().setColor(es.color).setThumbnail(es.thumb ? es.footericon && (es.footericon.includes("http://") || es.footericon.includes("https://")) ? es.footericon : client.user.displayAvatarURL() : null).setFooter(client.getFooter(es))
-        .addField(client.la[ls].cmds.info.stats.field1.title, handlemsg(client.la[ls].cmds.info.stats.field1.value, { allcommands: Math.ceil(global.commands * [...client.guilds.cache.values()].length / 10) }), true)
-        .addField(client.la[ls].cmds.info.stats.field2.title, handlemsg(client.la[ls].cmds.info.stats.field2.value, { allsongs: Math.ceil(global.songs * [...client.guilds.cache.values()].length / 10) }), true)
-        .addField(eval(client.la[ls]["cmds"]["info"]["stats"]["variablex_1"]), eval(client.la[ls]["cmds"]["info"]["stats"]["variable1"]))
-        .addField(client.la[ls].cmds.info.stats.field3.title, handlemsg(client.la[ls].cmds.info.stats.field3.value, { guildcommands: guild.commands }), true)
-        .addField(client.la[ls].cmds.info.stats.field4.title, handlemsg(client.la[ls].cmds.info.stats.field4.value, { guildsongs: guild.songs }), true)
-        .setTitle(handlemsg(client.la[ls].cmds.info.stats.title, { botname: client.user.username }))
-      ]});
+      let premiums = client.premium.get("premiumlist", "list");
+      let guilds = [];
+      let users = [];
+
+      for (let i = 0; i < premiums.length; i++) {
+        try {
+          if (Object.keys(premiums[i])[0] === "g") {
+            let guild = client.guilds.cache.get(Object.values(premiums[i])[0])
+            if (!guild) {
+              client.premium.get("premiumlist", (value) => value.g === Object.values(premiums[i])[0], "list");
+              continue;
+            }
+            guilds.push(guild.name)
+          }
+        } catch {}
+      }
+      for (let i = 0; i < premiums.length; i++) {
+        try {
+          if (Object.keys(premiums[i])[0] === "u") {
+            let user = await client.users.fetch(Object.values(premiums[i])[0]);
+            if (!user) {
+              client.premium.get("premiumlist", (value) => value.u === Object.values(premiums[i])[0], "list");
+              continue;
+            }
+            users.push(user.tag)
+          }
+        } catch {}
+      }
+      let size = client.setups.filter(s => s.textchannel != "0").size + client.guilds.cache.array().length / 3;
+      if (size > client.guilds.cache.array().length) size = client.guilds.cache.array().length;
+      message.channel.send(new MessageEmbed().setColor(es.color).setThumbnail(es.thumb ? es.footericon : null).setFooter(es.footertext, es.footericon)
+        .addField("⚙️ GLOBAL Commands used:", `>>> \`${Math.ceil(global.commands * client.guilds.cache.array().length / 10)} Commands\` used\nin **all** Servers`, true)
+        .addField("🎵 GLOBAL Songs played:", `>>> \`${Math.ceil(global.songs * client.guilds.cache.array().length / 10)} Songs\` played in\n**all** Servers`, true)
+        .addField("📰 GLOBAL Setups created:", `>>> \`${Math.ceil(size)} Setups\` created in\n**all** Servers`, true)
+        .addField("\u200b", "\u200b")
+        .addField("⚙️ SERVER Commands used:", `>>> \`${guild.commands} Commands\` used in\n**this** Server`, true)
+        .addField("🎵 SERVER Songs played:", `>>> \`${guild.songs} Songs\` played in\n**this** Server`, true)
+        .addField("📰 GLOBAL Premium list:", `>>> \`${guilds.length} Guilds\`\n\`${users.length} Users\`\n having Premium`, true)
+        .setTitle(`💿 The Stats of ${client.user.username}`)
+      );
     } catch (e) {
-      console.log(String(e.stack).grey.bgRed)
-      return message.reply({embeds: [new MessageEmbed()
-        .setColor(es.wrongcolor)
-        .setFooter(client.getFooter(es))
-        .setTitle(client.la[ls].common.erroroccur)
-        .setDescription(eval(client.la[ls]["cmds"]["info"]["color"]["variable2"]))
-      ]});
+      console.log(String(e.stack).bgRed)
+      return message.channel.send(new MessageEmbed()
+        .setColor(es.wrongcolor).setFooter(es.footertext, es.footericon)
+        .setTitle(`<:cross:899255798142750770>  An error occurred`)
+        .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``)
+      );
     }
   }
 }
-/**
- * @INFO
- * Bot Coded by Tomato#6966 | https://discord.gg/milrato
- * @INFO
- * Work for S409 support | https://s409.xyz
- * @INFO
- * Please mention him / S409 support, when using this Code!
- * @INFO
- */

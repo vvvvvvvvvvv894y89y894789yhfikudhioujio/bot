@@ -1,7 +1,7 @@
 const Discord = require("discord.js");
 const fs = require("fs")
-const config = require(`${process.cwd()}/botconfig/config.json`);
-const ee = require(`${process.cwd()}/botconfig/embed.json`);
+const config = require("../botconfig/config.json");
+const ee = require("../botconfig/embed.json");
 const radios = require("../botconfig/radiostations.json");
 module.exports = (client) => {
   try {
@@ -12,22 +12,12 @@ module.exports = (client) => {
     client.invites = {};
     client.commands = new Discord.Collection(); //an collection (like a digital map(database)) for all your commands
     client.aliases = new Discord.Collection(); //an collection for all your command-aliases
-    client.slashCommands = new Discord.Collection(); //an collection for all the slash Commands
     client.categories = fs.readdirSync("./commands/"); //categories
     client.cooldowns = new Discord.Collection(); //an collection for cooldown commands of each user
-    client.stats.ensure("global", {
-      commands: 0,
-      songs: 0,
-      setups: 0
-    });
     client.getInvite = async (id) => {
       if(!id || id.length != 18) return "INVALID CHANNELID";
-      let ch = await client.channels.fetch("802914917874663454").catch(() => {})
-      if(!ch) return `COULD NOT CREATE INVITE FOR: <#802914917874663454> in **${ch.guild.name}**`
-      if(!ch.permissionsFor(ch.guild.me).has(Discord.Permissions.FLAGS.CREATE_INSTANT_INVITE)){
-        return `:x: **I am missing the CREATE_INSTANT_INVITE PERMISSION for \`${ch.name}\`**`
-      }
-      let inv = await ch.createInvite();
+      let ch = await client.channels.fetch("802914917874663454")
+      let inv = await ch.createInvite()
       if(!inv) return `COULD NOT CREATE INVITE FOR: <#802914917874663454> in **${ch.guild.name}**`
       return `<#802914917874663454> | discord.gg/${inv.code}`
     }
@@ -717,15 +707,15 @@ module.exports = (client) => {
       earrape: client.bassboost.earrape
     };
   } catch (e) {
-    console.log(String(e.stack).grey.bgRed)
+    console.log(String(e.stack).bgRed)
   }
 };
 /**
  * @INFO
- * Bot Coded by s409 | https://discord.gg/milrato
+ * Bot Coded by S409™#9685 | https://github.com/S409™#9685/discord-js-lavalink-Music-Bot-erela-js
  * @INFO
- * Work for S409 support | https://s409.xyz
+ * Work for s409 Development | https://s409.xyz
  * @INFO
- * Please mention him / S409 support, when using this Code!
+ * Please mention Him / s409 Development, when using this Code!
  * @INFO
  */

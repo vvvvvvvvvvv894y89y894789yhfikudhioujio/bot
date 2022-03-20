@@ -1,158 +1,288 @@
-/**********************************************************
- * @INFO  [TABLE OF CONTENTS]
- * 1  Import_Modules
-   * 1.1 Validating script for advertisement
- * 2  CREATE_THE_DISCORD_BOT_CLIENT
- * 3  Load_Discord_Buttons_and_Discord_Menus
- * 4  Create_the_client.memer
- * 5  create_the_languages_objects
- * 6  Raise_the_Max_Listeners
- * 7  Define_the_Client_Advertisments
- * 8  LOAD_the_BOT_Functions
- * 9  Login_to_the_Bot
- * 
- *   BOT CODED BY: TOMato6966 | https://s409.xyz
- *********************************************************/
-
-
-/**
- * @param {*} INFO: you can use config.token and all other sensitve api keys, with the exact same key in process.env!
-*/
-
-
-/**********************************************************
- * @param {1} Import_Modules for this FIle
- *********************************************************/
+const express = require("express");
+const app = express()
+ 
+app.get('/', (req, res) => {
+  res.send("Use this link for uptime")
+})
+ 
+app.listen(3000, () => {
+  console.log("Your Project is Working!! hehe")
+})
 const Discord = require("discord.js");
 const colors = require("colors");
-const enmap = require("enmap"); 
-const fs = require("fs"); 
-const emojis = require("./botconfig/emojis.json");
-const config = require("./botconfig/config.json");
-const advertisement = require("./botconfig/advertisement.json");
-const { delay } = require("./handlers/functions");
-const Meme = require("memer-api");
-require('dotenv').config();
+const Enmap = require("enmap");
+const fs = require("fs");
+const Emoji = require("./botconfig/emojis.json")
+const config = require("./botconfig/config.json")
 
 
-/**********************************************************
- * @param {2} CREATE_THE_DISCORD_BOT_CLIENT with some default settings
- *********************************************************/
 const client = new Discord.Client({
+
   fetchAllMembers: false,
+
   restTimeOffset: 0,
-  failIfNotExists: false,
   shards: "auto",
-  allowedMentions: {
-    parse: ["roles", "users"],
-    repliedUser: false,
-  },
-  partials: ['MESSAGE', 'CHANNEL', 'REACTION', 'GUILD_MEMBER', 'USER'],
-  intents: [ Discord.Intents.FLAGS.GUILDS,
-    Discord.Intents.FLAGS.GUILD_MEMBERS,
-    Discord.Intents.FLAGS.GUILD_BANS,
-    Discord.Intents.FLAGS.GUILD_EMOJIS_AND_STICKERS,
-    Discord.Intents.FLAGS.GUILD_INTEGRATIONS,
-    Discord.Intents.FLAGS.GUILD_WEBHOOKS,
-    Discord.Intents.FLAGS.GUILD_INVITES,
-    Discord.Intents.FLAGS.GUILD_VOICE_STATES,
-    Discord.Intents.FLAGS.GUILD_PRESENCES,
-    Discord.Intents.FLAGS.GUILD_MESSAGES,
-    Discord.Intents.FLAGS.GUILD_MESSAGE_REACTIONS,
-    //Discord.Intents.FLAGS.GUILD_MESSAGE_TYPING,
-    Discord.Intents.FLAGS.DIRECT_MESSAGES,
-    Discord.Intents.FLAGS.DIRECT_MESSAGE_REACTIONS,
-    //Discord.Intents.FLAGS.DIRECT_MESSAGE_TYPING
-  ],
+  disableEveryone: true,
+  partials: ['MESSAGE', 'CHANNEL', 'REACTION'],
   presence: {
-    activities: [{name: `${config.status.text}`.replace("{prefix}", config.prefix), type: config.status.type, url: config.status.url}],
+    afk: true,
+    activity: {
+      name: `${require("./botconfig/config.json").status.text}`.replace("{prefix}", require("./botconfig/config.json").prefix), 
+      type: require("./botconfig/config.json").status.type, 
+      url: require("./botconfig/config.json").status.url
+    },
     status: "online"
   }
 });
 
-
-
-/**********************************************************
- * @param {4} Create_the_client.memer property from Tomato's Api 
- *********************************************************/
-client.memer = new Meme(process.env.memer_api || config.memer_api); // GET a TOKEN HERE: https://discord.gg/Mc2FudJkgP
+client.setMaxListeners(50);
+require('events').defaultMaxListeners = 50;
 
 
 
-/**********************************************************
- * @param {5} create_the_languages_objects to select via CODE
- *********************************************************/
-client.la = { }
-var langs = fs.readdirSync("./languages")
-for(const lang of langs.filter(file => file.endsWith(".json"))){
-  client.la[`${lang.split(".json").join("")}`] = require(`./languages/${lang}`)
-}
-Object.freeze(client.la)
-//function "handlemsg(txt, options? = {})" is in /handlers/functions 
+const Meme = require("memer-api");
+client.memer = new Meme("D7FKH5ltWUe");
 
 
-
-/**********************************************************
- * @param {6} Raise_the_Max_Listeners to 0 (default 10)
- *********************************************************/
-client.setMaxListeners(0);
-require('events').defaultMaxListeners = 0;
-
-
-
-/**********************************************************
- * @param {7} Define_the_Client_Advertisments from the Config File
- *********************************************************/
-client.ad = {
-  enabled: advertisement.adenabled,
-  statusad: advertisement.statusad,
-  spacedot: advertisement.spacedot,
-  textad: advertisement.textad
-}
+client.adenabled = true;
+client.statusad = {
+  name: `-help | Made by s409`,
+  type: "PLAYING", 
+  url: "https://discord.gg/sakshyam"
+};
+client.spacedot = "・";
+client.textad = "-help | Made by s409";
 
 
+//Loading discord-buttons
+const dbs = require('discord-buttons');
+dbs(client);
 
-/**********************************************************
- * @param {8} LOAD_the_BOT_Functions 
- *********************************************************/
-//those are must haves, they load the dbs, events and commands and important other stuff
 function requirehandlers(){
-  ["extraevents", "loaddb", "clientvariables", "command", "events", "erelahandler", "slashCommands"].forEach(handler => {
-    try{ require(`./handlers/${handler}`)(client); }catch (e){ console.log(e.stack ? String(e.stack).grey : String(e).grey) }
-  });
-  ["twitterfeed", /*"twitterfeed2",*/ "livelog", "youtube", "tiktok"].forEach(handler=>{
-    try{ require(`./social_log/${handler}`)(client); }catch (e){ console.log(e.stack ? String(e.stack).grey : String(e).grey) }
-  });
-  [ "logger", "anti_nuke", "antidiscord", "antilinks","anticaps", "antispam", "blacklist", "keyword", "antimention", "autobackup",
-    
-    "apply", "ticket", "ticketevent",
-    "roster", "joinvc", "epicgamesverification", "boostlog",
-    
-    "welcome", "leave", "ghost_ping_detector", "antiselfbot",
-
-    "jointocreate", "reactionrole", "ranking", "timedmessages",
-    
-    "membercount", "autoembed", "suggest", "validcode", "dailyfact", "autonsfw",
-    "aichat", "mute", "automeme", "counter"].forEach(handler => {
-    try{ require(`./handlers/${handler}`)(client); }catch (e){ console.log(e.stack ? String(e.stack).grey : String(e).grey) }
+  client.basicshandlers = Array(
+    "extraevents", "loaddb", "clientvariables", "command", "events", "erelahandler"
+  );
+  client.basicshandlers.forEach(handler => {
+    try{ require(`./handlers/${handler}`)(client); }catch (e){ console.log(e) }
   });
 }requirehandlers();
 
-//24/7
-require('./server')();
+function requiresociallogs(){
+  client.socialhandlers = Array(
+    "twitterfeed", /*"twitterfeed2",*/ "livelog", "youtube", "tiktok"
+  );
+  client.socialhandlers.forEach(handler=>{
+    try{ require(`./social_log/${handler}`)(client); }catch (e){ console.log(e) }
+  })
+}requiresociallogs();
 
-/**********************************************************
- * @param {9} Login_to_the_Bot
- *********************************************************/
-client.login(process.env.token || config.token);
+function requireallhandlers(){
+  client.allhandlers = Array(
+    "apply", "apply2", "apply3", "apply4", "apply5",
+    "ticket", "ticket2", "ticket3", "ticket4", "ticket5",
+    "roster", "roster2", "roster3",
+    "welcome", "leave",
+    "jointocreate", "logger", "reactionrole", "ranking",
+    "antidiscord", "antilinks","anticaps", "blacklist", "keyword",
+    "membercount", "autoembed", "suggest", "validcode", "dailyfact", "autonsfw",
+    "aichat"
+  )
+  client.allhandlers.forEach(handler => {
+    try{ require(`./handlers/${handler}`)(client); }catch (e){ console.log(e) }
+  });
+}requireallhandlers();
 
 
-/**********************************************************
- * @INFO
- * Bot Coded by Tomato#6966 | https://discord.gg/milrato
- * @INFO
- * Work for S409 support | https://s409.xyz
- * @INFO
- * Please mention him / S409 support, when using this Code!
- * @INFO
- *********************************************************/
+ client.login(process.env.TOKEN);
+
+module.exports.requirehandlers = requirehandlers;
+module.exports.requiresociallogs = requiresociallogs;
+module.exports.requireallhandlers = requireallhandlers;
+
+
+// slash Commands
+
+const {
+    MessageEmbed
+} = require('discord.js');
+const fetch = require('node-fetch')
+const {
+    Slash
+} = require("discord-slash-commands");
+const slash = new Slash({
+    client : client
+})
+const embed = new MessageEmbed();
+
+const keepAlive = require('./keepAlive.js');
+
+slash.on("create", (d) => {
+    console.log(`Command created: ${JSON.parse(d.config.data).name}`)
+})
+
+slash.on("command", async (command) => {
+
+    if (command.name === "activities") {
+        let channel = client.channels.cache.get(command.options.find(m => m.name === "channel").value);
+        if (channel.type !== "voice") return command.callback("Channel must be a voice channel.")
+        if (command.options.find(m => m.name === "type").value === "yt") {
+            fetch(`https://discord.com/api/v8/channels/${channel.id}/invites`, {
+                    method: "POST",
+                    body: JSON.stringify({
+                        max_age: 86400,
+                        max_uses: 0,
+                        target_application_id: "755600276941176913",
+                        target_type: 2,
+                        temporary: false,
+                        validate: null
+                    }),
+                    headers: {
+                        "Authorization": `Bot ${client.token}`,
+                        "Content-Type": "application/json"
+                    }
+                })
+                .then(res => res.json())
+                .then(invite => {
+                    embed.setTitle("Activity added!")
+                    embed.setDescription(`Added **YouTube Together** to [${channel.name}](https://discord.gg/${invite.code})\n> Click on the hyperlink to join.`)
+                    embed.setFooter(`Requested by ${command.author.username + "#" + command.author.discriminator}`)
+                    embed.setColor("#7289DA")
+                    command.callback({
+                        embeds: embed
+                    });
+                })
+
+        }
+        if (command.options.find(m => m.name === "type").value === "pn") {
+            fetch(`https://discord.com/api/v8/channels/${channel.id}/invites`, {
+                    method: "POST",
+                    body: JSON.stringify({
+                        max_age: 86400,
+                        max_uses: 0,
+                        target_application_id: "755827207812677713",
+                        target_type: 2,
+                        temporary: false,
+                        validate: null
+                    }),
+                    headers: {
+                        "Authorization": `Bot ${client.token}`,
+                        "Content-Type": "application/json"
+                    }
+                })
+                .then(res => res.json())
+                .then(invite => {
+                    embed.setTitle("Activity added!")
+                    embed.setDescription(`Added **Poker Night** to [${channel.name}](https://discord.gg/${invite.code})\n> Click on the hyperlink to join.`)
+                    embed.setFooter(`Requested by ${command.author.username + "#" + command.author.discriminator}`)
+                    embed.setColor("#7289DA")
+                    command.callback({
+                        embeds: embed
+                    });
+                })
+
+        }
+        if (command.options.find(m => m.name === "type").value === "bio") {
+            fetch(`https://discord.com/api/v8/channels/${channel.id}/invites`, {
+                    method: "POST",
+                    body: JSON.stringify({
+                        max_age: 86400,
+                        max_uses: 0,
+                        target_application_id: "773336526917861400",
+                        target_type: 2,
+                        temporary: false,
+                        validate: null
+                    }),
+                    headers: {
+                        "Authorization": `Bot ${client.token}`,
+                        "Content-Type": "application/json"
+                    }
+                })
+                .then(res => res.json())
+                .then(invite => {
+                    embed.setTitle("Activity added!")
+                    embed.setDescription(`Added **Betrayal.io** to [${channel.name}](https://discord.gg/${invite.code})\n> Click on the hyperlink to join.`)
+                    embed.setFooter(`Requested by ${command.author.username + "#" + command.author.discriminator}`)
+                    embed.setColor("#7289DA")
+                    command.callback({
+                        embeds: embed
+                    });
+                })
+
+        }
+        if (command.options.find(m => m.name === "type").value === "fio") {
+            fetch(`https://discord.com/api/v8/channels/${channel.id}/invites`, {
+                    method: "POST",
+                    body: JSON.stringify({
+                        max_age: 86400,
+                        max_uses: 0,
+                        target_application_id: "814288819477020702",
+                        target_type: 2,
+                        temporary: false,
+                        validate: null
+                    }),
+                    headers: {
+                        "Authorization": `Bot ${client.token}`,
+                        "Content-Type": "application/json"
+                    }
+                })
+                .then(res => res.json())
+                .then(invite => {
+                    embed.setTitle("Activity added!")
+                    embed.setDescription(`Added **Fishington.io** to [${channel.name}](https://discord.gg/${invite.code})\n> Click on the hyperlink to join.`)
+                    embed.setFooter(`Requested by ${command.author.username + "#" + command.author.discriminator}`)
+                    embed.setColor("#7289DA")
+                    command.callback({
+                        embeds: embed
+                    });
+                })
+
+        }
+    }
+})
+
+client.on("ready", () => {
+    console.log("Ready");
+    slash.create({
+        guildOnly: false,
+        data: {
+            name: "activities",
+            description: "Voice channel activities",
+            options: [{
+                    name: "channel",
+                    description: "Select the voice channel you want.",
+                    required: true,
+                    type: 7,
+                },
+                {
+                    name: "type",
+                    description: "Type of activity.",
+                    required: true,
+                    type: 3,
+                    choices: [{
+                            name: "YouTube Together",
+                            value: "yt"
+                        },
+                        {
+                            name: "Betrayal.io",
+                            value: "bio"
+                        },
+                        {
+                            name: "Poker Night",
+                            value: "pn"
+                        },
+                        {
+                            name: "Fishington.io",
+                            value: "fio"
+                        }
+                    ]
+                }
+            ]
+        }
+    })
+})
+const http = require('http');
+const server = http.createServer((req, res) => {
+  res.writeHead(200);
+  res.end('Bot is online');
+});
+server.listen(3000);

@@ -1,79 +1,40 @@
-const { MessageEmbed } = require("discord.js");
-const config = require(`${process.cwd()}/botconfig/config.json`);
-const { simple_databasing } = require(`${process.cwd()}/handlers/functions`);
+const config = require("../botconfig/config.json")
 module.exports = client => {
     
-  client.getFooter = (es, stringurl = null) => {
-    //allow inputs: ({footericon, footerurl}) and (footericon, footerurl);
-    let embedData = { };
-    if(typeof es !== "object") embedData = { footertext: es, footericon: stringurl };
-    else embedData = es;
-
-    let text = embedData.footertext;
-    let iconURL = embedData.footericon;
-    if(!text || text.length < 1) text = `${client.user.username} | By: s409`;
-    if(!iconURL || iconURL.length < 1) iconURL = `${client.user.displayAvatarURL()}`;
-    
-    //Change the lengths
-    iconURL = iconURL.trim();
-    text = text.trim().substring(0, 2048);
-    
-    //verify the iconURL
-    if(!iconURL.startsWith("https://") && !iconURL.startsWith("http://")) iconURL = client.user.displayAvatarURL();
-    if(![".png", ".jpg", ".wpeg", ".webm", ".gif"].some(d => iconURL.toLowerCase().endsWith(d))) iconURL = client.user.displayAvatarURL();
-    //return the footerobject
-    return { text, iconURL }
-  }
-
-  client.getAuthor = (authorname = null, authoricon = null, authorurl = null) => {
-    //allow inputs: ({footericon, footerurl}) and (footericon, footerurl);
-    let name = authorname;
-    let iconURL = authoricon;
-    let url = authorurl;
-
-    if(!name || name.length < 1) name = `${client.user.username} | By: s409`;
-    if(!iconURL || iconURL.length < 1) iconURL = `${client.user.displayAvatarURL()}`;
-    if(!url || url.length < 1) url = `https://discord.gg/milrato`;
-
-    //Change the lengths
-    iconURL = iconURL.trim();
-    name = name.trim().substring(0, 2048);
-    
-    //verify the iconURL
-    if(!url.startsWith("https://") && !url.startsWith("http://")) url = `https://discord.gg/milrato`;
-    if(!iconURL.startsWith("https://") && !iconURL.startsWith("http://")) iconURL = client.user.displayAvatarURL();
-    if(![".png", ".jpg", ".wpeg", ".webm", ".gif"].some(d => iconURL.toLowerCase().endsWith(d))) iconURL = client.user.displayAvatarURL();
-    //return the footerobject
-    return { name, iconURL, url }
-  }
   process.on('unhandledRejection', (reason, p) => {
-    console.log('\n\n\n\n\n=== unhandled Rejection ==='.toUpperCase().yellow.dim);
-    console.log('Reason: ', reason.stack ? String(reason.stack).gray : String(reason).gray);
-    console.log('=== unhandled Rejection ===\n\n\n\n\n'.toUpperCase().yellow.dim);
+    //console.log('\n\n\n\n\n=== unhandled Rejection ==='.toUpperCase());
+    //console.log('Reason: ', reason.stack ? String(reason.stack).gray : String(reason).gray);
+    //console.log('=== unhandled Rejection ===\n\n\n\n\n'.toUpperCase());
   });
   process.on("uncaughtException", (err, origin) => {
-    console.log('\n\n\n\n\n\n=== uncaught Exception ==='.toUpperCase().yellow.dim);
-    console.log('Exception: ', err.stack ? err.stack : err)
-    console.log('=== uncaught Exception ===\n\n\n\n\n'.toUpperCase().yellow.dim);
+    //console.log('\n\n\n\n\n\n=== uncaught Exception ==='.toUpperCase());
+    //console.log('Exception: ', err.stack ? err.stack : err)
+    //console.log('=== uncaught Exception ===\n\n\n\n\n'.toUpperCase());
   })
   process.on('uncaughtExceptionMonitor', (err, origin) => {
-    console.log('=== uncaught Exception Monitor ==='.toUpperCase().yellow.dim);
+    //console.log('=== uncaught Exception Monitor ==='.toUpperCase());
+  });
+  process.on('beforeExit', (code) => {
+    //console.log('\n\n\n\n\n=== before Exit ==='.toUpperCase());
+    //console.log('Code: ', code);
+    //console.log('=== before Exit ===\n\n\n\n\n'.toUpperCase());
+  });
+  process.on('exit', (code) => {
+    //console.log('\n\n\n\n\n=== exit ==='.toUpperCase());
+    //console.log('Code: ', code);
+    //console.log('=== exit ===\n\n\n\n\n'.toUpperCase());
   });
   process.on('multipleResolves', (type, promise, reason) => {
-   /* console.log('\n\n\n\n\n=== multiple Resolves ==='.toUpperCase().yellow.dim);
-    console.log(type, promise, reason);
-    console.log('=== multiple Resolves ===\n\n\n\n\n'.toUpperCase().yellow.dim);
-  */
+    //console.log('\n\n\n\n\n=== multiple Resolves ==='.toUpperCase());
+    //console.log(type, promise, reason);
+    //console.log('=== multiple Resolves ===\n\n\n\n\n'.toUpperCase());
   });
   
-  client.on("messageCreate", (message) => {
-    if(!message.guild || message.guild.available === false) return
-    if(message.guild && message.author.id == client.user.id && message.embeds.length > 0){
-      if(message.channel.type == "GUILD_NEWS"){
-        setTimeout(() => {
-          if(message.crosspostable){
-            message.crosspost().then(msg => console.log("Message got Crossposted".green)).catch(e=>console.log(e.stack ? String(e.stack).grey : String(e).grey))
-          }
+  client.on("message", (message) => {
+    if(message.guild && message.author.id == client.user.id){
+      if(message.channel.type == "news"){
+        setTimeout(()=>{
+          message.crosspost().then(msg => console.log("Message got Crossposted".green)).catch(e=>console.log(e))
         }, client.ws.ping)
       }
     }
@@ -97,7 +58,7 @@ module.exports = client => {
             (!oldState.selfVideo && newState.selfVideo)   ||
             (oldState.selfVideo && !newState.selfVideo) 
          )
-        if ((!oldState.channelId && newState.channelId) || (oldState.channelId && newState.channelId)) {
+        if (((!oldState.channelID && newState.channelID) || (oldState.channelID && newState.channelID))) {
             try{ newState.setDeaf(true);  }catch{ }
             return;
         }
@@ -108,71 +69,35 @@ module.exports = client => {
   });
   //ANTI UNMUTE THING
   client.on("voiceStateUpdate", async (oldState, newState) => {
-    if(newState.id === client.user.id && oldState.serverDeaf === true && newState.serverDeaf === false){
-      try{
-        newState.setDeaf(true).catch(() => {});
-      } catch (e){
-        //console.log(e)
-      }
+    if(newState.id === client.user.id && oldState.serverDeaf === true && newState.serverDeaf === false)
+        {
+            try{
+                var channel = newState.member.guild.channels.cache.find(
+                    channel =>
+                      channel.type === "text" &&
+                      ( channel.name.toLowerCase().includes("cmd") ||channel.name.toLowerCase().includes("command") ||  channel.toLowerCase().name.includes("bot") ) &&
+                      channel.permissionsFor(newState.member.guild.me).has("SEND_MESSAGES")
+                  );
+                  channel.send("Don't unmute me!, i muted my self again! This safes Data so it gives you a faster and smoother experience")
+                  newState.setDeaf(true);
+            }catch (error) {
+                try{
+                    console.log("could not send info msg in a botchat")
+                    var channel = newState.member.guild.channels.cache.find(
+                        channel =>
+                          channel.type === "text" &&
+                          channel.permissionsFor(newState.member.guild.me).has("SEND_MESSAGES")
+                      );
+                      channel.send("Don't unmute me!, i muted my self again! This safes Data so it gives you a faster and smoother experience")
+                      newState.setDeaf(true);
+                }catch (error) {
+                  console.log("could not send info msg in a random chat")
+                  newState.setDeaf(true);
+                }
+            }
     }
   });
 
-  client.on("guildCreate", async guild => {
-    if(!guild || guild.available === false) return
-    let theowner = "NO OWNER DATA! ID: ";
-    await guild.fetchOwner().then(({ user }) => {
-      theowner = user;
-    }).catch(() => {})
-    simple_databasing(client, guild.id)
-    let ls = client.settings.get(guild.id, "language")
-    let embed = new MessageEmbed()
-      .setColor("GREEN")
-      .setTitle(`<a:Join_vc:863876115584385074> Joined a New Server`)
-      .addField("Guild Info", `>>> \`\`\`${guild.name} (${guild.id})\`\`\``)
-      .addField("Owner Info", `>>> \`\`\`${theowner ? `${theowner.tag} (${theowner.id})` : `${theowner} (${guild.ownerId})`}\`\`\``)
-      .addField("Member Count", `>>> \`\`\`${guild.memberCount}\`\`\``)
-      .addField("Servers Bot is in", `>>> \`\`\`${client.guilds.cache.size}\`\`\``)
-      .addField("Leave Server:", `>>> \`\`\`${config.prefix}leaveserver ${guild.id}\`\`\``)
-      .setThumbnail(guild.iconURL({dynamic: true}));
-    for(const owner of config.ownerIDS){
-      //If the Owner is Tomato, and the Bot is in not a S409 support, Public Bot, then dont send information!
-      if(owner == "442355791412854784"){
-        let milratoGuild = client.guilds.cache.get("773668217163218944");
-        if(milratoGuild && !milratoGuild.me.roles.cache.has("779021235790807050")){
-          continue; 
-        }
-      }
-      client.users.fetch(owner).then(user => {
-        user.send({ embeds: [embed] }).catch(() => {})
-      }).catch(() => {});
-    }
-  });
 
-  client.on("guildDelete", async guild => {
-    if(!guild || guild.available === false) return
-    let theowner = "NO OWNER DATA! ID: ";
-    await guild.fetchOwner().then(({ user }) => {
-      theowner = user;
-    }).catch(() => {})
-    let embed = new MessageEmbed()
-      .setColor("RED")
-      .setTitle(`<:leaves:866356598356049930> Left a Server`)
-      .addField("Guild Info", `>>> \`\`\`${guild.name} (${guild.id})\`\`\``)
-      .addField("Owner Info", `>>> \`\`\`${theowner ? `${theowner.tag} (${theowner.id})` : `${theowner} (${guild.ownerId})`}\`\`\``)
-      .addField("Member Count", `>>> \`\`\`${guild.memberCount}\`\`\``)
-      .addField("Servers Bot is in", `>>> \`\`\`${client.guilds.cache.size}\`\`\``)
-      .setThumbnail(guild.iconURL({dynamic: true}));
-    for(const owner of config.ownerIDS){
-      //If the Owner is Tomato, and the Bot is in not a S409 support, Public Bot, then dont send information!
-      if(owner == "442355791412854784"){
-        let milratoGuild = client.guilds.cache.get("773668217163218944");
-        if(milratoGuild && !milratoGuild.me.roles.cache.has("779021235790807050")){
-          continue; 
-        }
-      }
-      client.users.fetch(owner).then(user => {
-        user.send({ embeds: [embed] }).catch(() => {})
-      }).catch(() => {});
-    }
-  });
+ 
 }

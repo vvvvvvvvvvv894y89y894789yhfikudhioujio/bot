@@ -1,24 +1,22 @@
 const {MessageEmbed} = require("discord.js");
-const config = require(`${process.cwd()}/botconfig/config.json`);
-var ee = require(`${process.cwd()}/botconfig/embed.json`);
-const emoji = require(`${process.cwd()}/botconfig/emojis.json`);
-const { parseMilliseconds, duration, GetUser, nFormatter, ensure_economy_user } = require(`${process.cwd()}/handlers/functions`)
+const config = require(`../../botconfig/config.json`);
+var ee = require(`../../botconfig/embed.json`);
+const emoji = require(`../../botconfig/emojis.json`);
+const { parseMilliseconds, duration, GetUser, nFormatter, ensure_economy_user } = require("../../handlers/functions")
 module.exports = {
   name: "rob",
   category: "💸 Economy",
   description: "Rob Money from a Specific User, you can Ping him, add his ID / Username, it will be a random amount!",
   usage: "rob @USER",
-  type: "game",
   run: async (client, message, args, cmduser, text, prefix) => {
-    
-    let es = client.settings.get(message.guild.id, "embed");let ls = client.settings.get(message.guild.id, "language")
+    let es = client.settings.get(message.guild.id, "embed")
         if(!client.settings.get(message.guild.id, "ECONOMY")){
-          return message.reply({embeds: [new MessageEmbed()
+          return message.channel.send(new MessageEmbed()
             .setColor(es.wrongcolor)
-            .setFooter(client.getFooter(es))
-            .setTitle(client.la[ls].common.disabled.title)
-            .setDescription(require(`${process.cwd()}/handlers/functions`).handlemsg(client.la[ls].common.disabled.description, {prefix: prefix}))
-          ]});
+            .setFooter(es.footertext, es.footericon)
+            .setTitle(`<:cross:899255798142750770>  THIS COMMAND IS CURRENTLY DISABLED`)
+            .setDescription(`An Admin can enable it with: \`${prefix}setup-commands\``)
+          );
         }
     try {
       //command
@@ -27,18 +25,18 @@ module.exports = {
         try{
             user = await GetUser(message, args)
         }catch (e){
-          if(!e) return message.reply(eval(client.la[ls]["cmds"]["economy"]["rob"]["variable1"]))
-          return message.reply({content: String('```' + e.message ? String(e.message).substr(0, 1900) : String(e) + '```')})
+          if(!e) return message.reply("<:cross:899255798142750770>  UNABLE TO FIND THE USER")
+          return message.reply(e)
         }
       }
       if(!user)
-        return message.reply({embeds: [new MessageEmbed()
+        return message.channel.send(new MessageEmbed()
           .setColor(es.wrongcolor)
           .setFooter(message.author.tag, message.author.displayAvatarURL({dynamic: true}))
-          .setTitle(eval(client.la[ls]["cmds"]["economy"]["rob"]["variable2"]))
-          .setDescription(eval(client.la[ls]["cmds"]["economy"]["rob"]["variable3"]))
-        ]});
-      if(user.bot) return message.reply(eval(client.la[ls]["cmds"]["economy"]["rob"]["variable4"]))
+          .setTitle(`<:cross:899255798142750770>  You didn't pinged to whom you want to rob`)
+          .setDescription(`Usage: \`${prefix}rob <@USER>\`\n Mind you can also use a Name / Id, which would be nicer!`)
+        );
+      if(user.bot) return message.reply("<:cross:899255798142750770>  **A Discord Bot can not have Economy!**")
       
       //ensure the economy data
       ensure_economy_user(client, message.guild.id, user.id)
@@ -53,16 +51,16 @@ module.exports = {
 
       if(data.rob !== 0 && timeout - (Date.now() - data.rob) > 0){
         let time = duration(timeout - (Date.now() - data.rob));
-        return message.reply({embeds: [new MessageEmbed()
+        return message.reply({embed: new MessageEmbed()
           .setColor(es.wrongcolor)
           .setFooter(message.author.tag, message.author.displayAvatarURL({dynamic: true}))
-          .setTitle(eval(client.la[ls]["cmds"]["economy"]["rob"]["variable5"]))
-          .setDescription(eval(client.la[ls]["cmds"]["economy"]["rob"]["variable6"]))]
+          .setTitle(`<:cross:899255798142750770>  You've already robbed Today!!`)
+          .setDescription(`Try again in ${time.map(i=> `\`${i}\``).join(", ")}\n\n👛 You still have \`${nFormatter(Math.floor(data.balance))} 💸\` in your Pocket`)
         });
       } 
       //YEA
       else {
-        if(data2.balance < 500) return message.reply(eval(client.la[ls]["cmds"]["economy"]["rob"]["variable7"]))
+        if(data2.balance < 500) return message.reply("<:cross:899255798142750770>  He does not have enough balance!")
         let amountarray = [300, 350, 400, 340, 360, 350, 355, 345, 365, 350, 340, 360, 325, 375, 312.5, 387.5];
         let amount = Math.floor(amountarray[Math.floor((Math.random() * amountarray.length))]);
         amount = amount * data.black_market.boost.multiplier
@@ -74,29 +72,29 @@ module.exports = {
         //get the new data
         data = client.economy.get(`${message.guild.id}-${message.author.id}`)
         //return some message!
-        return message.reply({embeds: [new MessageEmbed()
-          .setColor(es.color).setThumbnail(es.thumb ? es.footericon && (es.footericon.includes("http://") || es.footericon.includes("https://")) ? es.footericon : client.user.displayAvatarURL() : null)
+        return message.reply(new MessageEmbed()
+          .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
           .setFooter(message.author.tag, message.author.displayAvatarURL({dynamic: true}))
-          .setTitle(eval(client.la[ls]["cmds"]["economy"]["rob"]["variable8"]))
-          .setDescription(eval(client.la[ls]["cmds"]["economy"]["rob"]["variable9"]))
-        ]});
+          .setTitle(`<:tick:899255869185855529> You robbed \`${amount} 💸\` of \`${user.tag}\``)
+          .setDescription(`👛 You now have \`${nFormatter(Math.floor(data.balance))} 💸\` in your Pocket`)
+        );
       }
     } catch (e) {
-      console.log(String(e.stack).grey.bgRed)
-      return message.reply({embeds: [new MessageEmbed()
-        .setColor(es.wrongcolor).setFooter(client.getFooter(es))
-        .setTitle(client.la[ls].common.erroroccur)
-        .setDescription(eval(client.la[ls]["cmds"]["economy"]["rob"]["variable10"]))
-      ]});
+      console.log(String(e.stack).bgRed)
+      return message.channel.send(new MessageEmbed()
+        .setColor(es.wrongcolor).setFooter(es.footertext, es.footericon)
+        .setTitle(`<:cross:899255798142750770>  An error occurred`)
+        .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``)
+      );
     }
   }
 };
 /**
  * @INFO
- * Bot Coded by Tomato#6966 | https://discord.gg/milrato
+ * Bot Coded by S409™#9685 | https://github.com/S409™#9685/discord-js-lavalink-Music-Bot-erela-js
  * @INFO
- * Work for S409 support | https://s409.xyz
+ * Work for s409 Development | https://s409.xyz
  * @INFO
- * Please mention him / S409 support, when using this Code!
+ * Please mention Him / s409 Development, when using this Code!
  * @INFO
  */

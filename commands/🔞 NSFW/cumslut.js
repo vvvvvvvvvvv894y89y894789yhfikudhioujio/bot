@@ -1,26 +1,31 @@
 const client = require('nekos.life');
 const Discord = require('discord.js')
 const neko = new client();
-const {
-      MessageEmbed, MessageAttachment
-} = require('discord.js')
+const {MessageEmbed} = require('discord.js')
 module.exports = {
       name: "cumslut",
       category: "🔞 NSFW",
       usage: "cumslut",
-      type: "anime",
       run: async (client, message, args, cmduser, text, prefix) => {
-            let es = client.settings.get(message.guild.id, "embed");let ls = client.settings.get(message.guild.id, "language")
+            let es = client.settings.get(message.guild.id, "embed")
             if (!client.settings.get(message.guild.id, "NSFW")) {
-                  const x = new MessageEmbed()
-                  .setColor(es.wrongcolor)
-                  .setFooter(client.getFooter(es))
-                  .setTitle(client.la[ls].common.disabled.title)
-                  .setDescription(require(`${process.cwd()}/handlers/functions`).handlemsg(client.la[ls].common.disabled.description, {prefix: prefix}))
-                  return message.reply({embeds: [x]});
+                  return message.channel.send(new MessageEmbed()
+                        .setColor(es.wrongcolor)
+                        .setFooter(es.footertext, es.footericon)
+                        .setTitle(`<:cross:899255798142750770>  THIS COMMAND IS CURRENTLY DISABLED`)
+                        .setDescription(`An Admin can enable it with: \`${prefix}setup-commands\``)
+                  );
             }
-            if (!message.channel.nsfw) return message.reply(eval(client.la[ls]["cmds"]["nsfw"]["cumslut"]["variable1"])).then(msg => { message.react('💢'); msg.delete({ timeout: 3000 }) })
+
+            if (!message.channel.nsfw) return message.reply("This Channel is not a NSFW Channel").then(msg => { message.react('💢'); msg.delete({ timeout: 3000 }) })
+            
             let owo = (await neko.nsfw.cumsluts());
-            message.reply({content: `${owo.url}`});
+
+            const cumslut = new Discord.MessageEmbed()
+                  .setTitle("Cumslut")
+                  .setImage(owo.url)
+                  .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null).setFooter(es.footertext, es.footericon)
+                  .setURL(owo.url);
+            message.channel.send(cumslut);
       }
 };

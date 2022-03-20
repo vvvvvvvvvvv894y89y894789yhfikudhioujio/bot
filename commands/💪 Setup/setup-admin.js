@@ -2,659 +2,676 @@ var {
   MessageEmbed
 } = require(`discord.js`);
 var Discord = require(`discord.js`);
-var config = require(`${process.cwd()}/botconfig/config.json`);
-var ee = require(`${process.cwd()}/botconfig/embed.json`);
-var emoji = require(`${process.cwd()}/botconfig/emojis.json`);
+var config = require(`../../botconfig/config.json`);
+var ee = require(`../../botconfig/embed.json`);
+var emoji = require(`../../botconfig/emojis.json`);
 var {
   databasing
-} = require(`${process.cwd()}/handlers/functions`);
-const { MessageButton, MessageActionRow, MessageSelectMenu } = require('discord.js')
+} = require(`../../handlers/functions`);
 module.exports = {
   name: "setup-admin",
   category: "💪 Setup",
   aliases: ["setupadmin", "setup-mod", "setupmod", "admin-setup", "adminsetup"],
   cooldown: 5,
   usage: "setup-admin  -->  Follow the Steps",
-  description: "Allow specific Roles/Users to execute specific Commands / all Commands!",
+  description: "Allowe specific Roles to execute specific Commands / all Commands!",
   memberpermissions: ["ADMINISTRATOR"],
-  type: "info",
   run: async (client, message, args, cmduser, text, prefix) => {
-    
-    let es = client.settings.get(message.guild.id, "embed");
-    let ls = client.settings.get(message.guild.id, "language")
-    let timeouterror;
+    var es = client.settings.get(message.guild.id, "embed")
     try {
-      first_layer()
-      async function first_layer(){
-        
-        let menuoptions = [
-          {
-            value: "Add Role",
-            description: `Add Roles to the general Admin Roles`,
-            emoji: "🔧"
-          },
-          {
-            value: "Remove Role",
-            description: `Remove Roles from the general Admin Roles`,
-            emoji: "🗑"
-          },
-          {
-            value: "Show Settings",
-            description: `Show Settings of all Admin Roles`,
-            emoji: "📑"
-          },
-          {
-            value: "Per Command Roles",
-            description: `Manage Admin Roles of each Command`,
-            emoji: "⚙️"
-          },
-          {
-            value: "Cancel",
-            description: `Cancel and stop the Admin-Setup!`,
-            emoji: "862306766338523166"
-          }
-        ]
-        //define the selection
-        let Selection = new MessageSelectMenu()
-          .setCustomId('MenuSelection') 
-          .setMaxValues(1) //OPTIONAL, this is how many values you can have at each selection
-          .setMinValues(1) //OPTIONAL , this is how many values you need to have at each selection
-          .setPlaceholder('Click me to setup the Administration Roles') 
-          .addOptions(
-          menuoptions.map(option => {
-            let Obj = {
-              label: option.label ? option.label.substr(0, 50) : option.value.substr(0, 50),
-              value: option.value.substr(0, 50),
-              description: option.description.substr(0, 50),
-            }
-          if(option.emoji) Obj.emoji = option.emoji;
-          return Obj;
-         }))
-        
-        //define the embed
-        let MenuEmbed = new MessageEmbed()
-        .setColor(es.color)
-        .setAuthor('Admin Setup', 'https://cdn.discordapp.com/emojis/892521772002447400.png?size=96', 'https://discord.gg/milrato')
-        .setDescription(eval(client.la[ls]["cmds"]["setup"]["setup-ticket"]["variable2"]))
-        //send the menu msg
-        let menumsg = await message.reply({embeds: [MenuEmbed], components: [new MessageActionRow().addComponents(Selection)]})
-        //Create the collector
-        const collector = menumsg.createMessageComponentCollector({ 
-          filter: i => i?.isSelectMenu() && i?.message.author.id == client.user.id && i?.user,
-          time: 90000
-        })
-        //Menu Collections
-        collector.on('collect', menu => {
-          if (menu?.user.id === cmduser.id) {
-            collector.stop();
-            let menuoptiondata = menuoptions.find(v=>v.value == menu?.values[0])
-            if(menu?.values[0] == "Cancel") return menu?.reply(eval(client.la[ls]["cmds"]["setup"]["setup-ticket"]["variable3"]))
-            menu?.deferUpdate();
-            let SetupNumber = menu?.values[0].split(" ")[0]
-            handle_the_picks(menu?.values[0], SetupNumber, menuoptiondata)
-          }
-          else menu?.reply({content: `<:no:833101993668771842> You are not allowed to do that! Only: <@${cmduser.id}>`, ephemeral: true});
-        });
-        //Once the Collections ended edit the menu message
-        collector.on('end', collected => {
-          menumsg.edit({embeds: [menumsg.embeds[0].setDescription(`~~${menumsg.embeds[0].description}~~`)], components: [], content: `${collected && collected.first() && collected.first().values ? `<a:yes:833101995723194437> **Selected: \`${collected ? collected.first().values[0] : "Nothing"}\`**` : "❌ **NOTHING SELECTED - CANCELLED**" }`})
+      var adminroles = client.settings.get(message.guild.id, "adminroles")
+
+      var timeouterror = false;
+      var filter = (reaction, user) => {
+        return user.id === message.author.id;
+      };
+      var temptype = ""
+      var tempmsg;
+
+      tempmsg = await message.channel.send(new Discord.MessageEmbed()
+        .setTitle("What do you want to do?")
+        .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+        .setDescription(`1️⃣ **== Add** Roles to the GENERAL ADMINISTRATOR ROLES
+
+2️⃣ **== Remove** Roles from the GENERAL ADMINISTRATOR ROLES
+
+3️⃣ **== Show** all Administrator Roles
+
+4️⃣ **==** Define Administrator Role/Users per **Admin Command**
+
+📑 **== Show Settings**
+
+
+
+*React with the Right Emoji according to the Right action*`)
+      .setFooter(es.footertext, es.footericon)
+      
+)
+
+      try {
+        tempmsg.react("1️⃣")
+        tempmsg.react("2️⃣")
+        tempmsg.react("3️⃣")
+        tempmsg.react("4️⃣")
+        tempmsg.react("📑")
+      } catch (e) {
+        return message.reply({embed: new Discord.MessageEmbed()
+          .setTitle("<:cross:899255798142750770>  ERROR | Missing Permissions to add Reactions")
+          .setColor(es.wrongcolor)
+          .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``.substr(0, 2000))
+          .setFooter(es.footertext, es.footericon)
         });
       }
+      await tempmsg.awaitReactions(filter, {
+          max: 1,
+          time: 90000,
+          errors: ["time"]
+        })
+        .then(collected => {
+          var reaction = collected.first()
+          reaction.users.remove(message.author.id)
+          if (reaction.emoji.name === "1️⃣") temptype = "add"
+          else if (reaction.emoji.name === "2️⃣") temptype = "remove"
+          else if (reaction.emoji.name === "3️⃣") temptype = "show"
+          else if (reaction.emoji.name === "4️⃣") temptype = "cmdrole"
+          else if (reaction.emoji.name === "📑") temptype = "thesettings"
+          else throw "You reacted with a wrong emoji"
 
-      async function handle_the_picks(optionhandletype, SetupNumber, menuoptiondata) {
-        switch (optionhandletype) {
-          case "Add Role": 
-          {
-            var tempmsg = await message.reply({embeds: [new MessageEmbed()
-              .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-admin"]["variable35"]))
-              .setColor(es.color)
-              .setDescription(eval(client.la[ls]["cmds"]["setup"]["setup-admin"]["variable36"]))
-              .setFooter(client.getFooter(es))]
-            })
-            await tempmsg.channel.awaitMessages({filter: m => m.author.id === message.author.id,
-                max: 1,
-                time: 90000,
-                errors: ["time"]
-              })
-              .then(collected => {
-                var message = collected.first();
-                var role = message.mentions.roles.filter(role=>role.guild.id==message.guild.id).first();
-                if (role) {
-                  var adminroles = client.settings.get(message.guild.id, "adminroles")
-                  if (adminroles.includes(role.id)) return message.reply({embeds: [new MessageEmbed()
-                    .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-admin"]["variable37"]))
-                    .setColor(es.wrongcolor)
-                    .setFooter(client.getFooter(es))]
-                  });
-                  try {
-                    client.settings.push(message.guild.id, role.id, "adminroles");
-                    return message.reply({embeds: [new MessageEmbed()
-                      .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-admin"]["variable38"]))
-                      .setColor(es.color)
-                      .setDescription(`Everyone with one of those Roles:\n<@&${client.settings.get(message.guild.id, "adminroles").join(">\n<@&")}>\nis now able to use the Admin Commands`.substr(0, 2048))
-                      .setFooter(client.getFooter(es))]
-                    });
-                  } catch (e) {
-                    return message.reply({embeds: [new MessageEmbed()
-                      .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-admin"]["variable39"]))
-                      .setColor(es.wrongcolor)
-                      .setDescription(eval(client.la[ls]["cmds"]["setup"]["setup-admin"]["variable47"]))
-                      .setFooter(client.getFooter(es))]
-                    });
-                  }
-                } else {
-                  return message.reply( "you didn't ping a valid Role")
-                }
-              })
-              .catch(e => {
-                timeouterror = e;
-              })
-            if (timeouterror)
-              return message.reply({embeds: [new MessageEmbed()
-                .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-admin"]["variable41"]))
-                .setColor(es.wrongcolor)
-                .setDescription(`Cancelled the Operation!`.substr(0, 2000))
-                .setFooter(client.getFooter(es))]
-              });
-    
+        })
+        .catch(e => {
+          timeouterror = e;
+        })
+      if (timeouterror)
+        return message.reply({embed: new Discord.MessageEmbed()
+          .setTitle("<:cross:899255798142750770>  ERROR | Your Time ran out")
+          .setColor(es.wrongcolor)
+          .setDescription(`Cancelled the Operation!`.substr(0, 2000))
+          .setFooter(es.footertext, es.footericon)
+        });
+
+      if(temptype == "cmdrole"){
+        tempmsg = await tempmsg.edit({embed: new Discord.MessageEmbed()
+        .setTitle("Which Command do you wanna manage?")
+        .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+        .setDescription(`
+        ${client.commands.filter((cmd) => cmd.category.includes("Admin")).map((cmd) => `\`${cmd.name}\``).join(" | ")}
+
+        
+        *Enter one of those Commands!*`).setFooter(es.footertext, es.footericon)
+      })
+      var thecmd;
+      await tempmsg.channel.awaitMessages(m=>m.author.id == message.author.id, {
+          max: 1,
+          time: 90000,
+          errors: ["time"]
+        })
+        .then(async collected => {
+          var com = collected.first().content.split(" ")[0]
+          const cmd = client.commands.get(com.toLowerCase()) || client.commands.get(client.aliases.get(com.toLowerCase()));
+          if(!cmd) 
+            return message.reply({embed: new Discord.MessageEmbed()
+              .setTitle("<:cross:899255798142750770>  ERROR | Unable to find the Command")
+              .setColor(es.wrongcolor)
+              .setFooter(es.footertext, es.footericon)
+            });
+          if(!cmd.category.toLowerCase().includes("admin")) 
+            return message.reply({embed: new Discord.MessageEmbed()
+              .setTitle("<:cross:899255798142750770>  ERROR | Command is **not** an Administration Command")
+              .setColor(es.wrongcolor)
+              .setFooter(es.footertext, es.footericon)
+            });
+          thecmd = cmd.name;
+          if(["detailwarn", "warnings", "report"].includes(thecmd.toLowerCase())) return timeouterror = {
+            message: "YOU CANNOT USE THAT COMMAND, CAUSE IT DOES NOT NEED PERMISSIONS"
           }
-          break;
-          case "Remove Role": 
-          {
-            var tempmsg = await message.reply({embeds: [new MessageEmbed()
-              .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-admin"]["variable42"]))
-              .setColor(es.color)
-              .setDescription(eval(client.la[ls]["cmds"]["setup"]["setup-admin"]["variable43"]))
-              .setFooter(client.getFooter(es))]
-            })
-            await tempmsg.channel.awaitMessages({filter: m => m.author.id === message.author.id,
-                max: 1,
-                time: 90000,
-                errors: ["time"]
-              })
-              .then(collected => {
-                var message = collected.first();
-                var role = message.mentions.roles.filter(role=>role.guild.id==message.guild.id).first();
-                if (role) {
-                  var adminroles = client.settings.get(message.guild.id, "adminroles")
-                  if (!adminroles.includes(role.id)) return message.reply({embeds: [new MessageEmbed()
-                    .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-admin"]["variable44"]))
-                    .setColor(es.wrongcolor)
-                    .setFooter(client.getFooter(es))]
-                  });
-                  try {
-                    client.settings.remove(message.guild.id, role.id, "adminroles");
-                    return message.reply({embeds: [new MessageEmbed()
-                      .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-admin"]["variable45"]))
-                      .setColor(es.color)
-                      .setDescription(`Everyone with one of those Roles:\n<@&${client.settings.get(message.guild.id, "adminroles").join(">\n<@&")}>\nis now able to use the Admin Commands`.substr(0, 2048))
-                      .setFooter(client.getFooter(es))]
-                    });
-                  } catch (e) {
-                    return message.reply({embeds: [new MessageEmbed()
-                      .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-admin"]["variable46"]))
-                      .setColor(es.wrongcolor)
-                      .setDescription(eval(client.la[ls]["cmds"]["setup"]["setup-admin"]["variable52"]))
-                      .setFooter(client.getFooter(es))]
-                    });
-                  }
-                } else {
-                  return message.reply( "you didn't ping a valid Role")
-                }
-              })
-              .catch(e => {
-                timeouterror = e;
-              })
-            if (timeouterror)
-              return message.reply({embeds: [new MessageEmbed()
-                .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-admin"]["variable48"]))
-                .setColor(es.wrongcolor)
-                .setDescription(`Cancelled the Operation!`.substr(0, 2000))
-                .setFooter(client.getFooter(es))]
-              });
+          if(["dm"].includes(thecmd.toLowerCase())) return timeouterror = {
+            message: "YOU CANNOT USE THAT COMMAND, CAUSE IT IS ADMIN ONLY"
           }
-          break;
-          case "Show Settings": 
-          {
-            let db = client.settings.get(message.guild.id, "cmdadminroles")
-            var cmdrole = []
-            for(const [cmd, values] of Object.entries(db)){
-              var percmd = [];
-              if(values.length > 0){
-                for(const r of values){
-                  if(message.guild.roles.cache.get(r)){
-                    percmd.push(`<@&${r}>`)
-                  }
-                  else if(message.guild.members.cache.get(r)){
-                    percmd.push(`<@${r}>`)
-                  }
-                  else {
-                    client.settings.remove(message.guild.id, r, `cmdadminroles.${cmd}`)
-                  }
+            tempmsg = await message.channel.send(new Discord.MessageEmbed()
+            .setTitle("What do you want to do?")
+            .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+            .setDescription(`1️⃣ **== Add** Roles/Users to the ${thecmd.toUpperCase()} ADMINISTRATOR ROLES\n\n2️⃣ **== Remove** Roles/Users from the ${thecmd.toUpperCase()} ADMINISTRATOR ROLES
+            
+3️⃣ **== Show** the ${thecmd.toUpperCase()} Administrator Roles
+                        
+📑 **== Show Settings**
+
+            
+*React with the Right Emoji according to the Right action*`).setFooter(es.footertext, es.footericon)
+          )
+  
+        try {
+          tempmsg.react("1️⃣")
+          tempmsg.react("2️⃣")
+          tempmsg.react("3️⃣")
+          tempmsg.react("📑")
+        } catch (e) {
+          return message.reply({embed: new Discord.MessageEmbed()
+            .setTitle("<:cross:899255798142750770>  ERROR | Missing Permissions to add Reactions")
+            .setColor(es.wrongcolor)
+            .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``.substr(0, 2000))
+            .setFooter(es.footertext, es.footericon)
+          });
+        }
+        await tempmsg.awaitReactions(filter, {
+            max: 1,
+            time: 90000,
+            errors: ["time"]
+          })
+          .then(collected => {
+            var reaction = collected.first()
+            reaction.users.remove(message.author.id)
+            if (reaction.emoji.name === "1️⃣") temptype = "add"
+            else if (reaction.emoji.name === "2️⃣") temptype = "remove"
+            else if (reaction.emoji.name === "3️⃣") temptype = "show"
+            else if (reaction.emoji.name === "📑") temptype = "thesettings"
+            else throw "You reacted with a wrong emoji"
+  
+          })
+          .catch(e => {
+            timeouterror = e;
+          })
+        if (timeouterror)
+          return message.reply({embed: new Discord.MessageEmbed()
+            .setTitle("<:cross:899255798142750770>  ERROR | Your Time ran out")
+            .setColor(es.wrongcolor)
+            .setDescription(`Cancelled the Operation!`.substr(0, 2000))
+            .setFooter(es.footertext, es.footericon)
+          });
+        })
+        .catch(e => {
+          timeouterror = e;
+        })
+      if (timeouterror)
+        return message.reply({embed: new Discord.MessageEmbed()
+          .setTitle("<:cross:899255798142750770>  ERROR | Your Time ran out")
+          .setColor(es.wrongcolor)
+          .setDescription(`Cancelled the Operation!`.substr(0, 2000))
+          .setFooter(es.footertext, es.footericon)
+        });
+
+        if (temptype == "add") {
+          tempmsg = await tempmsg.edit({embed: new Discord.MessageEmbed()
+            .setTitle("Which Role/User do you wanna add to " + thecmd)
+            .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+            .setDescription(`Please Ping the Role/User now!`)
+            .setFooter(es.footertext, es.footericon)
+          })
+          await tempmsg.channel.awaitMessages(m => m.author.id === message.author.id, {
+              max: 1,
+              time: 90000,
+              errors: ["time"]
+            })
+            .then(collected => {
+              var message = collected.first();
+              var role = message.mentions.roles.filter(role=>role.guild.id==message.guild.id).first();
+              var user = message.mentions.users.first();
+              if (role) {
+                var adminroles = client.settings.get(message.guild.id, `cmdadminroles.${thecmd}`)
+                if (adminroles.includes(role.id)) return message.reply({embed: new Discord.MessageEmbed()
+                  .setTitle(`<:cross:899255798142750770>  ERROR | The role: \`${role.name}\` is already registered as an Admin Role for ${thecmd}`)
+                  .setColor(es.wrongcolor)
+                  .setFooter(es.footertext, es.footericon)
+                });
+                try {
+                  client.settings.push(message.guild.id, role.id, `cmdadminroles.${thecmd}`)
+                  let cmd = client.settings.get(message.guild.id, `cmdadminroles.${thecmd}`)
+                  var cmdrole = []
+                    if(cmd.length > 0){
+                      for(const r of cmd){
+                        if(message.guild.roles.cache.get(r)){
+                          cmdrole.push(`<@&${r}>`)
+                        }
+                        else if(message.guild.members.cache.get(r)){
+                          cmdrole.push(`<@${r}>`)
+                        }
+                        else {
+                          console.log("F")
+                          console.log(r)
+                          client.settings.remove(message.guild.id, r, `cmdadminroles.${cmd}`)
+                        }
+                      }
+                    }
+                  return message.reply({embed: new Discord.MessageEmbed()
+                    .setTitle(`<:tick:899255869185855529> The role: \`${role.name}\` is now registered as an Admin Role`)
+                    .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+                    .setDescription(`Everyone with one of those Roles/Users:\n${cmdrole.join("\n")}\nis now able to use the ${thecmd} Admin Commands`.substr(0, 2048))
+                    .setFooter(es.footertext, es.footericon)
+                  });
+                } catch (e) {
+                  return message.reply({embed: new Discord.MessageEmbed()
+                    .setTitle("<:cross:899255798142750770>  ERROR | Something went wrong, please contact: `S409™#9685`")
+                    .setColor(es.wrongcolor)
+                    .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``)
+                    .setFooter(es.footertext, es.footericon)
+                  });
                 }
-                var key = `For the \`${cmd}\` Command`
-                cmdrole.push({ "info" : percmd, "name": key })
+              } else if (user) {
+                var adminroles = client.settings.get(message.guild.id, `cmdadminroles.${thecmd}`)
+                if (adminroles.includes(user.id)) return message.reply({embed: new Discord.MessageEmbed()
+                  .setTitle(`<:cross:899255798142750770>  ERROR | The User: \`${user.username}\` is already registered as an Admin Role for ${thecmd}`)
+                  .setColor(es.wrongcolor)
+                  .setFooter(es.footertext, es.footericon)
+                });
+                try {
+                  client.settings.push(message.guild.id, user.id, `cmdadminroles.${thecmd}`)
+                  let cmd = client.settings.get(message.guild.id, `cmdadminroles.${thecmd}`)
+                  var cmdrole = []
+                    if(cmd.length > 0){
+                      for(const r of cmd){
+                        if(message.guild.roles.cache.get(r)){
+                          cmdrole.push(`<@&${r}>`)
+                        }
+                        else if(message.guild.members.cache.get(r)){
+                          cmdrole.push(`<@${r}>`)
+                        }
+                        else {
+                          console.log("F")
+                          console.log(r)
+                          client.settings.remove(message.guild.id, r, `cmdadminroles.${cmd}`)
+                        }
+                      }
+                    }
+                  return message.reply({embed: new Discord.MessageEmbed()
+                    .setTitle(`<:tick:899255869185855529> The User: \`${user.username}\` is now registered as an Admin Role`)
+                    .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+                    .setDescription(`Everyone with one of those Roles/Users:\n${cmdrole.join("\n")}\nis now able to use the ${thecmd} Admin Commands`.substr(0, 2048))
+                    .setFooter(es.footertext, es.footericon)
+                  });
+                } catch (e) {
+                  return message.reply({embed: new Discord.MessageEmbed()
+                    .setTitle("<:cross:899255798142750770>  ERROR | Something went wrong, please contact: `S409™#9685`")
+                    .setColor(es.wrongcolor)
+                    .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``)
+                    .setFooter(es.footertext, es.footericon)
+                  });
+                }
+              } else {
+                throw "you didn't ping a valid Role"
+              }
+            })
+            .catch(e => {
+              timeouterror = e;
+            })
+          if (timeouterror)
+            return message.reply({embed: new Discord.MessageEmbed()
+              .setTitle("<:cross:899255798142750770>  ERROR | Your Time ran out")
+              .setColor(es.wrongcolor)
+              .setDescription(`Cancelled the Operation!`.substr(0, 2000))
+              .setFooter(es.footertext, es.footericon)
+            });
+        }  else if (temptype == "remove") {
+          tempmsg = await tempmsg.edit({embed: new Discord.MessageEmbed()
+            .setTitle("Which Role/User do you wanna remove from " + thecmd)
+            .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+            .setDescription(`Please Ping the Role/User now!`)
+            .setFooter(es.footertext, es.footericon)
+          })
+          await tempmsg.channel.awaitMessages(m => m.author.id === message.author.id, {
+              max: 1,
+              time: 90000,
+              errors: ["time"]
+            })
+            .then(collected => {
+              var message = collected.first();
+              var role = message.mentions.roles.filter(role=>role.guild.id==message.guild.id).first();
+              var user = message.mentions.users.first();
+              if (role) {
+                var adminroles = client.settings.get(message.guild.id, `cmdadminroles.${thecmd}`)
+                if (!adminroles.includes(role.id)) return message.reply({embed: new Discord.MessageEmbed()
+                  .setTitle(`<:cross:899255798142750770>  ERROR | The role: \`${role.name}\` is not registered as an Admin Role yet for ${thecmd}`)
+                  .setColor(es.wrongcolor)
+                  .setFooter(es.footertext, es.footericon)
+                });
+                try {
+                  client.settings.remove(message.guild.id, role.id, `cmdadminroles.${thecmd}`)
+                  let cmd = client.settings.get(message.guild.id, `cmdadminroles.${thecmd}`)
+                  var cmdrole = []
+                    if(cmd.length > 0){
+                      for(const r of cmd){
+                        if(message.guild.roles.cache.get(r)){
+                          cmdrole.push(`<@&${r}>`)
+                        }
+                        else if(message.guild.members.cache.get(r)){
+                          cmdrole.push(`<@${r}>`)
+                        }
+                        else {
+                          console.log("F")
+                          console.log(r)
+                          client.settings.remove(message.guild.id, r, `cmdadminroles.${cmd}`)
+                        }
+                      }
+                    }
+                  return message.reply({embed: new Discord.MessageEmbed()
+                    .setTitle(`<:tick:899255869185855529> The role: \`${role.name}\` is not registered as an Admin Role anymore`)
+                    .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+                    .setDescription(`Everyone with one of those Roles/Users:\n${cmdrole.join("\n")}\nis now able to use the ${thecmd} Admin Commands`.substr(0, 2048))
+                    .setFooter(es.footertext, es.footericon)
+                  });
+                } catch (e) {
+                  return message.reply({embed: new Discord.MessageEmbed()
+                    .setTitle("<:cross:899255798142750770>  ERROR | Something went wrong, please contact: `S409™#9685`")
+                    .setColor(es.wrongcolor)
+                    .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``)
+                    .setFooter(es.footertext, es.footericon)
+                  });
+                }
+              } else if (user) {
+                var adminroles = client.settings.get(message.guild.id, `cmdadminroles.${thecmd}`)
+                if (!adminroles.includes(user.id)) return message.reply({embed: new Discord.MessageEmbed()
+                  .setTitle(`<:cross:899255798142750770>  ERROR | The User: \`${user.username}\` is not registered as an Admin Role yet for ${thecmd}`)
+                  .setColor(es.wrongcolor)
+                  .setFooter(es.footertext, es.footericon)
+                });
+                try {
+                  client.settings.remove(message.guild.id, user.id, `cmdadminroles.${thecmd}`)
+                  let cmd = client.settings.get(message.guild.id, `cmdadminroles.${thecmd}`)
+                  var cmdrole = []
+                    if(cmd.length > 0){
+                      for(const r of cmd){
+                        if(message.guild.roles.cache.get(r)){
+                          cmdrole.push(`<@&${r}>`)
+                        }
+                        else if(message.guild.members.cache.get(r)){
+                          cmdrole.push(`<@${r}>`)
+                        }
+                        else {
+                          console.log("F")
+                          console.log(r)
+                          client.settings.remove(message.guild.id, r, `cmdadminroles.${cmd}`)
+                        }
+                      }
+                    }
+                  return message.reply({embed: new Discord.MessageEmbed()
+                    .setTitle(`<:tick:899255869185855529> The User: \`${user.username}\` is not registered as an Admin Role anymore`)
+                    .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+                    .setDescription(`Everyone with one of those Roles/Users:\n${cmdrole.join("\n")}\nis now able to use the ${thecmd} Admin Commands`.substr(0, 2048))
+                    .setFooter(es.footertext, es.footericon)
+                  });
+                } catch (e) {
+                  return message.reply({embed: new Discord.MessageEmbed()
+                    .setTitle("<:cross:899255798142750770>  ERROR | Something went wrong, please contact: `S409™#9685`")
+                    .setColor(es.wrongcolor)
+                    .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``)
+                    .setFooter(es.footertext, es.footericon)
+                  });
+                }
+              } else {
+                throw "you didn't ping a valid Role"
+              }
+            })
+            .catch(e => {
+              timeouterror = e;
+            })
+          if (timeouterror)
+            return message.reply({embed: new Discord.MessageEmbed()
+              .setTitle("<:cross:899255798142750770>  ERROR | Your Time ran out")
+              .setColor(es.wrongcolor)
+              .setDescription(`Cancelled the Operation!`.substr(0, 2000))
+              .setFooter(es.footertext, es.footericon)
+            });
+        } else if (temptype == "show") {
+          let cmd = client.settings.get(message.guild.id, `cmdadminroles.${thecmd}`)
+          var cmdrole = []
+            if(cmd.length > 0){
+              for(const r of cmd){
+                if(message.guild.roles.cache.get(r)){
+                  cmdrole.push(`<@&${r}>`)
+                }
+                else if(message.guild.members.cache.get(r)){
+                  cmdrole.push(`<@${r}>`)
+                }
+                else {
+                  console.log("F")
+                  console.log(r)
+                  client.settings.remove(message.guild.id, r, `cmdadminroles.${cmd}`)
+                }
               }
             }
-            var embed = new MessageEmbed()
-              .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-admin"]["variable50"]))
-              .setColor(es.color)
-              .setDescription(`**General Admin Roles:**\n${client.settings.get(message.guild.id, "adminroles").length > 0 ? `<@&${client.settings.get(message.guild.id, "adminroles").join(">, <@&")}>`: "No General Admin Roles Setup yet"}`.substr(0, 2048))
-              .setFooter(client.getFooter(es))
-            for(const cmd of cmdrole){
-              embed.addField(cmd.name, cmd.info.join(", "))
+          
+          return message.reply({embed: new MessageEmbed()
+            .setTitle(`Everyone with one of those Roles is able to use the Admin Commands`)
+            .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+            .setDescription(`${client.settings.get(message.guild.id, `cmdadminroles.${thecmd}`).length > 0 ? `${cmdrole.join("\n")}`: `No ${thecmd} Admin Roles Setup yet`})`.substr(0, 2048))
+            .setFooter(es.footertext, es.footericon)
+          });
+        } else if (temptype == "thesettings") {
+          let db = client.settings.get(message.guild.id, "cmdadminroles")
+          var cmdrole = []
+          for(const [cmd, values] of Object.entries(db)){
+            var percmd = [];
+            if(values.length > 0){
+              for(const r of values){
+                if(message.guild.roles.cache.get(r)){
+                  percmd.push(`<@&${r}>`)
+                }
+                else if(message.guild.members.cache.get(r)){
+                  percmd.push(`<@${r}>`)
+                }
+                else {
+                  client.settings.remove(message.guild.id, r, `cmdadminroles.${cmd}`)
+                }
+              }
+              var key = `For the \`${cmd}\` Command`
+              cmdrole.push({ "info" : percmd, "name": key })
             }
-            return message.reply({embeds: [embed]});
           }
-          break;
-          case "Per Command Roles": 
-          {
-            var tempmsg = await message.reply({embeds: [new MessageEmbed()
-              .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-admin"]["variable4"]))
-              .setColor(es.color)
-              .setDescription(`
-              ${client.commands.filter((cmd) => cmd.category.includes("Admin")).map((cmd) => `\`${cmd.name}\``).join(" | ")}
-      
-              
-              *Enter one of those Commands!*`).setFooter(client.getFooter(es))
-            ]})
-            var thecmd;
-            await tempmsg.channel.awaitMessages({filter: m => m.author.id == message.author.id, 
-                max: 1,
-                time: 90000,
-                errors: ["time"]
-              })
-              .then(async collected => {
-                var com = collected.first().content.split(" ")[0]
-                const cmd = client.commands.get(com.toLowerCase()) || client.commands.get(client.aliases.get(com.toLowerCase()));
-                if(!cmd) 
-                  return message.reply({embeds: [new MessageEmbed()
-                    .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-admin"]["variable5"]))
-                    .setColor(es.wrongcolor)
-                    .setFooter(client.getFooter(es))]
-                  });
-                if(!cmd.category.toLowerCase().includes("admin")) 
-                  return message.reply({embeds: [new MessageEmbed()
-                    .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-admin"]["variable6"]))
-                    .setColor(es.wrongcolor)
-                    .setFooter(client.getFooter(es))]
-                  });
-                thecmd = cmd.name;
-                if(["detailwarn", "warnings", "report"].includes(thecmd.toLowerCase())) return timeouterror = {
-                  message: "YOU CANNOT USE THAT COMMAND, CAUSE IT DOES NOT NEED PERMISSIONS"
-                }
-
-                client.settings.ensure(message.guild.id, [], `cmdadminroles.${thecmd}`)
-
-                if(["dm"].includes(thecmd.toLowerCase())) return timeouterror = {
-                  message: "YOU CANNOT USE THAT COMMAND, CAUSE IT IS ADMINISTRATOR ONLY"
-                }
-                second_layer()
-                async function second_layer(){
-                  
-                  let menuoptions = [
-                    {
-                      value: "Add Role",
-                      description: `Add Role/User to ${thecmd.toUpperCase()} ADMIN ROLES`.substr(0, 50),
-                      emoji: "🔧"
-                    },
-                    {
-                      value: "Remove Role",
-                      description: `Rempove Role/User from ${thecmd.toUpperCase()} ADMIN ROLES`.substr(0, 50),
-                      emoji: "🗑"
-                    },
-                    {
-                      value: "Show Settings",
-                      description: `Show all Roles of ${thecmd.toUpperCase()} ADMIN ROLES`,
-                      emoji: "📑"
-                    },
-                    {
-                      value: "Cancel",
-                      description: `Cancel and stop the Admin-Per-Command-Setup!`,
-                      emoji: "862306766338523166"
-                    }
-                  ]
-                  //define the selection
-                  let Selection = new MessageSelectMenu()
-                    .setCustomId('MenuSelection') 
-                    .setMaxValues(1) //OPTIONAL, this is how many values you can have at each selection
-                    .setMinValues(1) //OPTIONAL , this is how many values you need to have at each selection
-                    .setPlaceholder('Click me to setup the Administration Roles') 
-                    .addOptions(
-                    menuoptions.map(option => {
-                      let Obj = {
-                        label: option.label ? option.label.substr(0, 50) : option.value.substr(0, 50),
-                        value: option.value.substr(0, 50),
-                        description: option.description.substr(0, 50),
-                      }
-                    if(option.emoji) Obj.emoji = option.emoji;
-                    return Obj;
-                   }))
-                  
-                  //define the embed
-                  let MenuEmbed = new MessageEmbed()
-                  .setColor(es.color)
-                  .setAuthor('Admin Setup', 'https://cdn.discordapp.com/emojis/892521772002447400.png?size=96', 'https://discord.gg/milrato')
-                  .setDescription(eval(client.la[ls]["cmds"]["setup"]["setup-ticket"]["variable2"]))
-                  //send the menu msg
-                  let menumsg = await message.reply({embeds: [MenuEmbed], components: [new MessageActionRow().addComponents(Selection)]})
-                  //Create the collector
-                  const collector = menumsg.createMessageComponentCollector({ 
-                    filter: i => i?.isSelectMenu() && i?.message.author.id == client.user.id && i?.user,
-                    time: 90000
-                  })
-                  //Menu Collections
-                  collector.on('collect', menu => {
-                    if (menu?.user.id === cmduser.id) {
-                      collector.stop();
-                      let menuoptiondata = menuoptions.find(v=>v.value == menu?.values[0])
-                      if(menu?.values[0] == "Cancel") return menu?.reply(eval(client.la[ls]["cmds"]["setup"]["setup-ticket"]["variable3"]))
-                      menu?.deferUpdate();
-                      let SetupNumber = menu?.values[0].split(" ")[0]
-                      handle_the_picks2(menu?.values[0], SetupNumber, menuoptiondata)
-                    }
-                    else menu?.reply({content: `<:no:833101993668771842> You are not allowed to do that! Only: <@${cmduser.id}>`, ephemeral: true});
-                  });
-                  //Once the Collections ended edit the menu message
-                  collector.on('end', collected => {
-                    menumsg.edit({embeds: [menumsg.embeds[0].setDescription(`~~${menumsg.embeds[0].description}~~`)], components: [], content: `${collected && collected.first() && collected.first().values ? `<a:yes:833101995723194437> **Selected: \`${collected ? collected.first().values[0] : "Nothing"}\`**` : "❌ **NOTHING SELECTED - CANCELLED**" }`})
-                  });
-                }
-                async function handle_the_picks2(optionhandletype, SetupNumber, menuoptiondata) {
-                  switch (optionhandletype) {
-                    case "Add Role": 
-                    {
-                      var tempmsg = await message.reply({embeds: [new MessageEmbed()
-                        .setTitle("Which Role/User do you wanna add to " + thecmd)
-                        .setColor(es.color)
-                        .setDescription(eval(client.la[ls]["cmds"]["setup"]["setup-admin"]["variable11"]))
-                        .setFooter(client.getFooter(es))]
-                      })
-                      await tempmsg.channel.awaitMessages({filter: m => m.author.id === message.author.id,
-                          max: 1,
-                          time: 90000,
-                          errors: ["time"]
-                        })
-                        .then(collected => {
-                          var message = collected.first();
-                          var role = message.mentions.roles.filter(role=>role.guild.id==message.guild.id).first();
-                          var user = message.mentions.users.first();
-                          if (role) {
-                            var adminroles = client.settings.get(message.guild.id, `cmdadminroles.${thecmd}`)
-                            if (adminroles.includes(role.id)) return message.reply({embeds: [new MessageEmbed()
-                              .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-admin"]["variable12"]))
-                              .setColor(es.wrongcolor)
-                              .setFooter(client.getFooter(es))]
-                            });
-                            try {
-                              client.settings.push(message.guild.id, role.id, `cmdadminroles.${thecmd}`)
-                              let cmd = client.settings.get(message.guild.id, `cmdadminroles.${thecmd}`)
-                              var cmdrole = []
-                                if(cmd.length > 0){
-                                  for(const r of cmd){
-                                    if(message.guild.roles.cache.get(r)){
-                                      cmdrole.push(`<@&${r}>`)
-                                    }
-                                    else if(message.guild.members.cache.get(r)){
-                                      cmdrole.push(`<@${r}>`)
-                                    }
-                                    else {
-                                      
-                                      //console.log(r)
-                                      client.settings.remove(message.guild.id, r, `cmdadminroles.${cmd}`)
-                                    }
-                                  }
-                                }
-                              return message.reply({embeds: [new MessageEmbed()
-                                .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-admin"]["variable13"]))
-                                .setColor(es.color)
-                                .setDescription(`Everyone with one of those Roles/Users:\n${cmdrole.join("\n")}\nis now able to use the ${thecmd} Admin Commands`.substr(0, 2048))
-                                .setFooter(client.getFooter(es))]
-                              });
-                            } catch (e) {
-                              return message.reply({embeds: [new MessageEmbed()
-                                .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-admin"]["variable14"]))
-                                .setColor(es.wrongcolor)
-                                .setDescription(eval(client.la[ls]["cmds"]["setup"]["setup-admin"]["variable19"]))
-                                .setFooter(client.getFooter(es))]
-                              });
-                            }
-                          } else if (user) {
-                            var adminroles = client.settings.get(message.guild.id, `cmdadminroles.${thecmd}`)
-                            if (adminroles.includes(user.id)) return message.reply({embeds: [new MessageEmbed()
-                              .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-admin"]["variable16"]))
-                              .setColor(es.wrongcolor)
-                              .setFooter(client.getFooter(es))]
-                            });
-                            try {
-                              client.settings.push(message.guild.id, user.id, `cmdadminroles.${thecmd}`)
-                              let cmd = client.settings.get(message.guild.id, `cmdadminroles.${thecmd}`)
-                              var cmdrole = []
-                                if(cmd.length > 0){
-                                  for(const r of cmd){
-                                    if(message.guild.roles.cache.get(r)){
-                                      cmdrole.push(`<@&${r}>`)
-                                    }
-                                    else if(message.guild.members.cache.get(r)){
-                                      cmdrole.push(`<@${r}>`)
-                                    }
-                                    else {
-                                      
-                                      //console.log(r)
-                                      client.settings.remove(message.guild.id, r, `cmdadminroles.${cmd}`)
-                                    }
-                                  }
-                                }
-                              return message.reply({embeds: [new MessageEmbed()
-                                .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-admin"]["variable17"]))
-                                .setColor(es.color)
-                                .setDescription(`Everyone with one of those Roles/Users:\n${cmdrole.join("\n")}\nis now able to use the ${thecmd} Admin Commands`.substr(0, 2048))
-                                .setFooter(client.getFooter(es))]
-                              });
-                            } catch (e) {
-                              return message.reply({embeds: [new MessageEmbed()
-                                .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-admin"]["variable18"]))
-                                .setColor(es.wrongcolor)
-                                .setDescription(eval(client.la[ls]["cmds"]["setup"]["setup-admin"]["variable25"]))
-                                .setFooter(client.getFooter(es))]
-                              });
-                            }
-                          } else {
-                            return message.reply( "you didn't ping a valid Role")
-                          }
-                        })
-                        .catch(e => {
-                          timeouterror = e;
-                        })
-                      if (timeouterror)
-                        return message.reply({embeds: [new MessageEmbed()
-                          .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-admin"]["variable20"]))
-                          .setColor(es.wrongcolor)
-                          .setDescription(`Cancelled the Operation!`.substr(0, 2000))
-                          .setFooter(client.getFooter(es))]
-                        });
-                    }
-                    break;
-                    case "Remove Role":
-                    {
-                      var tempmsg = await message.reply({embeds: [new MessageEmbed()
-                        .setTitle("Which Role/User do you wanna remove from " + thecmd)
-                        .setColor(es.color)
-                        .setDescription(eval(client.la[ls]["cmds"]["setup"]["setup-admin"]["variable21"]))
-                        .setFooter(client.getFooter(es))]
-                      })
-                      await tempmsg.channel.awaitMessages({filter: m => m.author.id === message.author.id,
-                          max: 1,
-                          time: 90000,
-                          errors: ["time"]
-                        })
-                        .then(collected => {
-                          var message = collected.first();
-                          var role = message.mentions.roles.filter(role=>role.guild.id==message.guild.id).first();
-                          var user = message.mentions.users.first();
-                          if (role) {
-                            var adminroles = client.settings.get(message.guild.id, `cmdadminroles.${thecmd}`)
-                            if (!adminroles.includes(role.id)) return message.reply({embeds: [new MessageEmbed()
-                              .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-admin"]["variable22"]))
-                              .setColor(es.wrongcolor)
-                              .setFooter(client.getFooter(es))]
-                            });
-                            try {
-                              client.settings.remove(message.guild.id, role.id, `cmdadminroles.${thecmd}`)
-                              let cmd = client.settings.get(message.guild.id, `cmdadminroles.${thecmd}`)
-                              var cmdrole = []
-                                if(cmd.length > 0){
-                                  for(const r of cmd){
-                                    if(message.guild.roles.cache.get(r)){
-                                      cmdrole.push(`<@&${r}>`)
-                                    }
-                                    else if(message.guild.members.cache.get(r)){
-                                      cmdrole.push(`<@${r}>`)
-                                    }
-                                    else {
-                                      
-                                      //console.log(r)
-                                      client.settings.remove(message.guild.id, r, `cmdadminroles.${cmd}`)
-                                    }
-                                  }
-                                }
-                              return message.reply({embeds: [new MessageEmbed()
-                                .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-admin"]["variable23"]))
-                                .setColor(es.color)
-                                .setDescription(`Everyone with one of those Roles/Users:\n${cmdrole.join("\n")}\nis now able to use the ${thecmd} Admin Commands`.substr(0, 2048))
-                                .setFooter(client.getFooter(es))]
-                              });
-                            } catch (e) {
-                              return message.reply({embeds: [new MessageEmbed()
-                                .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-admin"]["variable24"]))
-                                .setColor(es.wrongcolor)
-                                .setDescription(eval(client.la[ls]["cmds"]["setup"]["setup-admin"]["variable29"]))
-                                .setFooter(client.getFooter(es))]
-                              });
-                            }
-                          } else if (user) {
-                            var adminroles = client.settings.get(message.guild.id, `cmdadminroles.${thecmd}`)
-                            if (!adminroles.includes(user.id)) return message.reply({embeds: [new MessageEmbed()
-                              .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-admin"]["variable26"]))
-                              .setColor(es.wrongcolor)
-                              .setFooter(client.getFooter(es))]
-                            });
-                            try {
-                              client.settings.remove(message.guild.id, user.id, `cmdadminroles.${thecmd}`)
-                              let cmd = client.settings.get(message.guild.id, `cmdadminroles.${thecmd}`)
-                              var cmdrole = []
-                                if(cmd.length > 0){
-                                  for(const r of cmd){
-                                    if(message.guild.roles.cache.get(r)){
-                                      cmdrole.push(`<@&${r}>`)
-                                    }
-                                    else if(message.guild.members.cache.get(r)){
-                                      cmdrole.push(`<@${r}>`)
-                                    }
-                                    else {
-                                      
-                                      //console.log(r)
-                                      client.settings.remove(message.guild.id, r, `cmdadminroles.${cmd}`)
-                                    }
-                                  }
-                                }
-                              return message.reply({embeds: [new MessageEmbed()
-                                .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-admin"]["variable27"]))
-                                .setColor(es.color)
-                                .setDescription(`Everyone with one of those Roles/Users:\n${cmdrole.join("\n")}\nis now able to use the ${thecmd} Admin Commands`.substr(0, 2048))
-                                .setFooter(client.getFooter(es))]
-                              });
-                            } catch (e) {
-                              return message.reply({embeds: [new MessageEmbed()
-                                .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-admin"]["variable28"]))
-                                .setColor(es.wrongcolor)
-                                .setDescription(eval(client.la[ls]["cmds"]["setup"]["setup-admin"]["variable40"]))
-                                .setFooter(client.getFooter(es))]
-                              });
-                            }
-                          } else {
-                            return message.reply( "you didn't ping a valid Role")
-                          }
-                        })
-                        .catch(e => {
-                          timeouterror = e;
-                        })
-                      if (timeouterror)
-                        return message.reply({embeds: [new MessageEmbed()
-                          .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-admin"]["variable30"]))
-                          .setColor(es.wrongcolor)
-                          .setDescription(`Cancelled the Operation!`.substr(0, 2000))
-                          .setFooter(client.getFooter(es))]
-                        });
-                    }
-                    break;
-                    case "Show Settings":
-                    {
-                      let db = client.settings.get(message.guild.id, "cmdadminroles")
-                var cmdrole = []
-                for(const [cmd, values] of Object.entries(db)){
-                  var percmd = [];
-                  if(values.length > 0){
-                    for(const r of values){
-                      if(message.guild.roles.cache.get(r)){
-                        percmd.push(`<@&${r}>`)
-                      }
-                      else if(message.guild.members.cache.get(r)){
-                        percmd.push(`<@${r}>`)
-                      }
-                      else {
-                        client.settings.remove(message.guild.id, r, `cmdadminroles.${cmd}`)
-                      }
-                    }
-                    var key = `For the \`${cmd}\` Command`
-                    cmdrole.push({ "info" : percmd, "name": key })
-                  }
-                }
-                var embed = new MessageEmbed()
-                .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-admin"]["variable33"]))
-                .setColor(es.color)
-                .setDescription(`**General Admin Roles:**\n${client.settings.get(message.guild.id, "adminroles").length > 0 ? `<@&${client.settings.get(message.guild.id, "adminroles").join(">, <@&")}>`: "No General Admin Roles Setup yet"}`.substr(0, 2048))
-                .setFooter(client.getFooter(es))
-        
-                for(const cmd of cmdrole){
-                  embed.addField(cmd.name, cmd.info.join(", "))
-                }
-                return message.reply({embeds: [embed]});
-                    }
-                    break;
-                  }
-                }
-              })
-              .catch(e => {
-                timeouterror = e;
-              })
-            if (timeouterror)
-              return message.reply({embeds: [new MessageEmbed()
-                .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-admin"]["variable10"]))
-                .setColor(es.wrongcolor)
-                .setDescription(`Cancelled the Operation!`.substr(0, 2000))
-                .setFooter(client.getFooter(es))]
-              });
+          var embed = new MessageEmbed()
+          .setTitle(`📑 Settings of the Administration Setup`)
+          .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+          .setDescription(`**General Admin Roles:**\n${client.settings.get(message.guild.id, "adminroles").length > 0 ? `<@&${client.settings.get(message.guild.id, "adminroles").join(">, <@&")}>`: "No General Admin Roles Setup yet"}`.substr(0, 2048))
+          .setFooter(es.footertext, es.footericon)
+  
+          for(const cmd of cmdrole){
+            embed.addField(cmd.name, cmd.info.join(", "))
           }
-          break;
-        } 
+          return message.reply({embed: embed});
+        } else {
+          return message.reply({embed: new Discord.MessageEmbed()
+            .setTitle("<:cross:899255798142750770>  ERROR | PLEASE CONTACT `S409™#9685`")
+            .setColor(es.wrongcolor)
+            .setFooter(es.footertext, es.footericon)
+          });
+        }
+
+
+
+
+
+
       }
+      else if (temptype == "add") {
+
+        tempmsg = await tempmsg.edit({embed: new Discord.MessageEmbed()
+          .setTitle("Which Role do you wanna add?")
+          .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+          .setDescription(`Please Ping the Role now!`)
+          .setFooter(es.footertext, es.footericon)
+        })
+        await tempmsg.channel.awaitMessages(m => m.author.id === message.author.id, {
+            max: 1,
+            time: 90000,
+            errors: ["time"]
+          })
+          .then(collected => {
+            var message = collected.first();
+            var role = message.mentions.roles.filter(role=>role.guild.id==message.guild.id).first();
+            if (role) {
+              var adminroles = client.settings.get(message.guild.id, "adminroles")
+              if (adminroles.includes(role.id)) return message.reply({embed: new Discord.MessageEmbed()
+                .setTitle(`<:cross:899255798142750770>  ERROR | The role: \`${role.name}\` is already registered as an Admin Role`)
+                .setColor(es.wrongcolor)
+                .setFooter(es.footertext, es.footericon)
+              });
+              try {
+                client.settings.push(message.guild.id, role.id, "adminroles");
+                return message.reply({embed: new Discord.MessageEmbed()
+                  .setTitle(`<:tick:899255869185855529> The role: \`${role.name}\` is now registered as an Admin Role`)
+                  .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+                  .setDescription(`Everyone with one of those Roles:\n<@&${client.settings.get(message.guild.id, "adminroles").join(">\n<@&")}>\nis now able to use the Admin Commands`.substr(0, 2048))
+                  .setFooter(es.footertext, es.footericon)
+                });
+              } catch (e) {
+                return message.reply({embed: new Discord.MessageEmbed()
+                  .setTitle("<:cross:899255798142750770>  ERROR | Something went wrong, please contact: `S409™#9685`")
+                  .setColor(es.wrongcolor)
+                  .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``)
+                  .setFooter(es.footertext, es.footericon)
+                });
+              }
+            } else {
+              throw "you didn't ping a valid Role"
+            }
+          })
+          .catch(e => {
+            timeouterror = e;
+          })
+        if (timeouterror)
+          return message.reply({embed: new Discord.MessageEmbed()
+            .setTitle("<:cross:899255798142750770>  ERROR | Your Time ran out")
+            .setColor(es.wrongcolor)
+            .setDescription(`Cancelled the Operation!`.substr(0, 2000))
+            .setFooter(es.footertext, es.footericon)
+          });
+
+      } else if (temptype == "remove") {
+        tempmsg = await tempmsg.edit({embed: new Discord.MessageEmbed()
+          .setTitle("Which Role do you wanna remove?")
+          .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+          .setDescription(`Please Ping the Role now!`)
+          .setFooter(es.footertext, es.footericon)
+        })
+        await tempmsg.channel.awaitMessages(m => m.author.id === message.author.id, {
+            max: 1,
+            time: 90000,
+            errors: ["time"]
+          })
+          .then(collected => {
+            var message = collected.first();
+            var role = message.mentions.roles.filter(role=>role.guild.id==message.guild.id).first();
+            if (role) {
+              var adminroles = client.settings.get(message.guild.id, "adminroles")
+              if (!adminroles.includes(role.id)) return message.reply({embed: new Discord.MessageEmbed()
+                .setTitle(`<:cross:899255798142750770>  ERROR | The role: \`${role.name}\` is not registered as an Admin Role yet`)
+                .setColor(es.wrongcolor)
+                .setFooter(es.footertext, es.footericon)
+              });
+              try {
+                client.settings.remove(message.guild.id, role.id, "adminroles");
+                return message.reply({embed: new Discord.MessageEmbed()
+                  .setTitle(`<:tick:899255869185855529> The role: \`${role.name}\` is now registered as an Admin Role`)
+                  .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+                  .setDescription(`Everyone with one of those Roles:\n<@&${client.settings.get(message.guild.id, "adminroles").join(">\n<@&")}>\nis now able to use the Admin Commands`.substr(0, 2048))
+                  .setFooter(es.footertext, es.footericon)
+                });
+              } catch (e) {
+                return message.reply({embed: new Discord.MessageEmbed()
+                  .setTitle("<:cross:899255798142750770>  ERROR | Something went wrong, please contact: `S409™#9685`")
+                  .setColor(es.wrongcolor)
+                  .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``)
+                  .setFooter(es.footertext, es.footericon)
+                });
+              }
+            } else {
+              throw "you didn't ping a valid Role"
+            }
+          })
+          .catch(e => {
+            timeouterror = e;
+          })
+        if (timeouterror)
+          return message.reply({embed: new Discord.MessageEmbed()
+            .setTitle("<:cross:899255798142750770>  ERROR | Your Time ran out")
+            .setColor(es.wrongcolor)
+            .setDescription(`Cancelled the Operation!`.substr(0, 2000))
+            .setFooter(es.footertext, es.footericon)
+          });
+      } else if (temptype == "show") {
+        let db = client.settings.get(message.guild.id, "cmdadminroles")
+        var cmdrole = []
+        for(const [cmd, values] of Object.entries(db)){
+          var percmd = [];
+          if(values.length > 0){
+            for(const r of values){
+              if(message.guild.roles.cache.get(r)){
+                percmd.push(`<@&${r}>`)
+              }
+              else if(message.guild.members.cache.get(r)){
+                percmd.push(`<@${r}>`)
+              }
+              else {
+                client.settings.remove(message.guild.id, r, `cmdadminroles.${cmd}`)
+              }
+            }
+            var key = `For the \`${cmd}\` Command`
+            cmdrole.push({ "info" : percmd, "name": key })
+          }
+        }
+        var embed = new MessageEmbed()
+        .setTitle(`Everyone with one of those Roles is able to use the Admin Commands`)
+        .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+        .setDescription(`${client.settings.get(message.guild.id, "adminroles").length > 0 ? `<@&${client.settings.get(message.guild.id, "adminroles").join(">, <@&")}>`: "No General Admin Roles Setup yet"}`.substr(0, 2048))
+        .setFooter(es.footertext, es.footericon)
+
+        for(const cmd of cmdrole){
+          embed.addField(cmd.name, cmd.info.join(", "))
+        }
+        return message.reply({embed: embed});
+      } else if (temptype == "thesettings") {
+        let db = client.settings.get(message.guild.id, "cmdadminroles")
+        var cmdrole = []
+        for(const [cmd, values] of Object.entries(db)){
+          var percmd = [];
+          if(values.length > 0){
+            for(const r of values){
+              if(message.guild.roles.cache.get(r)){
+                percmd.push(`<@&${r}>`)
+              }
+              else if(message.guild.members.cache.get(r)){
+                percmd.push(`<@${r}>`)
+              }
+              else {
+                client.settings.remove(message.guild.id, r, `cmdadminroles.${cmd}`)
+              }
+            }
+            var key = `For the \`${cmd}\` Command`
+            cmdrole.push({ "info" : percmd, "name": key })
+          }
+        }
+        var embed = new MessageEmbed()
+        .setTitle(`📑 Settings of the Administration Setup`)
+        .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+        .setDescription(`**General Admin Roles:**\n${client.settings.get(message.guild.id, "adminroles").length > 0 ? `<@&${client.settings.get(message.guild.id, "adminroles").join(">, <@&")}>`: "No General Admin Roles Setup yet"}`.substr(0, 2048))
+        .setFooter(es.footertext, es.footericon)
+
+        for(const cmd of cmdrole){
+          embed.addField(cmd.name, cmd.info.join(", "))
+        }
+        return message.reply({embed: embed});
+      }  else {
+        return message.reply({embed: new Discord.MessageEmbed()
+          .setTitle("<:cross:899255798142750770>  ERROR | PLEASE CONTACT `S409™#9685`")
+          .setColor(es.wrongcolor)
+          .setFooter(es.footertext, es.footericon)
+        });
+      }
+
     } catch (e) {
-      console.log(String(e.stack).grey.bgRed)
-      return message.reply({embeds: [new MessageEmbed()
-        .setColor(es.wrongcolor).setFooter(client.getFooter(es))
-        .setTitle(client.la[ls].common.erroroccur)
+      console.log(String(e.stack).bgRed)
+      return message.channel.send(new MessageEmbed()
+        .setColor(es.wrongcolor).setFooter(es.footertext, es.footericon)
+        .setTitle(`<:cross:899255798142750770>  Something went Wrong`)
         .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``)
-      ]});
+      );
     }
   },
 };
 /**
  * @INFO
- * Bot Coded by Tomato#6966 | https://discord.gg/milrato
+ * Bot Coded by S409™#9685 | https://github.com/S409™#9685/discord-js-lavalink-Music-Bot-erela-js
  * @INFO
- * Work for S409 support | https://s409.xyz
+ * Work for s409 Development | https://s409.xyz
  * @INFO
- * Please mention him / S409 support, when using this Code!
+ * Please mention Him / s409 Development, when using this Code!
  * @INFO
  */

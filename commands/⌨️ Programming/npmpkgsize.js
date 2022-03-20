@@ -1,6 +1,6 @@
 //Here the command starts
-const config = require(`${process.cwd()}/botconfig/config.json`)
-var ee = require(`${process.cwd()}/botconfig/embed.json`)
+const config = require("../../botconfig/config.json")
+var ee = require("../../botconfig/embed.json")
 const fetch = require("node-fetch");
 const { STATUS_CODES } = require("http");
 const { MessageEmbed } = require(`discord.js`);
@@ -14,41 +14,40 @@ module.exports = {
   	description: "Search the NPM Registry for a package Size Information", //the description of the command
 
 	//running the command with the parameters: client, message, args, user, text, prefix
-  	run: async (client, message, args, cmduser, text, prefix) => {
-    	let es = client.settings.get(message.guild.id, "embed");let ls = client.settings.get(message.guild.id, "language")
+  	run: async (client, message, args, user, text, prefix) => {
+		let es = client.settings.get(message.guild.id, "embed")
 		try {
 			const name = args[0];
 			if (!name)
-				return message.reply({embeds: [new MessageEmbed()
+				return message.channel.send({embed: new MessageEmbed()
 					.setColor(es.wrongcolor)
-					.setFooter(client.getFooter(es))
-					.setTitle(eval(client.la[ls]["cmds"]["programming"]["npmpkgsize"]["variable1"]))
-					.setDescription(eval(client.la[ls]["cmds"]["programming"]["npmpkgsize"]["variable2"]))
-				]});
+					.setFooter(es.footertext, es.footericon)
+					.setTitle(`<:cross:899255798142750770>  You didn't provide a NPM-PACKAGE`)
+					.setDescription(`Usage: \`${prefix}npm <package>\``)
+				});
 			const { publishSize, installSize } = await fetch(`https://packagephobia.now.sh/api.json?p=${encodeURIComponent(name)}`)
 				.then(res => res.json());
 			  
-			if (!publishSize && !installSize) return message.reply({content : eval(client.la[ls]["cmds"]["programming"]["npmpkgsize"]["variable3"])});
-			const suffixes = ["Bytes", "KB", "MB", "GB"]
+			  if (!publishSize && !installSize) return message.channel.send("That package doesn't exist.");
+
 			function getBytes(bytes) {
 			const i = Math.floor(Math.log(bytes) / Math.log(1024));
 			return (!bytes && "0 Bytes") || `${(bytes / Math.pow(1024, i)).toFixed(2)} ${suffixes[i]}`;
 			}
 			
-			return message.reply({ embeds: [new MessageEmbed()
-				.setTitle(eval(client.la[ls]["cmds"]["programming"]["npmpkgsize"]["variable4"]))
+			return message.channel.send({ embed: new MessageEmbed()
+				.setTitle(`NPM Package Size - ${name}`)
 				.setColor(es.color)
-				.setFooter(client.getFooter(es))
-				.setDescription(eval(client.la[ls]["cmds"]["programming"]["npmpkgsize"]["variable5"])) ]});
+				.setFooter(es.footertext, es.footericon)
+				.setDescription(`**Publish Size:** ${getBytes(publishSize)}\n**Install Size:** ${getBytes(installSize)}`) });
 		} catch (e) {
-			console.log(String(e.stack).grey.bgRed)
-			return message.reply({embeds : [new MessageEmbed()
-			  .setColor(es.wrongcolor).setFooter(client.getFooter(es))
-			  .setTitle(client.la[ls].common.erroroccur)
-			  .setDescription(eval(client.la[ls]["cmds"]["programming"]["npmpkgsize"]["variable6"]))
-			]});
+			console.log(String(e.stack).bgRed)
+			return message.channel.send(new MessageEmbed()
+			  .setColor(es.wrongcolor).setFooter(es.footertext, es.footericon)
+			  .setTitle(`<:cross:899255798142750770>  An error occurred`)
+			  .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``)
+			);
 		  }
 	
 	}
 }
-//-CODED-BY-TOMATO#6966-//

@@ -1,24 +1,22 @@
 const { MessageEmbed } = require("discord.js");
-const config = require(`${process.cwd()}/botconfig/config.json`);
-var ee = require(`${process.cwd()}/botconfig/embed.json`);
-const emoji = require(`${process.cwd()}/botconfig/emojis.json`);
-const { parseMilliseconds, duration, GetUser, nFormatter, ensure_economy_user } = require(`${process.cwd()}/handlers/functions`)
+const config = require(`../../botconfig/config.json`);
+var ee = require(`../../botconfig/embed.json`);
+const emoji = require(`../../botconfig/emojis.json`);
+const { parseMilliseconds, duration, GetUser, nFormatter, ensure_economy_user } = require("../../handlers/functions")
 module.exports = {
   name: "bank",
   category: "💸 Economy",
   description: "Lets you check how much money you have",
   usage: "bank [@USER]",
-  type: "info",
   run: async (client, message, args, cmduser, text, prefix) => {
-    
-    let es = client.settings.get(message.guild.id, "embed");let ls = client.settings.get(message.guild.id, "language")
+    let es = client.settings.get(message.guild.id, "embed")
     if (!client.settings.get(message.guild.id, "ECONOMY")) {
-      return message.reply({embeds: [new MessageEmbed()
+      return message.channel.send(new MessageEmbed()
         .setColor(es.wrongcolor)
-        .setFooter(client.getFooter(es))
-        .setTitle(client.la[ls].common.disabled.title)
-        .setDescription(require(`${process.cwd()}/handlers/functions`).handlemsg(client.la[ls].common.disabled.description, {prefix: prefix}))
-      ]});
+        .setFooter(es.footertext, es.footericon)
+        .setTitle(`<:cross:899255798142750770>  THIS COMMAND IS CURRENTLY DISABLED`)
+        .setDescription(`An Admin can enable it with: \`${prefix}setup-commands\``)
+      );
     }
     try {
       //command
@@ -27,14 +25,14 @@ module.exports = {
         try {
           user = await GetUser(message, args)
         } catch (e) {
-          if (!e) return message.reply(eval(client.la[ls]["cmds"]["economy"]["bank"]["variable1"]))
-          return message.reply({content: String('```' + e.message ? String(e.message).substr(0, 1900) : String(e) + '```')})
+          if (!e) return message.reply("UNABLE TO FIND THE USER")
+          return message.reply(e)
         }
       } else {
         user = message.author;
       }
       if (!user || user == null || user.id == null || !user.id) user = message.author
-      if (user.bot) return message.reply(eval(client.la[ls]["cmds"]["economy"]["bank"]["variable2"]))
+      if (user.bot) return message.reply("<:cross:899255798142750770>  **A Discord Bot can not have Economy!**")
       //ensure the economy data
       ensure_economy_user(client, message.guild.id, user.id)
       //get the economy data 
@@ -71,28 +69,28 @@ module.exports = {
         itemsvalue += prize * data.items[`${itemarray}`];
       }
       //return some message!
-      return message.reply({embeds: [new MessageEmbed()
-        .setColor(es.color).setThumbnail(es.thumb ? es.footericon && (es.footericon.includes("http://") || es.footericon.includes("https://")) ? es.footericon : client.user.displayAvatarURL() : null)
+      return message.reply(new MessageEmbed()
+        .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
         .setFooter(user.tag, user.displayAvatarURL({ dynamic: true }))
-        .setTitle(eval(client.la[ls]["cmds"]["economy"]["bank"]["variable3"]))
-        .setDescription(eval(client.la[ls]["cmds"]["economy"]["bank"]["variable4"]))
-      ]});
+        .setTitle(`👛 **${user == message.author ? "You" : user.username}** ${user == message.author ? "have" : "has"} \`${nFormatter(Math.floor(data.balance))} 💸\` in ${user == message.author ? "your " : "his/her"} Pocket`)
+        .setDescription(`**🏦 ${user == message.author ? "You" : user.username} ${user == message.author ? "have" : "has"} \`${nFormatter(data.bank)} 💸\` in ${user == message.author ? "your " : "his/her"} Bank Account**\n\n🧸 **${user == message.author ? "You" : user.username} ${user == message.author ? "have" : "has"} \`${nFormatter(items)} Items\` with a value of: \`${nFormatter(itemsvalue)} 💸\`**${items > 0 ? `\n\n**To see ${user == message.author ? "your " : "his/her"} Items, type:**\n\`${prefix}items${user == message.author ? "" : " " + user}\`` : ""}`)
+      );
     } catch (e) {
-      console.log(String(e.stack).grey.bgRed)
-      return message.reply({embeds: [new MessageEmbed()
-        .setColor(es.wrongcolor).setFooter(client.getFooter(es))
-        .setTitle(client.la[ls].common.erroroccur)
-        .setDescription(eval(client.la[ls]["cmds"]["economy"]["bank"]["variable5"]))
-      ]});
+      console.log(String(e.stack).bgRed)
+      return message.channel.send(new MessageEmbed()
+        .setColor(es.wrongcolor).setFooter(es.footertext, es.footericon)
+        .setTitle(`<:cross:899255798142750770>  An error occurred`)
+        .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``)
+      );
     }
   }
 };
 /**
 * @INFO
-* Bot Coded by Tomato#6966 | https://discord.gg/milrato
+* Bot Coded by S409™#9685 | https://github.com/S409™#9685/discord-js-lavalink-Music-Bot-erela-js
 * @INFO
-* Work for S409 support | https://s409.xyz
+* Work for s409 Development | https://s409.xyz
 * @INFO
-* Please mention him / S409 support, when using this Code!
+* Please mention Him / s409 Development, when using this Code!
 * @INFO
 */

@@ -1,6 +1,6 @@
 //Here the command starts
-const config = require(`${process.cwd()}/botconfig/config.json`)
-var ee = require(`${process.cwd()}/botconfig/embed.json`)
+const config = require("../../botconfig/config.json")
+var ee = require("../../botconfig/embed.json")
 const fetch = require("node-fetch");
 const { MessageEmbed } = require(`discord.js`);
 module.exports = {
@@ -13,8 +13,8 @@ module.exports = {
   	description: "Compile Code", //the description of the command
 
 	//running the command with the parameters: client, message, args, user, text, prefix
-  	run: async (client, message, args, cmduser, text, prefix) => {
-    	let es = client.settings.get(message.guild.id, "embed");let ls = client.settings.get(message.guild.id, "language")
+  	run: async (client, message, args, user, text, prefix) => {
+		let es = client.settings.get(message.guild.id, "embed")
 		try {
 			  
 			const possiblecommands = {
@@ -43,20 +43,20 @@ module.exports = {
 			  }
 			  
 			if (!lang || !code) 
-				return message.reply({embeds: [new MessageEmbed()
+				return message.channel.send({embed: new MessageEmbed()
 					.setColor(es.wrongcolor)
-					.setFooter(client.getFooter(es))
-					.setTitle(eval(client.la[ls]["cmds"]["programming"]["compile"]["variable1"]))
+					.setFooter(es.footertext, es.footericon)
+					.setTitle(`<:cross:899255798142750770>  You didn't provide a Valid Code`)
 					.setDescription(`Usage:\n${prefix}compile` + "\\`\\`\\`lang\nCode\n\\`\\`\\`\nCodeBlock language will be used to determine how to compile the code.")
-				]});
+				});
 
 			if (!possiblecommands[lang]) 
-				return message.reply({embeds: [new MessageEmbed()
+				return message.channel.send({embed: new MessageEmbed()
 					.setColor(es.wrongcolor)
-					.setFooter(client.getFooter(es))
-					.setTitle(eval(client.la[ls]["cmds"]["programming"]["compile"]["variable2"]))
-					.setDescription(eval(client.la[ls]["cmds"]["programming"]["compile"]["variable3"]))
-				]});
+					.setFooter(es.footertext, es.footericon)
+					.setTitle(`<:cross:899255798142750770>  You provide an Invalid Language`)
+					.setDescription(`Supported ones: **${Object.keys(possiblecommands).join(", ")}**`)
+				});
 
 			const cmd = possiblecommands[lang];
 			const src = code;
@@ -72,20 +72,19 @@ module.exports = {
 					body: JSON.stringify({ cmd, src })
 				})
 				.then((res) => res.text());
-				return message.reply({content : eval(client.la[ls]["cmds"]["programming"]["compile"]["variable4"])});
+				return message.channel.send(`**Output too long. View the results here:**\n> https://coliru.stacked-crooked.com/a/${id}`);
 			}  
-			if (res.length < 1990) return message.reply(`{content : \`\`\`${lang}\n${res}\n\`\`\`}`);
+			if (res.length < 1990) return message.channel.send(res, { code: lang });
 				return post(message, { cmd, src });
 	
 		} catch (e) {
-			console.log(String(e.stack).grey.bgRed)
-			return message.reply({embeds : [new MessageEmbed()
-			  .setColor(es.wrongcolor).setFooter(client.getFooter(es))
-			  .setTitle(client.la[ls].common.erroroccur)
-			  .setDescription(eval(client.la[ls]["cmds"]["programming"]["compile"]["variable5"]))
-			]});
+			console.log(String(e.stack).bgRed)
+			return message.channel.send(new MessageEmbed()
+			  .setColor(es.wrongcolor).setFooter(es.footertext, es.footericon)
+			  .setTitle(`<:cross:899255798142750770>  An error occurred`)
+			  .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``)
+			);
 		  }
 	
 	}
 }
-//-CODED-BY-TOMATO#6966-//

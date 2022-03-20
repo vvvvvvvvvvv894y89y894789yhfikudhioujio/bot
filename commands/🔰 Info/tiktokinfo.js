@@ -2,36 +2,35 @@ const Discord = require("discord.js");
 const {
   MessageEmbed
 } = require("discord.js");
-const config = require(`${process.cwd()}/botconfig/config.json`);
-var ee = require(`${process.cwd()}/botconfig/embed.json`);
-const emoji = require(`${process.cwd()}/botconfig/emojis.json`);
+const config = require("../../botconfig/config.json");
+var ee = require("../../botconfig/embed.json");
+const emoji = require(`../../botconfig/emojis.json`);
 const moment = require('moment');
 const TikTokScraper = require('tiktok-scraper');
-const { handlemsg } = require(`${process.cwd()}/handlers/functions`) 
 module.exports = {
   name: "tiktokinfo",
-  aliases: ["tiktokinfo", "tiktokuserinfo", "ttuserinfo", "ttuser", "tiktokuser"],
+  aliases: ["tiktokinfo", "tiktokuserinfo", "tuserinfo", "uinfo", "tuser", "tiktokuser"],
   category: "🔰 Info",
   description: "Get information about a Twitter User",
   usage: "tiktokinfo <TWITTERUSER>",
-  type: "util",
   run: async (client, message, args, cmduser, text, prefix) => {
-    
-    let es = client.settings.get(message.guild.id, "embed");let ls = client.settings.get(message.guild.id, "language")
+    let es = client.settings.get(message.guild.id, "embed")
     try {
       (async () => {
         try {
             const posts = await TikTokScraper.user(args.join(" "), {
                 number: 5,
             });
-            if(!posts.collector[0]) return message.reply(client.la[ls].common.usernotfound) 
+            if(!posts.collector[0]) return message.reply("<:cross:899255798142750770>  **NOT FOUND / No Posts!**") 
             author = posts.collector[0].authorMeta;
             var embed = new Discord.MessageEmbed()
-            .setColor(es.color).setThumbnail(es.thumb ? es.footericon && (es.footericon.includes("http://") || es.footericon.includes("https://")) ? es.footericon : client.user.displayAvatarURL() : null)
+            .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
             .setThumbnail(author.avatar)
-            .setTitle(handlemsg(client.la[ls].cmds.info.tiktokinfo.title, { name: author.name}))
-            .setDescription(handlemsg(client.la[ls].cmds.info.tiktokinfo.description, { nickName: author.nickName, video: author.video, signature: author.signature, fans: author.fans, following: author.following}))
-            .setFooter(client.getFooter(`ID: ${author.id_str}`, author.avatar))
+            .setTitle(`Information about: **\`${author.name}\`**`)
+            .setDescription(`**Nickname:** \`${author.nickName}\`\n**Bio:**\n> ${author.signature}\n\n> **\`${author.fans} Followers\` | \`${author.following} Follows\` | \`${author.video}Posts\`**`)
+            //.setFooter(`ID: ${user.id_str}`, user.profile_image_url_https ? user.profile_image_url_https : user.profile_image_url)
+            const dDate = new Date()
+            var num = dDate.getTime();
             var allposts = posts.collector.map(p => {
                 const Obj = {};
                 Obj.id = p.id;
@@ -49,36 +48,49 @@ module.exports = {
                 return Obj;
             })
             for(const post of allposts)
-            embed.addField(`**${String(post.title).charAt(0).toUpperCase() + String(post.title).slice(1)}**`, handlemsg(client.la[ls].cmds.info.tiktokinfo.videos, { url: author.url, views: author.views, shares: author.shares, comments: author.comments}))
-            message.reply({embeds: [embed]});
-        } catch (e) {
-            console.log(e.stack ? String(e.stack).grey : String(e).grey);
-            return message.reply({embeds: [new MessageEmbed()
-              .setColor(es.wrongcolor)
-              .setFooter(client.getFooter(es))
-              .setTitle(client.la[ls].common.erroroccur)
-              .setDescription(eval(client.la[ls]["cmds"]["info"]["color"]["variable2"]))
-            ]});
+            embed.addField(`**${String(post.title).charAt(0).toUpperCase() + String(post.title).slice(1)}**`, `> **[Watch it](${post.url}) | \`${post.views} Views\` | \`${post.shares} Shares\` | \`${post.comments} Comments\`**`)
+            message.channel.send(embed)
+            function timeSince(date) {
+
+              var seconds = Math.floor((new Date() - date) / 1000);
+            
+              var interval = seconds / 31536000;
+            
+              if (interval > 1) {
+                return Math.floor(interval) + " years";
+              }
+              interval = seconds / 2592000;
+              if (interval > 1) {
+                return Math.floor(interval) + " months";
+              }
+              interval = seconds / 86400;
+              if (interval > 1) {
+                return Math.floor(interval) + " days";
+              }
+              interval = seconds / 3600;
+              if (interval > 1) {
+                return Math.floor(interval) + " hours";
+              }
+              interval = seconds / 60;
+              if (interval > 1) {
+                return Math.floor(interval) + " minutes";
+              }
+              return Math.floor(seconds) + " seconds";
+            }
+        } catch (error) {
+            console.log(error);
         }
     })();
+     
     } catch (e) {
-      console.log(String(e.stack).grey.bgRed)
-      return message.reply({embeds: [new MessageEmbed()
+      console.log(String(e.stack).bgRed)
+      return message.channel.send(new MessageEmbed()
         .setColor(es.wrongcolor)
-        .setFooter(client.getFooter(es))
-        .setTitle(client.la[ls].common.erroroccur)
-        .setDescription(eval(client.la[ls]["cmds"]["info"]["color"]["variable2"]))
-      ]});
+        .setFooter(es.footertext, es.footericon)
+        .setTitle(`ERROR | An error occurred`)
+        .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``)
+      );
     }
     return;
   }
 }
-/**
- * @INFO
- * Bot Coded by Tomato#6966 | https://discord.gg/milrato
- * @INFO
- * Work for S409 support | https://s409.xyz
- * @INFO
- * Please mention him / S409 support, when using this Code!
- * @INFO
- */

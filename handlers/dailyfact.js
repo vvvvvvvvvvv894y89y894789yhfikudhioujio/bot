@@ -33,16 +33,16 @@ module.exports = client => {
             if(!set || set == "no") return
             //try to fetch the channel if no channel found throw error and return
             try{
-                channel = await client.channels.fetch(set).catch(() => {})
+                channel = await client.channels.fetch(set)
                 if(!channel || channel == null || channel == undefined || !channel.name || channel.name == null || channel.name == undefined) throw "Channel not found"
             }catch (e){
                 return;
             }
             let owo;
             owo = await neko.sfw.fact();
-            channel.send( "***〔📢〕Daily Fact***\n>>> " + owo.fact).catch(() => {});
-        } catch (e){
-            console.log(String(e).grey)
+            message.channel.send( "***〔📢〕Daily Fact***\n>>> " + owo.fact).catch((e) => console.log(String(e.stack).red));
+        } catch {
+
         }
     }
 

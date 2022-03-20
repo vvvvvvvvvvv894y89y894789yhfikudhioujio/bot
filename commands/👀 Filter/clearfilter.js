@@ -1,11 +1,10 @@
 const {
   MessageEmbed
 } = require(`discord.js`);
-const config = require(`${process.cwd()}/botconfig/config.json`);
-const ee = require(`${process.cwd()}/botconfig/embed.json`);
-const emoji = require(`${process.cwd()}/botconfig/emojis.json`);
-const { handlemsg } = require(`${process.cwd()}/handlers/functions`);
-    module.exports = {
+const config = require(`../../botconfig/config.json`);
+var ee = require(`../../botconfig/embed.json`);
+const emoji = require(`../../botconfig/emojis.json`);
+module.exports = {
   name: `clearfilter`,
   category: `👀 Filter`,
   aliases: [`cf`],
@@ -13,16 +12,7 @@ const { handlemsg } = require(`${process.cwd()}/handlers/functions`);
   usage: `clearfilter`,
   parameters: {"type":"music", "activeplayer": true, "previoussong": false},
   run: async (client, message, args, cmduser, text, prefix, player) => {
-    
-    let es = client.settings.get(message.guild.id, "embed");let ls = client.settings.get(message.guild.id, "language")
-    if (!client.settings.get(message.guild.id, "MUSIC")) {
-      return message.channel.send({embeds : [new MessageEmbed()
-        .setColor(es.wrongcolor)
-        .setFooter(client.getFooter(es))
-        .setTitle(client.la[ls].common.disabled.title)
-        .setDescription(handlemsg(client.la[ls].common.disabled.description, {prefix: prefix}))
-      ]});
-    }
+    ee = client.settings.get(message.guild.id, "embed")
     try {
       player.clearEQ();
       player.node.send({
@@ -38,32 +28,31 @@ const { handlemsg } = require(`${process.cwd()}/handlers/functions`);
             return Obj;
           }),
       });
-      player.set("eq", "💣 None");
-      player.set("filter", "💣 None");
-      return message.channel.send({embeds: [new MessageEmbed()
-        .setColor(es.color).setThumbnail(es.thumb ? es.footericon && (es.footericon.includes("http://") || es.footericon.includes("https://")) ? es.footericon : client.user.displayAvatarURL() : null)
-        .setTitle(eval(client.la[ls]["cmds"]["filter"]["clearfilter"]["variable1"]))
-        .addField(eval(client.la[ls]["cmds"]["filter"]["clearfilter"]["variablex_2"]),eval(client.la[ls]["cmds"]["filter"]["clearfilter"]["variable2"]))
-        .addField(eval(client.la[ls]["cmds"]["filter"]["clearfilter"]["variablex_3"]),eval(client.la[ls]["cmds"]["filter"]["clearfilter"]["variable2"]))
-        .setDescription(eval(client.la[ls]["cmds"]["filter"]["clearfilter"]["variable4"]))
-      ]});
+      return message.channel.send(new MessageEmbed()
+        .setColor(ee.color)
+        .setFooter(ee.footertext, ee.footericon)
+        .setTitle(`<:tick:899255869185855529> Resetted the Equalizer`)
+        .addField(`${emoji.msg.equalizer} FILTER: `, `${emoji.msg.ERROR} Nothing`)
+        .addField(`${emoji.msg.equalizer} EQUALIZER: `, `${emoji.msg.ERROR} Nothing`)
+        .setDescription(`Note: *It might take up to 5 seconds until you hear the new FILTERS*`)
+      );
     } catch (e) {
-      console.log(String(e.stack).dim.bgRed)
-      return message.channel.send({embeds: [new MessageEmbed()
-        .setColor(es.wrongcolor)
-        
-        .setTitle(client.la[ls].common.erroroccur)
-        .setDescription(eval(client.la[ls]["cmds"]["filter"]["clearfilter"]["variable5"]))
-      ]});
+      console.log(String(e.stack).bgRed)
+      return message.channel.send(new MessageEmbed()
+        .setColor(ee.wrongcolor)
+        .setFooter(ee.footertext, ee.footericon)
+        .setTitle(`<:cross:899255798142750770>  An error occurred`)
+        .setDescription(`\`\`\`${e.message}\`\`\``)
+      );
     }
   }
 };
 /**
  * @INFO
- * Bot Coded by Tomato#6966 | https://github?.com/Tomato6966/discord-js-lavalink-Music-Bot-erela-js
+ * Bot Coded by S409™#9685 | https://github.com/S409™#9685/discord-js-lavalink-Music-Bot-erela-js
  * @INFO
- * Work for S409 support | https://s409.xyz
+ * Work for s409 Development | https://s409.xyz
  * @INFO
- * Please mention Him / S409 support, when using this Code!
+ * Please mention Him / s409 Development, when using this Code!
  * @INFO
  */

@@ -1,14 +1,14 @@
 //here the event starts
 module.exports = client => {
-    console.log(`You have been disconnected at ${new Date()}.`.dim)
+    console.log(`You have been disconnected at ${new Date()}.`.red)
 }
 /**
   * @INFO
-  * Bot Coded by Tomato#6966 | https://discord.gg/milrato
+  * Bot Coded by S409™#9685 | https://github.com/S409™#9685/discord-js-lavalink-Music-Bot-erela-js
   * @INFO
-  * Work for S409 support | https://s409.xyz
+  * Work for s409 Development | https://s409.xyz
   * @INFO
-  * Please mention him / S409 support, when using this Code!
+  * Please mention Him / s409 Development, when using this Code!
   * @INFO
 */
 

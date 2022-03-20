@@ -1,55 +1,44 @@
 const Discord = require("discord.js");
 const {MessageEmbed} = require("discord.js");
-const config = require(`${process.cwd()}/botconfig/config.json`);
-var ee = require(`${process.cwd()}/botconfig/embed.json`);
-const { handlemsg } = require(`${process.cwd()}/handlers/functions`)
+const config = require("../../botconfig/config.json");
+var ee = require("../../botconfig/embed.json");
+const { GetUser, GetGlobalUser } = require("../../handlers/functions")
 module.exports = {
   name: "enlarge",
   aliases: ["enlargeemoji"],
   category: "🔰 Info",
   description: "Make the Emoji, just larger",
   usage: "enlarge <EMOJI>",
-  type: "util",
   run: async (client, message, args, cmduser, text, prefix) => {
-    
-    let es = client.settings.get(message.guild.id, "embed");let ls = client.settings.get(message.guild.id, "language")
+    let es = client.settings.get(message.guild.id, "embed")
     try {
       let hasEmoteRegex = /<a?:.+:\d+>/gm
       let emoteRegex = /<:.+:(\d+)>/gm
       let animatedEmoteRegex = /<a:.+:(\d+)>/gm
 
       if(!message.content.match(hasEmoteRegex))
-      return message.reply(handlemsg(client.la[ls].cmds.info.enlarge.error1)) 
+      return message.reply("<:cross:899255798142750770>  Your message does not include a VALID Emoji, please retry by adding a guild specific emoji!")
       if (emoji = emoteRegex.exec(message)) {
         let url = "https://cdn.discordapp.com/emojis/" + emoji[1] + ".png?v=1"
-        let attachment = new Discord.MessageAttachment(url, "emoji?.png")
-        message.reply({files: [attachment]});
+        let attachment = new Discord.MessageAttachment(url, "emoji.png")
+        message.channel.send(attachment)
       }
       else if (emoji = animatedEmoteRegex.exec(message)) {
         let url2 = "https://cdn.discordapp.com/emojis/" + emoji[1] + ".gif?v=1"
-        let attachment2 = new Discord.MessageAttachment(url2, "emoji?.gif")
-        message.reply({files: [attachment2]});
+        let attachment2 = new Discord.MessageAttachment(url2, "emoji.gif")
+        message.channel.send(attachment2);
       }
       else {
-        return message.reply(handlemsg(client.la[ls].cmds.info.enlarge.error2)) 
+        message.channel.send("Couldn't find an emoji to paste! if it's uniced(standard) and not a guild Emoji, it's not possible!")
       }
     } catch (e) {
-      console.log(String(e.stack).grey.bgRed)
-      return message.reply({embeds: [new MessageEmbed()
+      console.log(String(e.stack).bgRed)
+      return message.channel.send(new MessageEmbed()
         .setColor(es.wrongcolor)
-        .setFooter(client.getFooter(es))
-        .setTitle(client.la[ls].common.erroroccur)
-        .setDescription(eval(client.la[ls]["cmds"]["info"]["color"]["variable2"]))
-      ]});
+        .setFooter(es.footertext, es.footericon)
+        .setTitle(`<:cross:899255798142750770>  ERROR | An error occurred`)
+        .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``)
+      );
     }
   }
 }
-/**
- * @INFO
- * Bot Coded by Tomato#6966 | https://discord.gg/milrato
- * @INFO
- * Work for S409 support | https://s409.xyz
- * @INFO
- * Please mention him / S409 support, when using this Code!
- * @INFO
- */

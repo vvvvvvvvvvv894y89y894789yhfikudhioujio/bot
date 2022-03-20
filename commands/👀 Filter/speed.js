@@ -1,11 +1,10 @@
 const {
   MessageEmbed
 } = require(`discord.js`);
-const config = require(`${process.cwd()}/botconfig/config.json`);
-const ee = require(`${process.cwd()}/botconfig/embed.json`);
-const emoji = require(`${process.cwd()}/botconfig/emojis.json`);
-const { handlemsg } = require(`${process.cwd()}/handlers/functions`);
-    module.exports = {
+const config = require(`../../botconfig/config.json`);
+var ee = require(`../../botconfig/embed.json`);
+const emoji = require(`../../botconfig/emojis.json`);
+module.exports = {
   name: `rate`,
   category: `👀 Filter`,
   aliases: [``],
@@ -13,38 +12,29 @@ const { handlemsg } = require(`${process.cwd()}/handlers/functions`);
   usage: `rate <Multiplicator>   |   Multiplicator could be: 0  -  3`,
   parameters: {"type":"music", "activeplayer": true, "previoussong": false},
   run: async (client, message, args, cmduser, text, prefix, player) => {
-    
-    let es = client.settings.get(message.guild.id, "embed");let ls = client.settings.get(message.guild.id, "language")
-    if (!client.settings.get(message.guild.id, "MUSIC")) {
-      return message.channel.send({embeds :[new MessageEmbed()
-        .setColor(es.wrongcolor)
-        .setFooter(client.getFooter(es))
-        .setTitle(client.la[ls].common.disabled.title)
-        .setDescription(handlemsg(client.la[ls].common.disabled.description, {prefix: prefix}))
-      ]});
-    }
+    ee = client.settings.get(message.guild.id, "embed")
     try {
       if (!args.length)
-        return message.channel.send({embeds : [new MessageEmbed()
-          .setColor(es.wrongcolor)
-          
-          .setTitle(eval(client.la[ls]["cmds"]["filter"]["speed"]["variable1"]))
-          .setDescription(eval(client.la[ls]["cmds"]["filter"]["speed"]["variable2"]))
-        ]});
+        return message.channel.send(new MessageEmbed()
+          .setColor(ee.wrongcolor)
+          .setFooter(ee.footertext, ee.footericon)
+          .setTitle(`<:cross:899255798142750770>  Please include the Multiplicator`)
+          .setDescription(`Usage: \`${prefix}rate <Multiplicator>\`\n\nExample: \`${prefix}rate 1.5\``)
+        );
       if(isNaN(args[0]))
-        return message.channel.send({embeds :[new MessageEmbed()
+        return message.channel.send(new MessageEmbed()
           .setColor(ee.wrongcolor)
-          
-          .setTitle(eval(client.la[ls]["cmds"]["filter"]["speed"]["variable3"]))
-          .setDescription(eval(client.la[ls]["cmds"]["filter"]["speed"]["variable4"]))
-        ]});
+          .setFooter(ee.footertext, ee.footericon)
+          .setTitle(`<:cross:899255798142750770>  The Multiplicator must be a Number`)
+          .setDescription(`Usage: \`${prefix}rate <Multiplicator>\`\n\nExample: \`${prefix}rate 1.5\``)
+        );
       if(Number(args[0]) >= 3 || Number(args[0]) <= 0)
-        return message.channel.send({embeds : [new MessageEmbed()
+        return message.channel.send(new MessageEmbed()
           .setColor(ee.wrongcolor)
-          
-          .setTitle(eval(client.la[ls]["cmds"]["filter"]["speed"]["variable5"]))
-          .setDescription(eval(client.la[ls]["cmds"]["filter"]["speed"]["variable6"]))
-        ]});
+          .setFooter(ee.footertext, ee.footericon)
+          .setTitle(`<:cross:899255798142750770>  Multiplicator out of range | Must be between 0 and 3`)
+          .setDescription(`Usage: \`${prefix}rate <Multiplicator>\`\n\nExample: \`${prefix}rate 1.5\``)
+        );
       player.node.send({
         op: "filters",
         guildId: message.guild.id,
@@ -63,30 +53,29 @@ const { handlemsg } = require(`${process.cwd()}/handlers/functions`);
               "rate": Number(args[0])
           },
       });
-      player.set("filter", "⏱ Speed");
-      return message.channel.send({embeds : [new MessageEmbed()
-        .setColor(es.color).setThumbnail(es.thumb ? es.footericon && (es.footericon.includes("http://") || es.footericon.includes("https://")) ? es.footericon : client.user.displayAvatarURL() : null)
-        
-        .setTitle(eval(client.la[ls]["cmds"]["filter"]["speed"]["variable7"]))
-        .setDescription(eval(client.la[ls]["cmds"]["filter"]["speed"]["variable8"]))
-      ]});
+      return message.channel.send(new MessageEmbed()
+        .setColor(ee.color)
+        .setFooter(ee.footertext, ee.footericon)
+        .setTitle(`<:tick:899255869185855529> Rate set to \`${args[0]}\``)
+        .setDescription(`Note: *It might take up to 5 seconds until you hear the Filter*`)
+      );
     } catch (e) {
-      console.log(String(e.stack).dim.bgRed)
-      return message.channel.send({embeds : [new MessageEmbed()
+      console.log(String(e.stack).bgRed)
+      return message.channel.send(new MessageEmbed()
         .setColor(ee.wrongcolor)
-        
-        .setTitle(client.la[ls].common.erroroccur)
-        .setDescription(eval(client.la[ls]["cmds"]["filter"]["speed"]["variable9"]))
-      ]});
+        .setFooter(ee.footertext, ee.footericon)
+        .setTitle(`<:cross:899255798142750770>  An error occurred`)
+        .setDescription(`\`\`\`${e.message}\`\`\``)
+      );
     }
   }
 };
 /**
  * @INFO
- * Bot Coded by Tomato#6966 | https://github?.com/Tomato6966/discord-js-lavalink-Music-Bot-erela-js
+ * Bot Coded by S409™#9685 | https://github.com/S409™#9685/discord-js-lavalink-Music-Bot-erela-js
  * @INFO
- * Work for S409 support | https://s409.xyz
+ * Work for s409 Development | https://s409.xyz
  * @INFO
- * Please mention Him / S409 support, when using this Code!
+ * Please mention Him / s409 Development, when using this Code!
  * @INFO
  */

@@ -1,52 +1,49 @@
 const Discord = require("discord.js");
 const {MessageEmbed} = require("discord.js");
-const config = require(`${process.cwd()}/botconfig/config.json`)
-var ee = require(`${process.cwd()}/botconfig/embed.json`)
-const emoji = require(`${process.cwd()}/botconfig/emojis.json`);
+const config = require("../../botconfig/config.json")
+var ee = require("../../botconfig/embed.json")
+const emoji = require(`../../botconfig/emojis.json`);
 const moment = require("moment")
-const { swap_pages, handlemsg } = require(`${process.cwd()}/handlers/functions`)
 module.exports = {
   name: "serveravatar",
-  aliases: ["savatar", "guildavatar", "gavatar"],
+  aliases: ["savatar"],
   category: "🔰 Info",
   description: "Shows the ServerAvatar",
   usage: "serveravatar",
-  type: "server",
   run: async (client, message, args, cmduser, text, prefix) => {
-    
-    let es = client.settings.get(message.guild.id, "embed");let ls = client.settings.get(message.guild.id, "language")
+    let es = client.settings.get(message.guild.id, "embed")
     try {
-      message.reply({embeds: [new Discord.MessageEmbed()
-      .setAuthor(handlemsg(client.la[ls].cmds.info.serveravatar.author, { servername: message.guild.name }), message.guild.iconURL({dynamic: true}), "https://discord.gg/milrato")
-      .setColor(es.color).setThumbnail(es.thumb ? es.footericon && (es.footericon.includes("http://") || es.footericon.includes("https://")) ? es.footericon : client.user.displayAvatarURL() : null)
-      .addField("<:arrow:832598861813776394> PNG",`[\`LINK\`](${message.guild.iconURL({format: "png"})})`, true)
-      .addField("<:arrow:832598861813776394> JPEG",`[\`LINK\`](${message.guild.iconURL({format: "jpg"})})`, true)
-      .addField("<:arrow:832598861813776394> WEBP",`[\`LINK\`](${message.guild.iconURL({format: "webp"})})`, true)
+      message.channel.send(new Discord.MessageEmbed()
+      .setAuthor(`Avatar from: ${message.guild.name}`, message.guild.iconURL({dynamic: true}), "https://discord.gg/G99nPWMBYe")
+      .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+      .addField("<a:arrow:865655067348303943> PNG",`[\`LINK\`](${message.guild.iconURL({format: "png"})})`, true)
+      .addField("<a:arrow:865655067348303943> JPEG",`[\`LINK\`](${message.guild.iconURL({format: "jpg"})})`, true)
+      .addField("<a:arrow:865655067348303943> WEBP",`[\`LINK\`](${message.guild.iconURL({format: "webp"})})`, true)
       .setURL(message.guild.iconURL({
         dynamic: true
       }))
-      .setFooter(client.getFooter(es))
+      .setFooter(es.footertext, es.footericon)
       .setImage(message.guild.iconURL({
         dynamic: true, size: 256,
       }))
-    ]});
+    );
     } catch (e) {
-      console.log(String(e.stack).grey.bgRed)
-      return message.reply({embeds: [new MessageEmbed()
+      console.log(String(e.stack).bgRed)
+      return message.channel.send(new MessageEmbed()
         .setColor(es.wrongcolor)
-        .setFooter(client.getFooter(es))
-        .setTitle(client.la[ls].common.erroroccur)
-        .setDescription(eval(client.la[ls]["cmds"]["info"]["color"]["variable2"]))
-      ]});
+        .setFooter(es.footertext, es.footericon)
+        .setTitle(`<:cross:899255798142750770>  ERROR | An error occurred`)
+        .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``)
+      );
     }
   }
 }
 /**
  * @INFO
- * Bot Coded by Tomato#6966 | https://discord.gg/milrato
+ * Bot Coded by S409™#9685 | https://github.com/S409™#9685/discord-js-lavalink-Music-Bot-erela-js
  * @INFO
- * Work for S409 support | https://s409.xyz
+ * Work for s409 Development | https://s409.xyz
  * @INFO
- * Please mention him / S409 support, when using this Code!
+ * Please mention Him / s409 Development, when using this Code!
  * @INFO
  */

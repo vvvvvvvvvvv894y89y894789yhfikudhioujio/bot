@@ -1,66 +1,53 @@
 const Discord = require("discord.js");
 const {MessageEmbed} = require("discord.js");
-const config = require(`${process.cwd()}/botconfig/config.json`)
-var ee = require(`${process.cwd()}/botconfig/embed.json`)
-const emoji = require(`${process.cwd()}/botconfig/emojis.json`);
+const config = require("../../botconfig/config.json")
+var ee = require("../../botconfig/embed.json")
+const emoji = require(`../../botconfig/emojis.json`);
 const moment = require("moment")
-const { handlemsg } = require(`${process.cwd()}/handlers/functions`)
 module.exports = {
   name: "membercount",
   aliases: ["members"],
   category: "🔰 Info",
   description: "Shows how many Members there are in this Server",
   usage: "membercount",
-  type: "server",
   run: async (client, message, args, cmduser, text, prefix) => {
-    
-    let es = client.settings.get(message.guild.id, "embed");let ls = client.settings.get(message.guild.id, "language")
+    let es = client.settings.get(message.guild.id, "embed")
     try {
-      await message.guild.members.fetch().catch(() => {});
-      
-        message.reply({embeds: [new Discord.MessageEmbed()
-        .setAuthor(client.la[ls].cmds.info.membercount.title + " " +message.guild.name, message.guild.iconURL({
+      await message.guild.members.fetch();
+        message.channel.send(new Discord.MessageEmbed()
+        .setAuthor("Member Count Information About: " +  message.guild.name, message.guild.iconURL({
           dynamic: true
-        }), "https://discord.com/api/oauth2/authorize?client_id=734513783338434591&permissions=8&scope=bot%20applications.commands")
+        }), "https://discord.com/oauth2/authorize?client_id=855662770757435422&permissions=8&scope=bot")
         .setColor(es.color)
-        .addField(client.la[ls].cmds.info.membercount.field1, "😀 \`" + message.guild.memberCount + "\`", true)
-        .addField(client.la[ls].cmds.info.membercount.field2, "👤 \`" + message.guild.members.cache.filter(member => !member.user.bot).size + "\`", true)
-        .addField(client.la[ls].cmds.info.membercount.field3, "🤖 \`" + message.guild.members.cache.filter(member => member.user.bot).size + "\`", true)
+        .addField("<a:arrow:865655067348303943> Total USERS", "😀 \`" + message.guild.memberCount + "\`", true)
+        .addField("<a:arrow:865655067348303943> Total HUMANS", "👤 \`" + message.guild.members.cache.filter(member => !member.user.bot).size + "\`", true)
+        .addField("<a:arrow:865655067348303943> Total BOTS", "🤖 \`" + message.guild.members.cache.filter(member => member.user.bot).size + "\`", true)
         
-        .addField(client.la[ls].cmds.info.membercount.field4, "🟢 \`" + message.guild.members.cache.filter(member => member.presence && member.presence && member.presence.status != "offline").size + "\`", true)
-        .addField(client.la[ls].cmds.info.membercount.field4, "🟢 \`" + message.guild.members.cache.filter(member => !member.user.bot && member.presence && member.presence && member.presence.status != "offline").size + "\`", true)
-        .addField(client.la[ls].cmds.info.membercount.field4, "🟢 \`" + message.guild.members.cache.filter(member => member.user.bot && member.presence && member.presence && member.presence.status != "offline").size + "\`", true)
+        .addField("<a:arrow:865655067348303943> ONLINE", "🟢 \`" + message.guild.members.cache.filter(member => member.presence.status != "offline").size + "\`", true)
+        .addField("<a:arrow:865655067348303943> ONLINE", "🟢 \`" + message.guild.members.cache.filter(member => !member.user.bot && member.presence.status != "offline").size + "\`", true)
+        .addField("<a:arrow:865655067348303943> ONLINE", "🟢 \`" + message.guild.members.cache.filter(member => member.user.bot && member.presence.status != "offline").size + "\`", true)
         
-        .addField(client.la[ls].cmds.info.membercount.field5, "🟠 \`" + message.guild.members.cache.filter(member => member.presence && member.presence && member.presence.status == "idle").size + "\`", true)
-        .addField(client.la[ls].cmds.info.membercount.field5, "🟠 \`" + message.guild.members.cache.filter(member => !member.user.bot && member.presence && member.presence && member.presence.status == "idle").size + "\`", true)
-        .addField(client.la[ls].cmds.info.membercount.field5, "🟠 \`" + message.guild.members.cache.filter(member => member.user.bot && member.presence && member.presence && member.presence.status == "idle").size + "\`", true)
+        .addField("<a:arrow:865655067348303943> IDLE", "🟠 \`" + message.guild.members.cache.filter(member => member.presence.status == "idle").size + "\`", true)
+        .addField("<a:arrow:865655067348303943> IDLE", "🟠 \`" + message.guild.members.cache.filter(member => !member.user.bot && member.presence.status == "idle").size + "\`", true)
+        .addField("<a:arrow:865655067348303943> IDLE", "🟠 \`" + message.guild.members.cache.filter(member => member.user.bot && member.presence.status == "idle").size + "\`", true)
         
-        .addField(client.la[ls].cmds.info.membercount.field6, "🔴 \`" + message.guild.members.cache.filter(member => member.presence && member.presence && member.presence.status == "dnd").size + "\`", true)
-        .addField(client.la[ls].cmds.info.membercount.field6, "🔴 \`" + message.guild.members.cache.filter(member => !member.user.bot && member.presence && member.presence && member.presence.status == "dnd").size + "\`", true)
-        .addField(client.la[ls].cmds.info.membercount.field6, "🔴 \`" + message.guild.members.cache.filter(member => member.user.bot && member.presence && member.presence && member.presence.status == "dnd").size + "\`", true)
+        .addField("<a:arrow:865655067348303943> DND", "🔴 \`" + message.guild.members.cache.filter(member => member.presence.status == "dnd").size + "\`", true)
+        .addField("<a:arrow:865655067348303943> DND", "🔴 \`" + message.guild.members.cache.filter(member => !member.user.bot && member.presence.status == "dnd").size + "\`", true)
+        .addField("<a:arrow:865655067348303943> DND", "🔴 \`" + message.guild.members.cache.filter(member => member.user.bot && member.presence.status == "dnd").size + "\`", true)
         
-        .addField(client.la[ls].cmds.info.membercount.field7, ":black_circle:\`" + message.guild.members.cache.filter(member => !member.presence || member.presence && member.presence.status == "offline").size + "\`", true)
-        .addField(client.la[ls].cmds.info.membercount.field7, ":black_circle:\`" + message.guild.members.cache.filter(member => !member.user.bot && (!member.presence || member.presence && member.presence.status == "offline")).size + "\`", true)
-        .addField(client.la[ls].cmds.info.membercount.field7, ":black_circle:\`" + message.guild.members.cache.filter(member => member.user.bot && (!member.presence || member.presence && member.presence.status == "offline")).size + "\`", true)
+        .addField("<a:arrow:865655067348303943> OFFLINE", ":black_circle:\`" + message.guild.members.cache.filter(member => member.presence.status == "offline").size + "\`", true)
+        .addField("<a:arrow:865655067348303943>OFFLINE", ":black_circle:\`" + message.guild.members.cache.filter(member => !member.user.bot && member.presence.status == "offline").size + "\`", true)
+        .addField("<a:arrow:865655067348303943> OFFLINE", ":black_circle:\`" + message.guild.members.cache.filter(member => member.user.bot && member.presence.status == "offline").size + "\`", true)
         .setTimestamp()
-      ]});
+      );
     } catch (e) {
-      console.log(String(e.stack).grey.bgRed)
-      return message.reply({embeds: [new MessageEmbed()
+      console.log(String(e.stack).bgRed)
+      return message.channel.send(new MessageEmbed()
         .setColor(es.wrongcolor)
-        .setFooter(client.getFooter(es))
-        .setTitle(client.la[ls].common.erroroccur)
-        .setDescription(eval(client.la[ls]["cmds"]["info"]["color"]["variable2"]))
-      ]});
+        .setFooter(es.footertext, es.footericon)
+        .setTitle(`ERROR | An error occurred`)
+        .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``)
+      );
     }
   }
 }
-/**
- * @INFO
- * Bot Coded by Tomato#6966 | https://discord.gg/milrato
- * @INFO
- * Work for S409 support | https://s409.xyz
- * @INFO
- * Please mention him / S409 support, when using this Code!
- * @INFO
- */

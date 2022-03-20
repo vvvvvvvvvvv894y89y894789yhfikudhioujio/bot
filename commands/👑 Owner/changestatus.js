@@ -1,520 +1,359 @@
 var {
-  MessageEmbed,
-  MessageButton, 
-  MessageActionRow, 
-  MessageMenuOption, 
-  MessageSelectMenu,
+  MessageEmbed
 } = require(`discord.js`);
 var Discord = require(`discord.js`);
-var config = require(`${process.cwd()}/botconfig/config.json`);
-var ee = require(`${process.cwd()}/botconfig/embed.json`);
-var emoji = require(`${process.cwd()}/botconfig/emojis.json`);
+var config = require(`../../botconfig/config.json`);
+var ee = require(`../../botconfig/embed.json`);
+var emoji = require(`../../botconfig/emojis.json`);
 const fs = require('fs');
 var {
   databasing,
-  isValidURL,
-  nFormatter
-} = require(`${process.cwd()}/handlers/functions`);
-const moment = require("moment")
+  isValidURL
+} = require(`../../handlers/functions`);
 module.exports = {
   name: "changestatus",
   category: "👑 Owner",
-  type: "bot",
   aliases: ["botstatus", "status"],
   cooldown: 5,
   usage: "changestatus  -->  Follow the Steps",
   description: "Changes the Status of the BOT",
   run: async (client, message, args, cmduser, text, prefix) => {
-    
-    let es = client.settings.get(message.guild.id, "embed");let ls = client.settings.get(message.guild.id, "language")
+    let es = client.settings.get(message.guild.id, "embed")
     if (!config.ownerIDS.some(r => r.includes(message.author.id)))
-      return message.channel.send({embeds: [new MessageEmbed()
-        .setColor(es.wrongcolor).setFooter(client.getFooter(es))
-        .setTitle(eval(client.la[ls]["cmds"]["owner"]["changestatus"]["variable1"]))
-        .setDescription(eval(client.la[ls]["cmds"]["owner"]["changestatus"]["variable2"]))
-      ]});
+      return message.channel.send({embed: new MessageEmbed()
+        .setColor(es.wrongcolor).setFooter(es.footertext, es.footericon)
+        .setTitle(`<:cross:899255798142750770>  You are not allowed to run this Command`)
+        .setDescription(`You need to be one of those guys: ${config.ownerIDS.map(id => `<@${id}>`)}`)
+      });
     try {
-      first_layer()
-      async function first_layer(){
-        let menuoptions = [
-          {
-            value: "Status 1. Text",
-            description: `Change the first Display Text of the Status`,
-            emoji: "📝"
-          },
-          {
-            value: "Status 2. Text",
-            description: `Change the second Display Text of the Status`,
-            emoji: "📝"
-          },
-          {
-            value: "Status Type",
-            description: `Change the Status-Type to: Playing/Listening/...`,
-            emoji: "🔰"
-          },
-          {
-            value: "Status URL",
-            description: `If Status-State = Streaming, change the Twitch URL`,
-            emoji: "🔗"
-          },
-          {
-            value: "Status State",
-            description: `Change the Status-State to: Online/Idle/Dnd/Streaming`,
-            emoji: "🔖"
-          },
-          {
-            value: "Cancel",
-            description: `Cancel and stop the Ai-Chat-Setup!`,
-            emoji: "862306766338523166"
-          }
-        ]
-        //define the selection
-        let Selection = new MessageSelectMenu()
-          .setCustomId('MenuSelection') 
-          .setMaxValues(1) //OPTIONAL, this is how many values you can have at each selection
-          .setMinValues(1) //OPTIONAL , this is how many values you need to have at each selection
-          .setPlaceholder('Click me to change the Status') 
-          .addOptions(
-          menuoptions.map(option => {
-            let Obj = {
-              label: option.label ? option.label.substr(0, 50) : option.value.substr(0, 50),
-              value: option.value.substr(0, 50),
-              description: option.description.substr(0, 50),
-            }
-          if(option.emoji) Obj.emoji = option.emoji;
-          return Obj;
-         }))
-        
-        //define the embed
-        let MenuEmbed = new MessageEmbed()
-          .setColor(es.color)
-          .setAuthor('Change Status', 'https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/120/au-kddi/190/purple-heart_1f49c.png', 'https://discord.gg/milrato')
-          .setDescription(eval(client.la[ls]["cmds"]["setup"]["setup-ticket"]["variable2"]))
-        //send the menu msg
-        let menumsg = await message.reply({embeds: [MenuEmbed], components: [new MessageActionRow().addComponents(Selection)]})
-        //Create the collector
-        const collector = menumsg.createMessageComponentCollector({ 
-          filter: i => i?.isSelectMenu() && i?.message.author.id == client.user.id && i?.user,
-          time: 90000
-        })
-        //Menu Collections
-        collector.on('collect', menu => {
-          if (menu?.user.id === cmduser.id) {
-            collector.stop();
-            if(menu?.values[0] == "Cancel") return menu?.reply(eval(client.la[ls]["cmds"]["setup"]["setup-ticket"]["variable3"]))
-            menu?.deferUpdate();
-            handle_the_picks(menu?.values[0])
-          }
-          else menu?.reply({content: `<:no:833101993668771842> You are not allowed to do that! Only: <@${cmduser.id}>`, ephemeral: true});
+      var adminroles = client.settings.get(message.guild.id, "adminroles")
+
+      var timeouterror = false;
+      var filter = (reaction, user) => {
+        return user.id === message.author.id;
+      };
+      var temptype = ""
+      var tempmsg;
+
+      tempmsg = await message.channel.send({embed: new MessageEmbed()
+        .setTitle("What do you want to do?")
+        .setColor(es.color)
+        .setDescription(`1️⃣ **== Change** Status **TEXT**\n\n2️⃣ **== Change** Status **TYPE**\n\n3️⃣ **== Change** Status **URL**\n\n🟢 **==** Change the Online/Idle/DnD state\n\n\n\n*React with the Right Emoji according to the Right action*`).setFooter(es.footertext, es.footericon)
+      })
+
+      try {
+        tempmsg.react("1️⃣")
+        tempmsg.react("2️⃣")
+        tempmsg.react("3️⃣")
+        tempmsg.react("🟢")
+      } catch (e) {
+        return message.reply({embed: new MessageEmbed()
+          .setTitle("<:cross:899255798142750770>  ERROR | Missing Permissions to add Reactions")
+          .setColor(es.wrongcolor)
+          .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``.substr(0, 2000))
+          .setFooter(es.footertext, es.footericon)
         });
-        //Once the Collections ended edit the menu message
-        collector.on('end', collected => {
-          menumsg.edit({embeds: [menumsg.embeds[0].setDescription(`~~${menumsg.embeds[0].description}~~`)], components: [], content: `${collected && collected.first() && collected.first().values ? `<a:yes:833101995723194437> **Selected: \`${collected ? collected.first().values[0] : "Nothing"}\`**` : "❌ **NOTHING SELECTED - CANCELLED**" }`})
+      }
+      await tempmsg.awaitReactions(filter, {
+          max: 1,
+          time: 90000,
+          errors: ["time"]
+        })
+        .then(collected => {
+          var reaction = collected.first()
+          reaction.users.remove(message.author.id)
+          if (reaction.emoji.name === "1️⃣") temptype = "text"
+          else if (reaction.emoji.name === "2️⃣") temptype = "type"
+          else if (reaction.emoji.name === "3️⃣") temptype = "url"
+          else if (reaction.emoji.name === "🟢") temptype = "state"
+          else throw "You reacted with a wrong emoji"
+
+        })
+        .catch(e => {
+          timeouterror = e;
+        })
+      if (timeouterror)
+        return message.reply({embed: new MessageEmbed()
+          .setTitle("<:cross:899255798142750770>  ERROR | Your Time ran out")
+          .setColor(es.wrongcolor)
+          .setDescription(`\`\`\`${String(JSON.stringify(timeouterror)).substr(0, 2000)}\`\`\``.substr(0, 2000))
+          .setFooter(es.footertext, es.footericon)
+        });
+
+      if (temptype == "text") {
+        tempmsg = await tempmsg.edit({embed: new MessageEmbed()
+          .setTitle("Which Text should I display in the Status?")
+          .setColor(es.color)
+          .setDescription(`
+        Example: \`${prefix}help | ${client.user.username.split(" ")[0]} | by: s409.eu\`
+
+        *Enter the text now!*`).setFooter(es.footertext, es.footericon)
+        })
+        await tempmsg.channel.awaitMessages(m => m.author.id == message.author.id, {
+            max: 1,
+            time: 90000,
+            errors: ["time"]
+          })
+          .then(async collected => {
+            var msg = collected.first().content;
+            let status = config
+            status.status.text = msg;
+            client.user.setActivity(msg.substr(0, 50), {
+              type: config.status.type,
+              url: config.status.url
+            })
+            fs.writeFile(`./botconfig/config.json`, JSON.stringify(status, null, 3), (e) => {
+              if (e) {
+                console.log(String(e.stack).red);
+                return message.channel.send({embed: new MessageEmbed()
+                  .setFooter(es.footertext, es.footericon)
+                  .setColor(es.wrongcolor)
+                  .setTitle(`${emoji.msg.ERROR}  ERROR Writing the File`)
+                  .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``)
+                })
+              }
+              return message.channel.send({embed: new MessageEmbed()
+                .setFooter(es.footertext, es.footericon)
+                .setColor(es.color)
+                .setTitle(`${emoji.msg.SUCCESS}  Successfully set the new Status`)
+              })
+            });
+          }).catch(e => {
+            timeouterror = e;
+          })
+        if (timeouterror)
+          return message.reply({embed: new MessageEmbed()
+            .setTitle("<:cross:899255798142750770>  ERROR | Your Time ran out")
+            .setColor(es.wrongcolor)
+            .setDescription(`\`\`\`${String(JSON.stringify(timeouterror)).substr(0, 2000)}\`\`\``.substr(0, 2000))
+            .setFooter(es.footertext, es.footericon)
+          });
+
+      } else if (temptype == "type") {
+        tempmsg = await tempmsg.edit({ embed: new MessageEmbed()
+          .setTitle("What Type do you wanna use?")
+          .setColor(es.color)
+          .setDescription(`
+        1️⃣ **==** PLAYING
+        
+        2️⃣ **==** WATCHING
+        
+        3️⃣ **==** STREAMING
+
+        4️⃣ **==** LISTENING
+      
+        5️⃣ **==** COMPETING
+      
+        *React with the Right Emoji according to the Right action*`).setFooter(es.footertext, es.footericon)
+        })
+        try {
+          tempmsg.react("4️⃣")
+          tempmsg.react("5️⃣")
+        } catch {
+
+        }
+        await tempmsg.awaitReactions(filter, {
+            max: 1,
+            time: 90000,
+            errors: ["time"]
+          })
+          .then(collected => {
+            var reaction = collected.first()
+            reaction.users.remove(message.author.id)
+            if (reaction.emoji.name === "1️⃣") temptype = "PLAYING"
+            else if (reaction.emoji.name === "2️⃣") temptype = "WATCHING"
+            else if (reaction.emoji.name === "3️⃣") temptype = "STREAMING"
+            else if (reaction.emoji.name === "4️⃣") temptype = "LISTENING"
+            else if (reaction.emoji.name === "5️⃣") temptype = "COMPETING"
+            else throw "You reacted with a wrong emoji"
+
+          })
+          .catch(e => {
+            timeouterror = e;
+          })
+        if (timeouterror)
+          return message.reply({embed: new MessageEmbed()
+            .setTitle("<:cross:899255798142750770>  ERROR | Your Time ran out")
+            .setColor(es.wrongcolor)
+            .setDescription(`\`\`\`${String(JSON.stringify(timeouterror)).substr(0, 2000)}\`\`\``.substr(0, 2000))
+            .setFooter(es.footertext, es.footericon)
+          });
+
+
+        let status = config
+        status.status.type = temptype;
+        client.user.setActivity(config.status.text, {
+          type: temptype,
+          url: config.status.url
+        })
+        fs.writeFile(`./botconfig/config.json`, JSON.stringify(status, null, 3), (e) => {
+          if (e) {
+            console.log(String(e.stack).red);
+            return message.channel.send({embed: new MessageEmbed()
+              .setFooter(es.footertext, es.footericon)
+              .setColor(es.wrongcolor)
+              .setTitle(`${emoji.msg.ERROR}  ERROR Writing the File`)
+              .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``)
+            })
+          }
+          return message.channel.send({embed: new MessageEmbed()
+            .setFooter(es.footertext, es.footericon)
+            .setColor(es.color)
+            .setTitle(`${emoji.msg.SUCCESS}  Successfully set the new Status`)
+          })
+        });
+
+      } else if (temptype == "state") {
+        tempmsg = await tempmsg.edit({embed: new MessageEmbed()
+          .setTitle("What Type do you wanna use?")
+          .setColor(es.color)
+          .setDescription(`
+        🟢 **==** ONLINE
+        
+        🟡 **==** IDLE
+        
+        🔴 **==** DO NOT DISTRUB (DND)
+      
+      
+        *React with the Right Emoji according to the Right action*`).setFooter(es.footertext, es.footericon)
+        })
+        try {
+          tempmsg.react("🔴")
+          tempmsg.react("🟡")
+        } catch {
+
+        }
+        await tempmsg.awaitReactions(filter, {
+            max: 1,
+            time: 90000,
+            errors: ["time"]
+          })
+          .then(collected => {
+            var reaction = collected.first()
+            reaction.users.remove(message.author.id)
+            if (reaction.emoji.name === "🟢") client.user.setStatus('online')  .then(t=>{
+              return message.channel.send({embed: new MessageEmbed()
+                .setFooter(es.footertext, es.footericon)
+                .setColor(es.color)
+                .setTitle(`${emoji.msg.SUCCESS}  Successfully set the new Status`)
+              })
+            })
+            .catch(e=>timeouterror=e);
+            else if (reaction.emoji.name === "🟡") client.user.setStatus('idle')  .then(t=>{
+              return message.channel.send({embed: new MessageEmbed()
+                .setFooter(es.footertext, es.footericon)
+                .setColor(es.color)
+                .setTitle(`${emoji.msg.SUCCESS}  Successfully set the new Status`)
+              })
+            })
+            .catch(e=>timeouterror=e);
+            else if (reaction.emoji.name === "🔴") client.user.setStatus('dnd')  .then(t=>{
+              return message.channel.send({embed: new MessageEmbed()
+                .setFooter(es.footertext, es.footericon)
+                .setColor(es.color)
+                .setTitle(`${emoji.msg.SUCCESS}  Successfully set the new Status`)
+              })
+            })
+            .catch(e=>timeouterror=e);
+            else throw "You reacted with a wrong emoji"
+            
+          })
+          .catch(e => {
+            timeouterror = e;
+          })
+        if (timeouterror)
+          return message.reply({embed: new MessageEmbed()
+            .setTitle("<:cross:899255798142750770>  ERROR | Your Time ran out")
+            .setColor(es.wrongcolor)
+            .setDescription(`\`\`\`${String(JSON.stringify(timeouterror)).substr(0, 2000)}\`\`\``.substr(0, 2000))
+            .setFooter(es.footertext, es.footericon)
+          });
+
+      } else if (temptype == "url") {
+        tempmsg = await tempmsg.edit({embed: new MessageEmbed()
+          .setTitle("Which URL should I display in the Status, if I am streaming?")
+          .setColor(es.color)
+          .setDescription(`
+        Example: \`https://twitch.tv/#\` --> must be a twitch link
+
+        *Enter the text now!*`).setFooter(es.footertext, es.footericon)
+        })
+        await tempmsg.channel.awaitMessages(m => m.author.id == message.author.id, {
+            max: 1,
+            time: 90000,
+            errors: ["time"]
+          })
+          .then(async collected => {
+            var msg = collected.first().content;
+            if (!isValidURL(msg))
+              return message.channel.send({embed: new MessageEmbed()
+                .setFooter(es.footertext, es.footericon)
+                .setColor(es.wrongcolor)
+                .setTitle(`<:cross:899255798142750770>  NOT A VALID URL`)
+              })
+            if (!msg.includes("twitch"))
+              return message.channel.send({embed: new MessageEmbed()
+                .setFooter(es.footertext, es.footericon)
+                .setColor(es.wrongcolor)
+                .setTitle(`<:cross:899255798142750770>  NOT A VALID TWITCH URL`)
+              })
+            let status = config
+            status.status.url = msg;
+            client.user.setActivity(msg.substr(0, 50), {
+              type: config.status.type,
+              url: msg
+            })
+            fs.writeFile(`./botconfig/config.json`, JSON.stringify(status, null, 3), (e) => {
+              if (e) {
+                console.log(String(e.stack).red);
+                return message.channel.send({embed: new MessageEmbed()
+                  .setFooter(es.footertext, es.footericon)
+                  .setColor(es.wrongcolor)
+                  .setTitle(`${emoji.msg.ERROR}  ERROR Writing the File`)
+                  .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``)
+                })
+              }
+              return message.channel.send({embed: new MessageEmbed()
+                .setFooter(es.footertext, es.footericon)
+                .setColor(es.color)
+                .setTitle(`${emoji.msg.SUCCESS}  Successfully set the new Status`)
+              })
+            });
+          }).catch(e => {
+            timeouterror = e;
+          })
+        if (timeouterror)
+          return message.reply({embed: new MessageEmbed()
+            .setTitle("<:cross:899255798142750770>  ERROR | Your Time ran out")
+            .setColor(es.wrongcolor)
+            .setDescription(`\`\`\`${String(JSON.stringify(timeouterror)).substr(0, 2000)}\`\`\``.substr(0, 2000))
+            .setFooter(es.footertext, es.footericon)
+          });
+
+      } else {
+        return message.reply({embed: new MessageEmbed()
+          .setTitle("<:cross:899255798142750770>  ERROR | PLEASE CONTACT `S409™#9685`")
+          .setColor(es.wrongcolor)
+          .setFooter(es.footertext, es.footericon)
         });
       }
 
-      async function handle_the_picks(optionhandletype) {
-        switch (optionhandletype) {
-          case "Status 1. Text":
-            {
-              var tempmsg = await message.reply({embeds: [new MessageEmbed()
-                .setTitle(eval(client.la[ls]["cmds"]["owner"]["changestatus"]["variable7"]))
-                .setColor(es.color)
-                .setDescription(`Example: \`${prefix}help | ${client.user.username.split(" ")[0]} | by: s409.xyz\`
-      
-              *Enter the text now!*`).setFooter(client.getFooter(es))
-              .addField("KEYWORDS which get replaced:", `\`{guildcount}\` .. Shows all guilds
-              \`{prefix}\` .. Shows the default Prefix
-              \`{membercount}\` .. Shows all Members
-              \`{created}\` .. Shows when the Bot was Created
-              
-              \`{createdtime}\` .. Shows when Time when was Created
-              \`{name}\` .. Shows Bot Name
-              \`{tag}\` ... Shows Bot Name#1234
-              \`{commands}\` .. Shows all Commands
-              \`{usedcommands}\` .. Shows Amount of Used Commands
-              \`{songsplayed}\` .. Shows Amount of Played Songs`)
-              ]})
-              await tempmsg.channel.awaitMessages({ filter: m => m.author.id == cmduser.id, 
-                  max: 1,
-                  time: 90000,
-                  errors: ["time"]
-                })
-                .then(async collected => {
-                  var msg = collected.first().content;
-                  let status = config
-                  let newStatusText = msg
-                  .replace("{prefix}", config.prefix)
-                  .replace("{guildcount}", nFormatter(client.guilds.cache.size, 2))
-                  .replace("{membercount}", nFormatter(client.guilds.cache.reduce((a, b) => a + b?.memberCount, 0), 2))
-                  .replace("{created}", moment(client.user.createdTimestamp).format("DD/MM/YYYY"))
-                  .replace("{createdime}", moment(client.user.createdTimestamp).format("HH:mm:ss"))
-                  .replace("{name}", client.user.username)
-                  .replace("{tag}", client.user.tag)
-                  .replace("{commands}", client.commands.size)
-                  .replace("{usedcommands}", nFormatter(Math.ceil(client.stats.get("global", "commands") * [...client.guilds.cache.values()].length / 10), 2))
-                  .replace("{songsplayed}", nFormatter(Math.ceil(client.stats.get("global", "songs") * [...client.guilds.cache.values()].length / 10), 2))
-                  newStatusText = String(newStatusText).substr(0, 128);
-                  status.status.text = String(msg).substr(0, 128);
-                  client.user.setActivity(newStatusText, {
-                    type: config.status.type,
-                    url: config.status.url
-                  })
-                  fs.writeFile(`./botconfig/config.json`, JSON.stringify(status, null, 3), (e) => {
-                    if (e) {
-                      console.log(e.stack ? String(e.stack).dim : String(e).dim);
-                      return message.channel.send({embeds: [new MessageEmbed()
-                        .setFooter(client.getFooter(es))
-                        .setColor(es.wrongcolor)
-                        .setTitle(eval(client.la[ls]["cmds"]["owner"]["changestatus"]["variable8"]))
-                        .setDescription(eval(client.la[ls]["cmds"]["owner"]["changestatus"]["variable9"]))
-                      ]})
-                    }
-                    return message.channel.send({embeds: [new MessageEmbed()
-                      .setFooter(client.getFooter(es))
-                      .setColor(es.color)
-                      .setTitle(`Successfully set the New Status Text to:\n> \`${newStatusText}\``)
-                    ]})
-                  });
-                }).catch(e => {
-                  console.log(e)
-                  return message.reply({embeds: [new MessageEmbed()
-                    .setTitle(eval(client.la[ls]["cmds"]["owner"]["changestatus"]["variable11"]))
-                    .setColor(es.wrongcolor)
-                    .setDescription(`\`\`\`${String(e.message ? e.message : e).substr(0, 2000)}\`\`\``.substr(0, 2000))
-                    .setFooter(client.getFooter(es))
-                  ]});
-                })
-          }
-          break;
-          case "Status 2. Text":
-            {
-              var tempmsg = await message.reply({embeds: [new MessageEmbed()
-                .setTitle(eval(client.la[ls]["cmds"]["owner"]["changestatus"]["variable7"]))
-                .setColor(es.color)
-                .setDescription(`Example: \`${prefix}help | ${client.user.username.split(" ")[0]} | by: s409.xyz\`
-      
-              *Enter the text now!*`).setFooter(client.getFooter(es))
-              .addField("KEYWORDS which get replaced:", `\`{guildcount}\` .. Shows all guilds
-              \`{prefix}\` .. Shows the default Prefix
-              \`{membercount}\` .. Shows all Members
-              \`{created}\` .. Shows when the Bot was Created
-              
-              \`{createdtime}\` .. Shows when Time when was Created
-              \`{name}\` .. Shows Bot Name
-              \`{tag}\` ... Shows Bot Name#1234
-              \`{commands}\` .. Shows all Commands
-              \`{usedcommands}\` .. Shows Amount of Used Commands
-              \`{songsplayed}\` .. Shows Amount of Played Songs`)
-              ]})
-              await tempmsg.channel.awaitMessages({ filter: m => m.author.id == cmduser.id, 
-                  max: 1,
-                  time: 90000,
-                  errors: ["time"]
-                })
-                .then(async collected => {
-                  var msg = collected.first().content;
-                  let status = config
-                  let newStatusText = msg
-                  .replace("{prefix}", config.prefix)
-                  .replace("{guildcount}", nFormatter(client.guilds.cache.size, 2))
-                  .replace("{membercount}", nFormatter(client.guilds.cache.reduce((a, b) => a + b?.memberCount, 0), 2))
-                  .replace("{created}", moment(client.user.createdTimestamp).format("DD/MM/YYYY"))
-                  .replace("{createdime}", moment(client.user.createdTimestamp).format("HH:mm:ss"))
-                  .replace("{name}", client.user.username)
-                  .replace("{tag}", client.user.tag)
-                  .replace("{commands}", client.commands.size)
-                  .replace("{usedcommands}", nFormatter(Math.ceil(client.stats.get("global", "commands") * [...client.guilds.cache.values()].length / 10), 2))
-                  .replace("{songsplayed}", nFormatter(Math.ceil(client.stats.get("global", "songs") * [...client.guilds.cache.values()].length / 10), 2))
-                  newStatusText = String(newStatusText).substr(0, 128);
-                  status.status.text2 = String(msg).substr(0, 128);
-                  client.user.setActivity(newStatusText, {
-                    type: config.status.type,
-                    url: config.status.url
-                  })
-                  fs.writeFile(`./botconfig/config.json`, JSON.stringify(status, null, 3), (e) => {
-                    if (e) {
-                      console.log(e.stack ? String(e.stack).dim : String(e).dim);
-                      return message.channel.send({embeds: [new MessageEmbed()
-                        .setFooter(client.getFooter(es))
-                        .setColor(es.wrongcolor)
-                        .setTitle(eval(client.la[ls]["cmds"]["owner"]["changestatus"]["variable8"]))
-                        .setDescription(eval(client.la[ls]["cmds"]["owner"]["changestatus"]["variable9"]))
-                      ]})
-                    }
-                    return message.channel.send({embeds: [new MessageEmbed()
-                      .setFooter(client.getFooter(es))
-                      .setColor(es.color)
-                      .setTitle(`Successfully set the New Status Text to:\n> \`${newStatusText}\``)
-                    ]})
-                  });
-                }).catch(e => {
-                  console.log(e)
-                  return message.reply({embeds: [new MessageEmbed()
-                    .setTitle(eval(client.la[ls]["cmds"]["owner"]["changestatus"]["variable11"]))
-                    .setColor(es.wrongcolor)
-                    .setDescription(`\`\`\`${String(e.message ? e.message : e).substr(0, 2000)}\`\`\``.substr(0, 2000))
-                    .setFooter(client.getFooter(es))
-                  ]});
-                })
-          }
-          break;
-          case "Status Type":
-            {
-                second_layer()
-                async function second_layer(){
-                  let menuoptions = [
-                    {
-                      value: "PLAYING",
-                      description: `e.g: Playing ${config.status.text}`
-                    },
-                    {
-                      value: "WATCHING",
-                      description: `e.g: Watching ${config.status.text}`
-                    },
-                    {
-                      value: "STREAMING",
-                      description: `e.g: Streaming ${config.status.text}`
-                    },
-                    {
-                      value: "LISTENING",
-                      description: `e.g: Listening to ${config.status.text}`
-                    },
-                    {
-                      value: "COMPETING",
-                      description: `e.g: Competing ${config.status.text}`
-                    },
-                    {
-                      value: "Cancel",
-                      description: `Cancel and stop the Ai-Chat-Setup!`,
-                      emoji: "862306766338523166"
-                    }
-                  ]
-                  //define the selection
-                  let Selection = new MessageSelectMenu()
-                    .setCustomId('MenuSelection') 
-                    .setMaxValues(1) //OPTIONAL, this is how many values you can have at each selection
-                    .setMinValues(1) //OPTIONAL , this is how many values you need to have at each selection
-                    .setPlaceholder('Click me to change the Status') 
-                    .addOptions(
-                    menuoptions.map(option => {
-                      let Obj = {
-                        label: option.label ? option.label.substr(0, 50) : option.value.substr(0, 50),
-                        value: option.value.substr(0, 50),
-                        description: option.description.substr(0, 50),
-                      }
-                    if(option.emoji) Obj.emoji = option.emoji;
-                    return Obj;
-                   }))
-                  
-                  //define the embed
-                  let MenuEmbed = new MessageEmbed()
-                    .setColor(es.color)
-                    .setAuthor('Change Status', 'https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/120/au-kddi/190/purple-heart_1f49c.png', 'https://discord.gg/milrato')
-                    .setDescription(eval(client.la[ls]["cmds"]["setup"]["setup-ticket"]["variable2"]))
-                  //send the menu msg
-                  let menumsg = await message.reply({embeds: [MenuEmbed], components: [new MessageActionRow().addComponents(Selection)]})
-                  //Create the collector
-                  const collector = menumsg.createMessageComponentCollector({ 
-                    filter: i => i?.isSelectMenu() && i?.message.author.id == client.user.id && i?.user,
-                    time: 90000
-                  })
-                  //Menu Collections
-                  collector.on('collect', menu => {
-                    if (menu?.user.id === cmduser.id) {
-                      collector.stop();
-                      if(menu?.values[0] == "Cancel") return menu?.reply(eval(client.la[ls]["cmds"]["setup"]["setup-ticket"]["variable3"]))
-                      menu?.deferUpdate();
-                      let temptype = menu?.values[0]
-                      let status = config
-                      status.status.type = temptype;
-                      client.user.setActivity(config.status.text, {
-                        type: temptype,
-                        url: config.status.url
-                      })
-                      fs.writeFile(`./botconfig/config.json`, JSON.stringify(status, null, 3), (e) => {
-                        if (e) {
-                          console.log(e.stack ? String(e.stack).dim : String(e).dim);
-                          return message.channel.send({embeds: [new MessageEmbed()
-                            .setFooter(client.getFooter(es))
-                            .setColor(es.wrongcolor)
-                            .setTitle(eval(client.la[ls]["cmds"]["owner"]["changestatus"]["variable14"]))
-                            .setDescription(eval(client.la[ls]["cmds"]["owner"]["changestatus"]["variable15"]))
-                          ]})
-                        }
-                        return message.channel.send({embeds: [new MessageEmbed()
-                          .setFooter(client.getFooter(es))
-                          .setColor(es.color)
-                          .setTitle(eval(client.la[ls]["cmds"]["owner"]["changestatus"]["variable16"]))
-                        ]})
-                      });
-                    }
-                    else menu?.reply({content: `<:no:833101993668771842> You are not allowed to do that! Only: <@${cmduser.id}>`, ephemeral: true});
-                  });
-                  //Once the Collections ended edit the menu message
-                  collector.on('end', collected => {
-                    menumsg.edit({embeds: [menumsg.embeds[0].setDescription(`~~${menumsg.embeds[0].description}~~`)], components: [], content: `${collected && collected.first() && collected.first().values ? `<a:yes:833101995723194437> **Selected: \`${collected ? collected.first().values[0] : "Nothing"}\`**` : "❌ **NOTHING SELECTED - CANCELLED**" }`})
-                  });
-                }
-            }
-          break;
-          case "Status URL":{
-            tempmsg = await message.reply({embeds: [new MessageEmbed()
-              .setTitle(eval(client.la[ls]["cmds"]["owner"]["changestatus"]["variable22"]))
-              .setColor(es.color)
-              .setDescription(`
-            Example: \`https://twitch.tv/#\` --> must be a twitch link
-    
-            *Enter the text now!*`).setFooter(client.getFooter(es))
-            ]})
-            await tempmsg.channel.awaitMessages({ filter: m => m.author.id == cmduser.id, 
-                max: 1,
-                time: 90000,
-                errors: ["time"]
-              })
-              .then(async collected => {
-                var msg = collected.first().content;
-                if (!isValidURL(msg))
-                  return message.channel.send({embeds: [new MessageEmbed()
-                    .setFooter(client.getFooter(es))
-                    .setColor(es.wrongcolor)
-                    .setTitle(eval(client.la[ls]["cmds"]["owner"]["changestatus"]["variable23"]))
-                  ]})
-                if (!msg.includes("twitch"))
-                  return message.channel.send({embeds: [new MessageEmbed()
-                    .setFooter(client.getFooter(es))
-                    .setColor(es.wrongcolor)
-                    .setTitle(eval(client.la[ls]["cmds"]["owner"]["changestatus"]["variable24"]))
-                  ]})
-                let status = config
-                status.status.url = msg;
-                client.user.setActivity(config.status.text, {
-                  type: config.status.type,
-                  url: msg
-                })
-                fs.writeFile(`./botconfig/config.json`, JSON.stringify(status, null, 3), (e) => {
-                  if (e) {
-                    console.log(e.stack ? String(e.stack).dim : String(e).dim);
-                    return message.channel.send({embeds: [new MessageEmbed()
-                      .setFooter(client.getFooter(es))
-                      .setColor(es.wrongcolor)
-                      .setTitle(eval(client.la[ls]["cmds"]["owner"]["changestatus"]["variable25"]))
-                      .setDescription(eval(client.la[ls]["cmds"]["owner"]["changestatus"]["variable26"]))
-                    ]})
-                  }
-                  return message.channel.send({embeds: [new MessageEmbed()
-                    .setFooter(client.getFooter(es))
-                    .setColor(es.color)
-                    .setTitle(eval(client.la[ls]["cmds"]["owner"]["changestatus"]["variable27"]))
-                  ]})
-                });
-              }).catch(e => {
-                console.log(e)
-                return message.reply({embeds: [new MessageEmbed()
-                  .setTitle(eval(client.la[ls]["cmds"]["owner"]["changestatus"]["variable28"]))
-                  .setColor(es.wrongcolor)
-                  .setDescription(`\`\`\`${String(e.message ? e.message : e).substr(0, 2000)}\`\`\``.substr(0, 2000))
-                  .setFooter(client.getFooter(es))
-                ]});
-              })
-          }break;
-          case "Status State":
-            {
-                second_layer()
-                async function second_layer(){
-                  let menuoptions = [
-                    {
-                      value: "online",
-                      description: `Showing myself as ONLINE`,
-                      emoji: "🟢"
-                    },
-                    {
-                      value: "idle",
-                      description: `Showing myself as IDLE`,
-                      emoji: "🟡"
-                    },
-                    {
-                      value: "dnd",
-                      description: `Showing myself as DND`,
-                      emoji: "🔴"
-                    },
-                    {
-                      value: "Cancel",
-                      description: `Cancel and stop the Ai-Chat-Setup!`,
-                      emoji: "862306766338523166"
-                    }
-                  ]
-                  //define the selection
-                  let Selection = new MessageSelectMenu()
-                    .setCustomId('MenuSelection') 
-                    .setMaxValues(1) //OPTIONAL, this is how many values you can have at each selection
-                    .setMinValues(1) //OPTIONAL , this is how many values you need to have at each selection
-                    .setPlaceholder('Click me to change the Status') 
-                    .addOptions(
-                    menuoptions.map(option => {
-                      let Obj = {
-                        label: option.label ? option.label.substr(0, 50) : option.value.substr(0, 50),
-                        value: option.value.substr(0, 50),
-                        description: option.description.substr(0, 50),
-                      }
-                    if(option.emoji) Obj.emoji = option.emoji;
-                    return Obj;
-                   }))
-                  
-                  //define the embed
-                  let MenuEmbed = new MessageEmbed()
-                    .setColor(es.color)
-                    .setAuthor('Change Status', 'https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/120/au-kddi/190/purple-heart_1f49c.png', 'https://discord.gg/milrato')
-                    .setDescription(eval(client.la[ls]["cmds"]["setup"]["setup-ticket"]["variable2"]))
-                  //send the menu msg
-                  let menumsg = await message.reply({embeds: [MenuEmbed], components: [new MessageActionRow().addComponents(Selection)]})
-                  //Create the collector
-                  const collector = menumsg.createMessageComponentCollector({ 
-                    filter: i => i?.isSelectMenu() && i?.message.author.id == client.user.id && i?.user,
-                    time: 90000
-                  })
-                  //Menu Collections
-                  collector.on('collect', menu => {
-                    if (menu?.user.id === cmduser.id) {
-                      collector.stop();
-                      if(menu?.values[0] == "Cancel") return menu?.reply(eval(client.la[ls]["cmds"]["setup"]["setup-ticket"]["variable3"]))
-                      menu?.deferUpdate();
-                      let temptype = menu?.values[0]
-                      client.user.setStatus(temptype) 
-                      return message.channel.send({embeds: [new MessageEmbed()
-                        .setFooter(client.getFooter(es))
-                        .setColor(es.color)
-                        .setTitle(eval(client.la[ls]["cmds"]["owner"]["changestatus"]["variable20"]))
-                      ]})
-                    }
-                    else menu?.reply({content: `<:no:833101993668771842> You are not allowed to do that! Only: <@${cmduser.id}>`, ephemeral: true});
-                  });
-                  //Once the Collections ended edit the menu message
-                  collector.on('end', collected => {
-                    menumsg.edit({embeds: [menumsg.embeds[0].setDescription(`~~${menumsg.embeds[0].description}~~`)], components: [], content: `${collected && collected.first() && collected.first().values ? `<a:yes:833101995723194437> **Selected: \`${collected ? collected.first().values[0] : "Nothing"}\`**` : "❌ **NOTHING SELECTED - CANCELLED**" }`})
-                  });
-                }
-            }
-          break;
-          
-        }
-      }
     } catch (e) {
-      console.log(String(e.stack).dim.bgRed)
-      return message.channel.send({embeds: [new MessageEmbed()
-        .setColor(es.wrongcolor).setFooter(client.getFooter(es))
-        .setTitle(client.la[ls].common.erroroccur)
-        .setDescription(eval(client.la[ls]["cmds"]["owner"]["changestatus"]["variable30"]))
-      ]});
+      console.log(String(e.stack).bgRed)
+      return message.channel.send({embed: new MessageEmbed()
+        .setColor(es.wrongcolor).setFooter(es.footertext, es.footericon)
+        .setTitle(`<:cross:899255798142750770>  Something went Wrong`)
+        .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``)
+      });
     }
   },
 };
 /**
  * @INFO
- * Bot Coded by Tomato#6966 | https://discord.gg/milrato
+ * Bot Coded by S409™#9685 | https://github.com/S409™#9685/discord-js-lavalink-Music-Bot-erela-js
  * @INFO
- * Work for S409 support | https://s409.xyz
+ * Work for s409 Development | https://s409.xyz
  * @INFO
- * Please mention him / S409 support, when using this Code!
+ * Please mention Him / s409 Development, when using this Code!
  * @INFO
  */

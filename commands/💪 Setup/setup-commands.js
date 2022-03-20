@@ -2,13 +2,12 @@ var {
   MessageEmbed
 } = require(`discord.js`);
 var Discord = require(`discord.js`);
-var config = require(`${process.cwd()}/botconfig/config.json`);
-var ee = require(`${process.cwd()}/botconfig/embed.json`);
-var emoji = require(`${process.cwd()}/botconfig/emojis.json`);
+var config = require(`../../botconfig/config.json`);
+var ee = require(`../../botconfig/embed.json`);
+var emoji = require(`../../botconfig/emojis.json`);
 var {
   databasing
-} = require(`${process.cwd()}/handlers/functions`);
-const { MessageButton, MessageActionRow, MessageSelectMenu } = require('discord.js')
+} = require(`../../handlers/functions`);
 module.exports = {
   name: "setup-commands",
   category: "💪 Setup",
@@ -17,181 +16,110 @@ module.exports = {
   usage: "setup-commands  -->  Follow the Steps",
   description: "Enable/Disable specific Commands",
   memberpermissions: ["ADMINISTRATOR"],
-  type: "info",
   run: async (client, message, args, cmduser, text, prefix) => {
-    
-    let es = client.settings.get(message.guild.id, "embed");let ls = client.settings.get(message.guild.id, "language")
+    var es = client.settings.get(message.guild.id, "embed")
     try {
-      function getMenuOptions() {
-        return [
-          {
-            label: "ECONOMY",
-            value: "ECONOMY",
-            emoji: "💸",
-            description: `${client.settings.get(message.guild.id, "ECONOMY") ? "❌ Disable ECONOMY Commands" : "✅ Enable ECONOMY Commands"}`
-          },
-          {
-            label: "SCHOOL",
-            value: "SCHOOL",
-            emoji: "🏫",
-            description: `${client.settings.get(message.guild.id, "SCHOOL") ? "❌ Disable SCHOOL Commands" : "✅ Enable SCHOOL Commands"}`
-          },
-          {
-            label: "MUSIC",
-            value: "MUSIC",
-            emoji: "🎶",
-            description: `${client.settings.get(message.guild.id, "MUSIC") ? "❌ Disable Music Commands" : "✅ Enable Music Commands"}`
-          },
-          {
-            label: "FILTER",
-            value: "FILTER",
-            emoji: "👀",
-            description: `${client.settings.get(message.guild.id, "FILTER") ? "❌ Disable FILTER Commands" : "✅ Enable FILTER Commands"}`
-          },
-          {
-            label: "CUSTOMQUEUE",
-            value: "CUSTOMQUEUE",
-            emoji: "⚜️",
-            description: `${client.settings.get(message.guild.id, "CUSTOMQUEUE") ? "❌ Disable CUSTOM-QUEUE Commands" : "✅ Enable CUSTOM-QUEUE Commands"}`
-          },
-          {
-            label: "PROGRAMMING",
-            value: "PROGRAMMING",
-            emoji: "⌨️",
-            description: `${client.settings.get(message.guild.id, "PROGRAMMING") ? "❌ Disable PROGRAMMING Commands" : "✅ Enable PROGRAMMING Commands"}`
-          },
-          {
-            label: "RANKING",
-            value: "RANKING",
-            emoji: "📈",
-            description: `${client.settings.get(message.guild.id, "RANKING") ? "❌ Disable RANKING Commands" : "✅ Enable RANKING Commands"}`
-          },
-          {
-            label: "SOUNDBOARD",
-            value: "SOUNDBOARD",
-            emoji: "🔊",
-            description: `${client.settings.get(message.guild.id, "SOUNDBOARD") ? "❌ Disable SOUNDBOARD Commands" : "✅ Enable SOUNDBOARD Commands"}`
-          },
-          {
-            label: "VOICE",
-            value: "VOICE",
-            emoji: "🎤",
-            description: `${client.settings.get(message.guild.id, "VOICE") ? "❌ Disable VOICE Commands" : "✅ Enable VOICE Commands"}`
-          },
-          {
-            label: "FUN",
-            value: "FUN",
-            emoji: "🕹️",
-            description: `${client.settings.get(message.guild.id, "FUN") ? "❌ Disable FUN Commands" : "✅ Enable FUN Commands"}`
-          },
-          {
-            label: "MINIGAMES",
-            value: "MINIGAMES",
-            emoji: "🎮",
-            description: `${client.settings.get(message.guild.id, "MINIGAMES") ? "❌ Disable MINIGAMES Commands" : "✅ Enable MINIGAMES Commands"}`
-          },
-          {
-            label: "ANIME",
-            value: "ANIME",
-            emoji: "😳",
-            description: `${client.settings.get(message.guild.id, "ANIME") ? "❌ Disable ANIME Commands" : "✅ Enable ANIME Commands"}`
-          },
-          {
-            label: "NSFW",
-            value: "NSFW",
-            emoji: "🔞",
-            description: `${client.settings.get(message.guild.id, "NSFW") ? "❌ Disable NSFW Commands" : "✅ Enable NSFW Commands"}`
-          },
-        ];
+      var adminroles = client.settings.get(message.guild.id, "adminroles")
+
+      var timeouterror = false;
+      var filter = (reaction, user) => {
+        return user.id === message.author.id;
+      };
+      var temptype = ""
+      var tempmsg;
+
+      tempmsg = await message.channel.send(new Discord.MessageEmbed()
+        .setTitle("What do you want to do?")
+        .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+        .setDescription(`1️⃣ **==** ${client.settings.get(message.guild.id, "MUSIC") ? "Disable Music Commands" : "Enable Music Commands"}
+        
+        2️⃣ **==** ${client.settings.get(message.guild.id, "FUN") ? "Disable Fun Commands" : "Enable Fun Commands"}
+
+        3️⃣ **==** ${client.settings.get(message.guild.id, "ECONOMY") ? "Disable Economy Commands" : "Enable Economy Commands"}
+
+        4️⃣ **==** ${client.settings.get(message.guild.id, "NSFW") ? "Disable NSFW Commands" : "Enable NSFW Commands"}
+
+        5️⃣ **==** ${client.settings.get(message.guild.id, "SCHOOL") ? "Disable SCHOOL Commands" : "Enable SCHOOL Commands"}
+
+        6️⃣ **==** ${client.settings.get(message.guild.id, "MINIGAMES") ? "Disable MINIGAMES Commands" : "Enable MINIGAMES Commands"}
+
+        7️⃣ **==** ${client.settings.get(message.guild.id, "VOICE") ? "Disable Voice Commands" : "Enable Voice Commands"} (Join to Create)
+        
+        8️⃣ **==** ${client.settings.get(message.guild.id, "SOUNDBOARD") ? "Disable SOUNDBOARD Commands" : "Enable SOUNDBOARD Commands"}
+
+        *React with the Right Emoji according to the Right action*`).setFooter(es.footertext, es.footericon)
+      )
+
+      try {
+        tempmsg.react("1️⃣")
+        tempmsg.react("2️⃣")
+        tempmsg.react("3️⃣")
+        tempmsg.react("4️⃣")
+        tempmsg.react("5️⃣")
+        tempmsg.react("6️⃣")
+        tempmsg.react("7️⃣")
+        tempmsg.react("8️⃣")
+      } catch (e) {
+        return message.reply(new Discord.MessageEmbed()
+          .setTitle("<:cross:899255798142750770>  ERROR | Missing Permissions to add Reactions")
+          .setColor(es.wrongcolor)
+          .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``.substr(0, 2000))
+          .setFooter(es.footertext, es.footericon)
+        );
       }
-      function getMenuRowComponent() { 
-        let menuOptions = getMenuOptions();
-        let menuSelection = new MessageSelectMenu()
-          .setCustomId("MenuSelection")
-          .setPlaceholder("Click: enable/disable Command-Categories")
-          .setMinValues(1)
-          .setMaxValues(menuOptions.length)
-          .addOptions(menuOptions.filter(Boolean))
-        return [new MessageActionRow().addComponents(menuSelection)]
-      }
+      await tempmsg.awaitReactions(filter, {
+          max: 1,
+          time: 90000,
+          errors: ["time"]
+        })
+        .then(collected => {
+          var reaction = collected.first()
+          reaction.users.remove(message.author.id)
+          if (reaction.emoji.name === "1️⃣") temptype = "MUSIC"
+          else if (reaction.emoji.name === "2️⃣") temptype = "FUN"
+          else if (reaction.emoji.name === "3️⃣") temptype = "ECONOMY"
+          else if (reaction.emoji.name === "4️⃣") temptype = "NSFW"
+          else if (reaction.emoji.name === "5️⃣") temptype = "SCHOOL"
+          else if (reaction.emoji.name === "6️⃣") temptype = "MINIGAMES"
+          else if (reaction.emoji.name === "7️⃣") temptype = "VOICE"
+          else if (reaction.emoji.name === "8️⃣") temptype = "SOUNDBOARD"
+          else throw "You reacted with a wrong emoji"
 
+        })
+        .catch(e => {
+          timeouterror = e;
+        })
+      if (timeouterror)
+        return message.reply(new Discord.MessageEmbed()
+          .setTitle("<:cross:899255798142750770>  ERROR | Your Time ran out")
+          .setColor(es.wrongcolor)
+          .setDescription(`Cancelled the Operation!`.substr(0, 2000))
+          .setFooter(es.footertext, es.footericon)
+        );
 
-      let embed = new Discord.MessageEmbed()
-        .setTitle(`Setup the allowed/not-allowed Command-Categories of this Server`)
-        .setColor(es.color)
-        .setDescription(`**In the selection down below all Categories are listed**\n\n**Select it to either disable/enable it!**\n\n**You can select all (*at least 1*) Command-Categories if you want to disable/enable all of them at once!**`)
+      client.settings.set(message.guild.id, !client.settings.get(message.guild.id, temptype), temptype)
+      return message.reply(new Discord.MessageEmbed()
+        .setTitle(`<:tick:899255869185855529> ${client.settings.get(message.guild.id, temptype) ? "Enabled" : "Disabled"} ${temptype} Commands`)
+        .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+        .setFooter(es.footertext, es.footericon)
+      );
 
-       //Send message with buttons
-      let msg = await message.reply({   
-        embeds: [embed], 
-        components: getMenuRowComponent()
-      });
-      const collector = msg.createMessageComponentCollector({filter: (i) => i?.isSelectMenu() && i?.user && i?.message.author.id == client.user.id, time: 180e3, max: 1 });
-      collector.on("collect", async b => {
-        if(b?.user.id !== message.author.id)
-        return b?.reply({content: ":x: Only the one who typed the Command is allowed to select Things!", ephemeral: true});
-     
-        let enabled = 0, disabled = 0;
-        for(const value of b?.values) {
-          let oldstate = client.settings.get(message.guild.id, `${value.toUpperCase()}`);
-          if(!oldstate) enabled++;
-          else disabled++;
-          client.settings.set(message.guild.id, !oldstate, `${value.toUpperCase()}`)
-        }
-        b?.reply(`<a:yes:833101995723194437> **\`Enabled ${enabled} Command-Categories\` and \`Disabled ${disabled} Command-Categories\` out of \`${b?.values.length} selected Command-Categories\`**`)
-      })
-      collector.on('end', collected => {
-        msg.edit({content: ":x: Time ran out/Input finished! Cancelled", embeds: [
-          msg.embeds[0]
-            .setDescription(`${getMenuOptions().map(option => `> ${option.emoji} **${option.value}-Commands**: ${option.description.split(" ")[0] != "❌" ? `\`Are now disabled [❌]\`` : `\`Are now enabled [✅]\``}`).join("\n\n")}`)
-        ], components: []}).catch((e)=>{})
-      });
     } catch (e) {
-      console.log(String(e.stack).grey.bgRed)
-      return message.reply({embeds: [new MessageEmbed()
-        .setColor(es.wrongcolor).setFooter(client.getFooter(es))
-        .setTitle(client.la[ls].common.erroroccur)
-        .setDescription(eval(client.la[ls]["cmds"]["setup"]["setup-commands"]["variable5"]))
-      ]});
+      console.log(String(e.stack).bgRed)
+      return message.channel.send(new MessageEmbed()
+        .setColor(es.wrongcolor).setFooter(es.footertext, es.footericon)
+        .setTitle(`<:cross:899255798142750770>  Something went Wrong`)
+        .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``)
+      );
     }
   },
 };
 /**
  * @INFO
- * Bot Coded by Tomato#6966 | https://discord.gg/milrato
+ * Bot Coded by S409™#9685 | https://github.com/S409™#9685/discord-js-lavalink-Music-Bot-erela-js
  * @INFO
- * Work for S409 support | https://s409.xyz
+ * Work for s409 Development | https://s409.xyz
  * @INFO
- * Please mention him / S409 support, when using this Code!
+ * Please mention Him / s409 Development, when using this Code!
  * @INFO
  */
-function getNumberEmojis() {
-  return [
-    "<:Number_0:843943149915078696>",
-    "<:Number_1:843943149902626846>",
-    "<:Number_2:843943149868023808>",
-    "<:Number_3:843943149914554388>",
-    "<:Number_4:843943149919535154>",
-    "<:Number_5:843943149759889439>",
-    "<:Number_6:843943150468857876>",
-    "<:Number_7:843943150179713024>",
-    "<:Number_8:843943150360068137>",
-    "<:Number_9:843943150443036672>",
-    "<:Number_10:843943150594031626>",
-    "<:Number_11:893173642022748230>",
-    "<:Number_12:893173642165383218>",
-    "<:Number_13:893173642274410496>",
-    "<:Number_14:893173642198921296>",
-    "<:Number_15:893173642182139914>",
-    "<:Number_16:893173642530271342>",
-    "<:Number_17:893173642538647612>",
-    "<:Number_18:893173642307977258>",
-    "<:Number_19:893173642588991488>",
-    "<:Number_20:893173642307977266>",
-    "<:Number_21:893173642274430977>",
-    "<:Number_22:893173642702250045>",
-    "<:Number_23:893173642454773782>",
-    "<:Number_24:893173642744201226>",
-    "<:Number_25:893173642727424020>"
-  ]
-}

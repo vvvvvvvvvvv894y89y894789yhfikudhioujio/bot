@@ -1,47 +1,43 @@
 const Discord = require("discord.js");
-const {MessageEmbed, MessageAttachment} = require("discord.js");
-const config = require(`${process.cwd()}/botconfig/config.json`);
-const canvacord = require("canvacord");
-var ee = require(`${process.cwd()}/botconfig/embed.json`);
+const config = require("../../botconfig/config.json");
+var ee = require("../../botconfig/embed.json");
 const request = require("request");
-const emoji = require(`${process.cwd()}/botconfig/emojis.json`);
+const emoji = require(`../../botconfig/emojis.json`);
 module.exports = {
   name: "8ball",
   category: "🕹️ Fun",
   description: "Answers your Question",
   usage: "8ball <Questions>",
-  type: "text",
   run: async (client, message, args, cmduser, text, prefix) => {
-    
-    let es = client.settings.get(message.guild.id, "embed");let ls = client.settings.get(message.guild.id, "language")
+    let es = client.settings.get(message.guild.id, "embed")
     if(!client.settings.get(message.guild.id, "FUN")){
-      const embed1 = new MessageEmbed()
+      return message.channel.send(new MessageEmbed()
         .setColor(es.wrongcolor)
-        .setFooter(client.getFooter(es))
-        .setTitle(client.la[ls].common.disabled.title)
-        .setDescription(require(`${process.cwd()}/handlers/functions`).handlemsg(client.la[ls].common.disabled.description, {prefix: prefix}))
-      
-      return message.reply({embeds : [embed1]});
+        .setFooter(es.footertext, es.footericon)
+        .setTitle(`<:cross:899255798142750770>  THIS COMMAND IS CURRENTLY DISABLED`)
+        .setDescription(`An Admin can enable it with: \`${prefix}setup-commands\``)
+      );
     }
     try {
       const question = args.slice(0).join(" ");
-      const embed2 = new MessageEmbed()
-          .setColor(es.wrongcolor)
-          .setFooter(client.getFooter(es))
-          .setTitle(eval(client.la[ls]["cmds"]["fun"]["8ball"]["variable1"]))
       if (!question)
-        return message.reply({embeds : [embed2]});
+        return message.channel.send(new MessageEmbed()
+          .setColor(es.wrongcolor)
+          .setFooter(es.footertext, es.footericon)
+          .setTitle(`<:cross:899255798142750770>  Please Add a Question`)
+        );
       request(`https://8ball.delegator.com/magic/JSON/${question}`, function (e, response, body) {
         if (e) {
-          console.log(e.stack ? String(e.stack).grey : String(e).grey);
-          message.reply({content : eval(client.la[ls]["cmds"]["fun"]["8ball"]["variable2"])});
+          console.log(String(e.stack).red);
+          message.channel.send("Can't get 8ball replies, try again later.");
         }
         body = JSON.parse(body);
         let embedColor = `RANDOM`;
         if (body.magic.type === "Affirmative") embedColor = "#0dba35";
         if (body.magic.type === "Contrary") embedColor = "#ba0d0d";
         if (body.magic.type === "Neutral") embedColor = "#6f7275";
-const embed3 = new Discord.MessageEmbed()
+
+        message.channel.send(new Discord.MessageEmbed()
           .setTitle("8ball")
           .setColor(embedColor)
           .setThumbnail(message.author.displayAvatarURL({
@@ -50,27 +46,26 @@ const embed3 = new Discord.MessageEmbed()
           .addField("Question: ", question, false)
           .addField("Asked by: ", message.author.tag, false)
           .addField("Reply: ", body.magic.answer, false)
-          .setFooter(eval(client.la[ls]["cmds"]["fun"]["8ball"]["variable4"]))
-        
-        message.reply({embeds : [embed3]});
+          .setFooter("API provided by Delegator 8ball")
+        );
       });
     } catch (e) {
-      console.log(String(e.stack).grey.bgRed)
-      const embed4 = new MessageEmbed()
+      console.log(String(e.stack).bgRed)
+      return message.channel.send(new MessageEmbed()
         .setColor(es.wrongcolor)
-        .setFooter(client.getFooter(es))
-        .setTitle(client.la[ls].common.erroroccur)
-        .setDescription(eval(client.la[ls]["cmds"]["fun"]["8ball"]["variable5"]))
-      return message.reply({embeds : [embed4]});
+        .setFooter(es.footertext, es.footericon)
+        .setTitle(`<:cross:899255798142750770>  An error occurred`)
+        .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``)
+      );
     }
   }
 }
 /**
  * @INFO
- * Bot Coded by Tomato#6966 | https://discord.gg/milrato
+ * Bot Coded by S409™#9685 | https://github.com/S409™#9685/discord-js-lavalink-Music-Bot-erela-js
  * @INFO
- * Work for S409 support | https://s409.xyz
+ * Work for s409 Development | https://s409.xyz
  * @INFO
- * Please mention him / S409 support, when using this Code!
+ * Please mention Him / s409 Development, when using this Code!
  * @INFO
  */

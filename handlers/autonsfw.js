@@ -36,13 +36,13 @@ module.exports = client => {
             if(!set || set == "no") return
             //try to fetch the channel if no channel found throw error and return
             try{
-                channel = await client.channels.fetch(set).catch(() => {})
+                channel = await client.channels.fetch(set)
                 if(!channel || channel == null || channel == undefined || !channel.name || channel.name == null || channel.name == undefined) throw "Channel not found"
             }catch (e){
                 return;
             }
             //if the Channel is not an nsfw Channel, return
-            if (!channel.nsfw) return
+            if (!channel.nsfw) return console.log("nonsfw");
             //define the array with all possible nsfw cmds methods
             var methodarray = ["ass", "porn", "boobs"]
             //get a random method from the array
@@ -55,15 +55,22 @@ module.exports = client => {
                     encoding: null
                     });
                 }).then(function (res) {
-                    const attach = new Discord.MessageAttachment(res);
-                    channel.send({files: [attach]}).catch(() => {});
+                    const ass = new Discord.MessageEmbed()
+                    .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+                    .setImage("attachment://file.png").attachFiles([{
+                        attachment: res,
+                        name: "file.png"
+                    }])
+                    channel.send(ass);
                 });
             }
             //if the method is "porn"
             else if(method == "porn"){
                 superagent.get('https://nekobot.xyz/api/image').query({ type: 'pgif'}).end((err, response) => {
-                    const attach = new Discord.MessageAttachment(response.body.message);
-                    channel.send({files: [attach]}).catch(() => {});
+                    var embed_nsfw = new Discord.MessageEmbed()
+                        .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+                        .setImage(response.body.message)
+                    channel.send({embed: embed_nsfw});
                 });
             }
             //if the method is "boobs"
@@ -74,16 +81,23 @@ module.exports = client => {
                         encoding: null
                     });
                     }).then(function (res) {
-                        const attach = new Discord.MessageAttachment(res);
-                        channel.send({files: [attach]}).catch(() => {});
+                        const boobs = new Discord.MessageEmbed()
+                            .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+                            .setImage("attachment://file.png").attachFiles([{
+                            attachment: res,
+                            name: "file.png"
+                            }])
+                     channel.send(boobs);
                     });
             }
             //else call "porn"
             else {                    
                 superagent.get('https://nekobot.xyz/api/image').query({ type: 'pgif'}).end((err, response) => {
-                    const attach = new Discord.MessageAttachment(response.body.message);
-                    channel.send({files: [attach]}).catch(() => {});
-                });
+                var embed_nsfw = new Discord.MessageEmbed()
+                     .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+                    .setImage(response.body.message)
+                channel.send({embed: embed_nsfw});
+            });
             }
         }catch{
 

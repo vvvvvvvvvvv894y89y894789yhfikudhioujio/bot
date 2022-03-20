@@ -1,22 +1,20 @@
 const {
   MessageEmbed
 } = require("discord.js");
-const config = require(`${process.cwd()}/botconfig/config.json`);
-var ee = require(`${process.cwd()}/botconfig/embed.json`);
-const emoji = require(`${process.cwd()}/botconfig/emojis.json`);
+const config = require("../../botconfig/config.json");
+var ee = require("../../botconfig/embed.json");
+const emoji = require(`../../botconfig/emojis.json`);
 const {
-  getRandomInt, GetGlobalUser, GetUser, handlemsg
-} = require(`${process.cwd()}/handlers/functions`)
+  getRandomInt, GetGlobalUser, GetUser
+} = require("../../handlers/functions")
 module.exports = {
   name: "modstats",
   category: "🔰 Info",
   aliases: ["adminstats"],
   usage: "modstats [@USER]",
   description: "Shows the Admin Stats of a Mod/Admin, how many cmds he has executed etc.",
-  type: "user",
   run: async (client, message, args, cmduser, text, prefix) => {
-    
-    let es = client.settings.get(message.guild.id, "embed");let ls = client.settings.get(message.guild.id, "language")
+    let es = client.settings.get(message.guild.id, "embed")
     try {
       var user;
       if(args[0]){
@@ -28,13 +26,13 @@ module.exports = {
             user = await GetUser(message, args)
           }
         }catch (e){
-          if(!e) return message.reply(client.la[ls].common.usernotfound)
-          return message.reply({content: String('```' + e.message ? String(e.message).substr(0, 1900) : String(e) + '```')})
+          if(!e) return message.reply("UNABLE TO FIND THE USER")
+          return message.reply(e)
         }
       }else{
         user = message.author;
       }
-      if(!user || user == null || user.id == null || !user.id) return message.reply(client.la[ls].common.usernotfound)
+      if(!user || user == null || user.id == null || !user.id) return message.reply("<:cross:899255798142750770>  Could not find the USER")
 
       client.stats.ensure(message.guild.id + user.id, {
         ban: [],
@@ -45,50 +43,49 @@ module.exports = {
         warn: [],
       })
 
-      message.reply({embeds: [new MessageEmbed().setColor(es.color).setThumbnail(es.thumb ? es.footericon && (es.footericon.includes("http://") || es.footericon.includes("https://")) ? es.footericon : client.user.displayAvatarURL() : null).setFooter(client.getFooter(es))
-        .addField(eval(client.la[ls]["cmds"]["info"]["modstats"]["variablex_1"]), eval(client.la[ls]["cmds"]["info"]["modstats"]["variable1"]), true)
-        .addField(eval(client.la[ls]["cmds"]["info"]["modstats"]["variablex_2"]), eval(client.la[ls]["cmds"]["info"]["modstats"]["variable2"]), true)
-        .addField(eval(client.la[ls]["cmds"]["info"]["modstats"]["variablex_3"]), eval(client.la[ls]["cmds"]["info"]["modstats"]["variable3"]), true)
+      message.channel.send({embed: new MessageEmbed().setColor(es.color).setThumbnail(es.thumb ? es.footericon : null).setFooter(es.footertext, es.footericon)
+        .addField("Bans [7]", "**`" + client.stats.get(message.guild.id + user.id, "ban").filter(item=>{ var date = new Date(); date.setDate(date.getDate() - 7); return date <= Number(item); }).length + "`**", true)
+        .addField("Bans [30]", "**`" + client.stats.get(message.guild.id + user.id, "ban").filter(item=>{ var date = new Date(); date.setDate(date.getDate() - 30); return date <= Number(item); }).length + "`**", true)
+        .addField("Bans [All]", "**`" + client.stats.get(message.guild.id + user.id, "ban").length + "`**", true)
        
-        .addField(eval(client.la[ls]["cmds"]["info"]["modstats"]["variablex_4"]), eval(client.la[ls]["cmds"]["info"]["modstats"]["variable4"]), true)
-        .addField(eval(client.la[ls]["cmds"]["info"]["modstats"]["variablex_5"]), eval(client.la[ls]["cmds"]["info"]["modstats"]["variable5"]), true)
-        .addField(eval(client.la[ls]["cmds"]["info"]["modstats"]["variablex_6"]), eval(client.la[ls]["cmds"]["info"]["modstats"]["variable6"]), true)
+        .addField("Kicks [7]", "**`" + client.stats.get(message.guild.id + user.id, "kick").filter(item=>{ var date = new Date(); date.setDate(date.getDate() - 7); return date <= Number(item); }).length + "`**", true)
+        .addField("Kicks [30]", "**`" + client.stats.get(message.guild.id + user.id, "kick").filter(item=>{ var date = new Date(); date.setDate(date.getDate() - 30); return date <= Number(item); }).length + "`**", true)
+        .addField("Kicks [All]", "**`" + client.stats.get(message.guild.id + user.id, "kick").length + "`**", true)
        
-        .addField(eval(client.la[ls]["cmds"]["info"]["modstats"]["variablex_7"]), eval(client.la[ls]["cmds"]["info"]["modstats"]["variable7"]), true)
-        .addField(eval(client.la[ls]["cmds"]["info"]["modstats"]["variablex_8"]), eval(client.la[ls]["cmds"]["info"]["modstats"]["variable8"]), true)
-        .addField(eval(client.la[ls]["cmds"]["info"]["modstats"]["variablex_9"]), eval(client.la[ls]["cmds"]["info"]["modstats"]["variable9"]), true)
+        .addField("Mutes [7]", "**`" + client.stats.get(message.guild.id + user.id, "mute").filter(item=>{ var date = new Date(); date.setDate(date.getDate() - 7); return date <= Number(item); }).length + "`**", true)
+        .addField("Mutes [30]", "**`" + client.stats.get(message.guild.id + user.id, "mute").filter(item=>{ var date = new Date(); date.setDate(date.getDate() - 30); return date <= Number(item); }).length + "`**", true)
+        .addField("Mutes [All]", "**`" + client.stats.get(message.guild.id + user.id, "mute").length + "`**", true)
        
-        .addField(eval(client.la[ls]["cmds"]["info"]["modstats"]["variablex_10"]), eval(client.la[ls]["cmds"]["info"]["modstats"]["variable10"]), true)
-        .addField(eval(client.la[ls]["cmds"]["info"]["modstats"]["variablex_11"]), eval(client.la[ls]["cmds"]["info"]["modstats"]["variable11"]), true)
-        .addField(eval(client.la[ls]["cmds"]["info"]["modstats"]["variablex_12"]), eval(client.la[ls]["cmds"]["info"]["modstats"]["variable12"]), true)
+        .addField("Tickets [7]", "**`" + client.stats.get(message.guild.id + user.id, "ticket").filter(item=>{ var date = new Date(); date.setDate(date.getDate() - 7); return date <= Number(item); }).length + "`**", true)
+        .addField("Tickets [30]", "**`" + client.stats.get(message.guild.id + user.id, "ticket").filter(item=>{ var date = new Date(); date.setDate(date.getDate() - 30); return date <= Number(item); }).length + "`**", true)
+        .addField("Tickets [All]", "**`" + client.stats.get(message.guild.id + user.id, "ticket").length + "`**", true)
        
-        .addField(eval(client.la[ls]["cmds"]["info"]["modstats"]["variablex_13"]), eval(client.la[ls]["cmds"]["info"]["modstats"]["variable13"]), true)
-        .addField(eval(client.la[ls]["cmds"]["info"]["modstats"]["variablex_14"]), eval(client.la[ls]["cmds"]["info"]["modstats"]["variable14"]), true)
-        .addField(eval(client.la[ls]["cmds"]["info"]["modstats"]["variablex_15"]), eval(client.la[ls]["cmds"]["info"]["modstats"]["variable15"]), true)
+        .addField("Says [7]", "**`" + client.stats.get(message.guild.id + user.id, "says").filter(item=>{ var date = new Date(); date.setDate(date.getDate() - 7); return date <= Number(item); }).length + "`**", true)
+        .addField("Says [30]", "**`" + client.stats.get(message.guild.id + user.id, "says").filter(item=>{ var date = new Date(); date.setDate(date.getDate() - 30); return date <= Number(item); }).length + "`**", true)
+        .addField("Says [All]", "**`" + client.stats.get(message.guild.id + user.id, "says").length + "`**", true)
         
-        .addField(eval(client.la[ls]["cmds"]["info"]["modstats"]["variablex_16"]), eval(client.la[ls]["cmds"]["info"]["modstats"]["variable16"]), true)
-        .addField(eval(client.la[ls]["cmds"]["info"]["modstats"]["variablex_17"]), eval(client.la[ls]["cmds"]["info"]["modstats"]["variable17"]), true)
-        .addField(eval(client.la[ls]["cmds"]["info"]["modstats"]["variablex_18"]), eval(client.la[ls]["cmds"]["info"]["modstats"]["variable18"]), true)
-        .addField("\u200b", client.la[ls].cmds.info.modstats.desc)
-        .setAuthor(`${client.la[ls].cmds.info.modstats.about} ${user.tag}`, user.displayAvatarURL({dynamic: true, size: 512}))
-      ]});
+        .addField("Warns [7]", "**`" +  client.stats.get(message.guild.id + user.id, "warn").filter(item=>{ var date = new Date(); date.setDate(date.getDate() - 7); return date <= Number(item); }).length + "`**", true)
+        .addField("Warns [30]", "**`" + client.stats.get(message.guild.id + user.id, "warn").filter(item=>{ var date = new Date(); date.setDate(date.getDate() - 30); return date <= Number(item); }).length + "`**", true)
+        .addField("Warns [All]", "**`" + client.stats.get(message.guild.id + user.id, "warn").length + "`**", true)
+        .addField("\u200b", "*[] ... Days the amount of Cmds were executed*\n*Says includes embeds too*")
+        .setAuthor(`The Stats of:  ${user.tag}`, user.displayAvatarURL({dynamic: true, size: 512}))
+      });
     } catch (e) {
-      console.log(String(e.stack).grey.bgRed)
-      return message.reply({embeds: [new MessageEmbed()
-        .setColor(es.wrongcolor)
-        .setFooter(client.getFooter(es))
-        .setTitle(client.la[ls].common.erroroccur)
-        .setDescription(eval(client.la[ls]["cmds"]["info"]["color"]["variable2"]))
-      ]});
+      console.log(String(e.stack).bgRed)
+      return message.channel.send(new MessageEmbed()
+        .setColor(es.wrongcolor).setFooter(es.footertext, es.footericon)
+        .setTitle(`<:cross:899255798142750770>  An error occurred`)
+        .setDescription(`\`\`\`${String(JSON.stringify(e)).substr([], 2000)}\`\`\``)
+      );
     }
   }
 }
 /**
  * @INFO
- * Bot Coded by Tomato#6966 | https://discord.gg/milrato
+ * Bot Coded by S409™#9685 | https://github.com/S409™#9685/discord-js-lavalink-Music-Bot-erela-js
  * @INFO
- * Work for S409 support | https://s409.xyz
+ * Work for s409 Development | https://s409.xyz
  * @INFO
- * Please mention him / S409 support, when using this Code!
+ * Please mention Him / s409 Development, when using this Code!
  * @INFO
  */

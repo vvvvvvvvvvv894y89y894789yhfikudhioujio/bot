@@ -1,6 +1,6 @@
 //Here the command starts
-const config = require(`${process.cwd()}/botconfig/config.json`)
-var ee = require(`${process.cwd()}/botconfig/embed.json`)
+const config = require("../../botconfig/config.json")
+var ee = require("../../botconfig/embed.json")
 module.exports = {
 	//definition
 	name: "removepoints", //the name of the command 
@@ -9,11 +9,10 @@ module.exports = {
 	cooldown: 4, //this will set it to a 4 second cooldown
 	usage: "removepoints <@User> <Amount>", //this is for the help command for EACH cmd
   	description: "Remove a specific amount of Points to a User", //the description of the command
-	  type: "manage",
+
 	//running the command with the parameters: client, message, args, user, text, prefix
-  run: async (client, message, args, cmduser, text, prefix) => {
-    
+  run: async (client, message, args, user, text, prefix) => {
 
 	}
 }
-//-CODED-BY-TOMATO#6966-//
+//-CODED-BY-S409™#9685-//

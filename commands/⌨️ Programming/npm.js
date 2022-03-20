@@ -1,6 +1,6 @@
 //Here the command starts
-const config = require(`${process.cwd()}/botconfig/config.json`)
-var ee = require(`${process.cwd()}/botconfig/embed.json`)
+const config = require("../../botconfig/config.json")
+var ee = require("../../botconfig/embed.json")
 const fetch = require("node-fetch");
 const { STATUS_CODES } = require("http");
 const { MessageEmbed } = require(`discord.js`);
@@ -14,17 +14,17 @@ module.exports = {
   	description: "Search the NPM Registry for a package information", //the description of the command
 
 	//running the command with the parameters: client, message, args, user, text, prefix
-  	run: async (client, message, args, cmduser, text, prefix) => {
-    	let es = client.settings.get(message.guild.id, "embed");let ls = client.settings.get(message.guild.id, "language")
+  	run: async (client, message, args, user, text, prefix) => {
+		let es = client.settings.get(message.guild.id, "embed")
 		try {
 			const pkg = args[0];
 			if (!pkg)
-				return message.reply({embeds: [new MessageEmbed()
+				return message.channel.send({embed: new MessageEmbed()
 					.setColor(es.wrongcolor)
-					.setFooter(client.getFooter(es))
-					.setTitle(eval(client.la[ls]["cmds"]["programming"]["npm"]["variable1"]))
-					.setDescription(eval(client.la[ls]["cmds"]["programming"]["npm"]["variable2"]))
-				]});
+					.setFooter(es.footertext, es.footericon)
+					.setTitle(`<:cross:899255798142750770>  You didn't provide a NPM-PACKAGE`)
+					.setDescription(`Usage: \`${prefix}npm <package>\``)
+				});
 
 			const body = await fetch(`https://registry.npmjs.com/${pkg}`)
 				.then((res) => {
@@ -49,10 +49,10 @@ module.exports = {
 				deps.push(`...${len} more.`);
 			}
 		
-			return message.reply({ embeds: [new MessageEmbed()
-				.setTitle(eval(client.la[ls]["cmds"]["programming"]["npm"]["variable3"]))
+			return message.channel.send({ embed: new MessageEmbed()
+				.setTitle(`NPM - ${pkg}`)
 				.setColor(es.color)
-				.setFooter(client.getFooter(es))
+				.setFooter(es.footertext, es.footericon)
 				.setURL(`https://npmjs.com/package/${pkg}`)
 				.setAuthor(message.author.tag, message.author.displayAvatarURL({ size: 64 }))
 				.setDescription([
@@ -62,16 +62,15 @@ module.exports = {
 				`**Author:** ${body.author ? body.author.name : "Unknown"}`,
 				`**Modified:** ${new Date(body.time.modified).toDateString()}`,
 				`**Dependencies:** ${deps && deps.length ? deps.join(", ") : "None"}`
-				].join("\n")) ]});
+				].join("\n")) });
 		} catch (e) {
-			console.log(String(e.stack).grey.bgRed)
-			return message.reply({embeds : [new MessageEmbed()
-			  .setColor(es.wrongcolor).setFooter(client.getFooter(es))
-			  .setTitle(client.la[ls].common.erroroccur)
-			  .setDescription(eval(client.la[ls]["cmds"]["programming"]["npm"]["variable4"]))
-			]});
+			console.log(String(e.stack).bgRed)
+			return message.channel.send(new MessageEmbed()
+			  .setColor(es.wrongcolor).setFooter(es.footertext, es.footericon)
+			  .setTitle(`<:cross:899255798142750770>  An error occurred`)
+			  .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``)
+			);
 		  }
 	
 	}
 }
-//-CODED-BY-TOMATO#6966-//

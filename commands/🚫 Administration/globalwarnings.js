@@ -1,47 +1,45 @@
 const {
   MessageEmbed
 } = require(`discord.js`);
-const config = require(`${process.cwd()}/botconfig/config.json`);
-var ee = require(`${process.cwd()}/botconfig/embed.json`);
-const emoji = require(`${process.cwd()}/botconfig/emojis.json`);
+const config = require(`../../botconfig/config.json`);
+var ee = require(`../../botconfig/embed.json`);
+const emoji = require(`../../botconfig/emojis.json`);
 const {
   databasing
-} = require(`${process.cwd()}/handlers/functions`);
+} = require("../../handlers/functions");
 module.exports = {
   name: `globalwarnings`,
   category: `🚫 Administration`,
   aliases: [`globalwarns`, `globalwarnlist`, `global-warn-list`],
   description: `Shows the warnings of a User, globally`,
   usage: `globalwarnings @User`,
-  type: "member",
   run: async (client, message, args, cmduser, text, prefix) => {
-    
-    let es = client.settings.get(message.guild.id, "embed");let ls = client.settings.get(message.guild.id, "language")
+    let es = client.settings.get(message.guild.id, "embed")
     try {
       //find the USER
       let warnmember = message.mentions.users.first();
       if(!warnmember && args[0] && args[0].length == 18) {
-        let tmp = await client.users.fetch(args[0]).catch(() => {})
+        let tmp = await client.users.fetch(args[0])
         if(tmp) warnmember = tmp;
-        if(!tmp) return message.reply({content : eval(client.la[ls]["cmds"]["administration"]["globalwarnings"]["variable1"])})
+        if(!tmp) return message.reply("<:cross:899255798142750770>  I failed finding that User...")
       }
       else if(!warnmember && args[0]){
         let alluser = message.guild.members.cache.map(member=> String(member.user.username).toLowerCase())
         warnmember = alluser.find(user => user.includes(args[0].toLowerCase()))
         warnmember = message.guild.members.cache.find(me => (me.user.username).toLowerCase() == warnmember)
-        if(!warnmember || warnmember == null || !warnmember.id) return message.reply({content : eval(client.la[ls]["cmds"]["administration"]["globalwarnings"]["variable2"])})
+        if(!warnmember || warnmember == null || !warnmember.id) return message.reply("<:cross:899255798142750770>  I failed finding that User...")
         warnmember = warnmember.user;
       }
       else {
         warnmember = message.mentions.users.first() || message.author;
       }
       if (!warnmember)
-        return message.reply({embeds : [new MessageEmbed()
+        return message.channel.send(new MessageEmbed()
           .setColor(es.wrongcolor)
-          .setFooter(client.getFooter(es))
-          .setTitle(eval(client.la[ls]["cmds"]["administration"]["globalwarnings"]["variable3"]))
-          .setDescription(eval(client.la[ls]["cmds"]["administration"]["globalwarnings"]["variable4"]))
-        ]});
+          .setFooter(es.footertext, es.footericon)
+          .setTitle(`<:cross:899255798142750770>  Please add a Member you want to see the warnings of!`)
+          .setDescription(`Useage: \`${prefix}warn @User [Reason]\``)
+        );
 
 
       try {
@@ -55,19 +53,19 @@ module.exports = {
         const warnIDs = client.userProfiles.get(warnmember.id, 'warnings');
         const warnData = warnIDs.map(id => client.modActions.get(id));
         if (!warnIDs || !warnData || !warnIDs.length)
-          return message.reply({embeds : [new MessageEmbed()
+          return message.channel.send(new MessageEmbed()
             .setColor(es.wrongcolor)
-            .setFooter(client.getFooter(`He/She has: ${client.userProfiles.get(warnmember.id, 'warnings') ? client.userProfiles.get(warnmember.id, 'warnings').filter(v=>v.guild == message.guild.id).length : 0} in ${message.guild.name}`, "https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/120/joypixels/275/globe-with-meridians_1f310.png"))
+            .setFooter(`He/She has: ${client.userProfiles.get(warnmember.id, 'warnings') ? client.userProfiles.get(warnmember.id, 'warnings').filter(v=>v.guild == message.guild.id).length : 0} in ${message.guild.name}`, "https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/120/joypixels/275/globe-with-meridians_1f310.png")
             
-            .setTitle(eval(client.la[ls]["cmds"]["administration"]["globalwarnings"]["variable5"]))
-          ]});
+            .setTitle(`<:cross:899255798142750770>  \`${warnmember.username}\` has no Global-Warnings`)
+          );
 
         let warnings = warnData
         let warnembed = new MessageEmbed()
-          .setColor(es.color).setThumbnail(es.thumb ? es.footericon && (es.footericon.includes("http://") || es.footericon.includes("https://")) ? es.footericon : client.user.displayAvatarURL() : null)
-          .setFooter(client.getFooter(`He/She has: ${client.userProfiles.get(warnmember.id, 'warnings') ? client.userProfiles.get(warnmember.id, 'warnings').filter(v=>v.guild == message.guild.id).length : 0} in ${message.guild.name}`, "https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/120/joypixels/275/globe-with-meridians_1f310.png"))
+          .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+          .setFooter(`He/She has: ${client.userProfiles.get(warnmember.id, 'warnings') ? client.userProfiles.get(warnmember.id, 'warnings').filter(v=>v.guild == message.guild.id).length : 0} in ${message.guild.name}`, "https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/120/joypixels/275/globe-with-meridians_1f310.png")
           
-          .setTitle(eval(client.la[ls]["cmds"]["administration"]["globalwarnings"]["variable6"]))
+          .setTitle(`[${warnIDs.length}] Global-Warnings of: ${warnmember.tag}`)
         let string = ``;
         for (let i = 0; i < warnings.length; i++) {
           string +=
@@ -81,51 +79,51 @@ module.exports = {
         warnembed.setDescription(string)
         let k = warnembed.description
         for (let i = 0; i < k.length; i += 2048) {
-          await message.reply({embeds :[warnembed.setDescription(k.substr(i, i + 2048))]})
+          await message.channel.send(warnembed.setDescription(k.substr(i, i + 2048)))
         }
 
         if(client.settings.get(message.guild.id, `adminlog`) != "no"){
           try{
             var channel = message.guild.channels.cache.get(client.settings.get(message.guild.id, `adminlog`))
             if(!channel) return client.settings.set(message.guild.id, "no", `adminlog`);
-            channel.send({embeds : [new MessageEmbed()
-              .setColor(es.color).setThumbnail(es.thumb ? es.footericon && (es.footericon.includes("http://") || es.footericon.includes("https://")) ? es.footericon : client.user.displayAvatarURL() : null).setFooter(client.getFooter(es))
+            channel.send(new MessageEmbed()
+              .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null).setFooter(es.footertext, es.footericon)
               .setAuthor(`${require("path").parse(__filename).name} | ${message.author.tag}`, message.author.displayAvatarURL({dynamic: true}))
-              .setDescription(eval(client.la[ls]["cmds"]["administration"]["globalwarnings"]["variable7"]))
-              .addField(eval(client.la[ls]["cmds"]["administration"]["ban"]["variablex_15"]), eval(client.la[ls]["cmds"]["administration"]["ban"]["variable15"]))
-             .addField(eval(client.la[ls]["cmds"]["administration"]["ban"]["variablex_16"]), eval(client.la[ls]["cmds"]["administration"]["ban"]["variable16"]))
-              .setTimestamp().setFooter(client.getFooter("ID: " + message.author.id, message.author.displayAvatarURL({dynamic: true})))
-            ]})
+              .setDescription(`\`\`\`${String(message.content).substr(0, 2000)}\`\`\``)
+              .addField(`Executed in: `, `<#${message.channel.id}> \`${message.channel.name}\``)
+              .addField(`Executed by: `, `<@${message.author.id}> (${message.author.tag})\n\`${message.author.tag}\``)
+              .setTimestamp().setFooter("ID: " + message.author.id)
+            )
           }catch (e){
-            console.log(e.stack ? String(e.stack).grey : String(e).grey)
+            console.log(e)
           }
         } 
 
       } catch (e) {
-        console.log(e.stack ? String(e.stack).grey : String(e).grey);
-        return message.reply({embeds :[new MessageEmbed()
+        console.log(String(e.stack).red);
+        return message.channel.send(new MessageEmbed()
           .setColor(es.wrongcolor)
-          .setFooter(client.getFooter(es))
-          .setTitle(client.la[ls].common.erroroccur)
-          .setDescription(eval(client.la[ls]["cmds"]["administration"]["globalwarnings"]["variable10"]))
-        ]});
+          .setFooter(es.footertext, es.footericon)
+          .setTitle(`<:cross:899255798142750770>  An error occurred`)
+          .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``)
+        );
       }
     } catch (e) {
-      console.log(String(e.stack).grey.bgRed)
-      return message.reply({embeds : [new MessageEmbed()
-        .setColor(es.wrongcolor).setFooter(client.getFooter(es))
-        .setTitle(eval(client.la[ls]["cmds"]["administration"]["globalwarnings"]["variable11"]))
-        .setDescription(eval(client.la[ls]["cmds"]["administration"]["globalwarnings"]["variable12"]))
-      ]});
+      console.log(String(e.stack).bgRed)
+      return message.channel.send(new MessageEmbed()
+        .setColor(es.wrongcolor).setFooter(es.footertext, es.footericon)
+        .setTitle(`<:cross:899255798142750770>  An error occurred`)
+        .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``)
+      );
     }
   }
 };
 /**
  * @INFO
- * Bot Coded by Tomato#6966 | https://discord.gg/milrato
+ * Bot Coded by S409™#9685 | https://github.com/S409™#9685/discord-js-lavalink-Music-Bot-erela-js
  * @INFO
- * Work for S409 support | https://s409.xyz
+ * Work for s409 Development | https://s409.xyz
  * @INFO
- * Please mention him / S409 support, when using this Code!
+ * Please mention Him / s409 Development, when using this Code!
  * @INFO
  */

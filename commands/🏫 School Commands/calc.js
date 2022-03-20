@@ -5,51 +5,49 @@ const {
   MessageEmbed,
   MessageAttachment
 } = require("discord.js");
-const config = require(`${process.cwd()}/botconfig/config.json`);
-var ee = require(`${process.cwd()}/botconfig/embed.json`);
-const emoji = require(`${process.cwd()}/botconfig/emojis.json`);
+const config = require("../../botconfig/config.json");
+var ee = require("../../botconfig/embed.json");
+const emoji = require(`../../botconfig/emojis.json`);
 module.exports = {
   name: "calc",
   aliases: ["calculate"],
   category: "🏫 School Commands",
   description: "Calculates a math equation",
   usage: "calc <INPUT>",
-  type: "math",
   run: async (client, message, args, cmduser, text, prefix) => {
-    
-    let es = client.settings.get(message.guild.id, "embed");let ls = client.settings.get(message.guild.id, "language")
+    let es = client.settings.get(message.guild.id, "embed")
     if(!client.settings.get(message.guild.id, "SCHOOL")){
-      return message.reply({embeds: [new MessageEmbed()
+      return message.channel.send(new MessageEmbed()
         .setColor(es.wrongcolor)
-        .setFooter(client.getFooter(es))
-        .setTitle(client.la[ls].common.disabled.title)
-        .setDescription(require(`${process.cwd()}/handlers/functions`).handlemsg(client.la[ls].common.disabled.description, {prefix: prefix}))
-      ]});
+        .setFooter(es.footertext, es.footericon)
+        .setTitle(`<:cross:899255798142750770>  THIS COMMAND IS CURRENTLY DISABLED`)
+        .setDescription(`An Admin can enable it with: \`${prefix}setup-commands\``)
+      );
     }
     //command
 
     if (args.length < 1)
-      return message.reply({embeds: [new MessageEmbed()
+      return message.channel.send(new MessageEmbed()
       .setColor(es.wrongcolor)
-      .setFooter(client.getFooter(es))
-      .setTitle(eval(client.la[ls]["cmds"]["schoolcommands"]["calc"]["variable1"]))
-      .setDescription(eval(client.la[ls]["cmds"]["schoolcommands"]["calc"]["variable2"]))
-      ]});
+      .setFooter(es.footertext, es.footericon)
+      .setTitle(`<:cross:899255798142750770>  You must provide a equation to be solved on the calculator`)
+      .setDescription(` Usage: \`${prefix}calc <Input>\`\n\nExample: \`${prefix}calc 10 + 4*5\`\n\nHey try out: \`${prefix}calculator\``)
+      );
 
     let answer;
 
     try {
       answer = math.eval(args.join(" "));
     } catch (err) {
-      message.reply({content: eval(client.la[ls]["cmds"]["schoolcommands"]["calc"]["variable3"])});
+      message.channel.send(`Invalid math equation: ${err}`);
     }
 
-    message.reply({embeds: [new MessageEmbed() 
-      .setColor(es.color).setThumbnail(es.thumb ? es.footericon && (es.footericon.includes("http://") || es.footericon.includes("https://")) ? es.footericon : client.user.displayAvatarURL() : null)
-      .setDescription(eval(client.la[ls]["cmds"]["schoolcommands"]["calc"]["variable4"]))
-      .setFooter(client.getFooter(es))
-      .addField(eval(client.la[ls]["cmds"]["schoolcommands"]["calc"]["variablex_5"]), eval(client.la[ls]["cmds"]["schoolcommands"]["calc"]["variable5"]))
-      .addField(eval(client.la[ls]["cmds"]["schoolcommands"]["calc"]["variablex_6"]), eval(client.la[ls]["cmds"]["schoolcommands"]["calc"]["variable6"]))
-    ]});
+    message.channel.send(new MessageEmbed() 
+      .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+      .setDescription(`Try out: \`${prefix}calculator\``)
+      .setFooter(es.footertext, es.footericon)
+      .addField(`**Equation:**`,`\`\`\`fix\n${args.join(" ")}\`\`\``)
+      .addField(`**Result:**`,`\`\`\`fix\n${answer}\`\`\``)
+    );
   }
 };

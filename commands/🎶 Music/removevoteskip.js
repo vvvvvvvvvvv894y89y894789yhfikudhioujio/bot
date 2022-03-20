@@ -1,33 +1,27 @@
-/*const {
+const {
   MessageEmbed
 } = require(`discord.js`);
-const config = require(`${process.cwd()}/botconfig/config.json`);
-const ee = require(`${process.cwd()}/botconfig/embed.json`);
-const emoji = require(`${process.cwd()}/botconfig/emojis.json`);
-const { handlemsg } = require(`${process.cwd()}/handlers/functions`);
-    module.exports = {
+const config = require(`../../botconfig/config.json`);
+var ee = require(`../../botconfig/embed.json`);
+const emoji = require(`../../botconfig/emojis.json`);
+module.exports = {
   name: `removevoteskip`,
   category: `🎶 Music`,
   aliases: [`rvs`, `removeskip`, `removevs`, `votestop`, `stopvote`],
   description: `Removes your Vote of the VoteSkip!`,
   usage: `removevoteskip`,
-  parameters: {
-    "type": "music",
-    "activeplayer": true,
-    "previoussong": false
-  },
+  parameters: {"type":"music", "activeplayer": true, "previoussong": false},
   run: async (client, message, args, cmduser, text, prefix, player) => {
-    
-    let es = client.settings.get(message.guild.id, "embed");let ls = client.settings.get(message.guild.id, "language")
-    if (!client.settings.get(message.guild.id, "MUSIC")) {
-      return message.reply({embeds : [new MessageEmbed()
-        .setColor(es.wrongcolor)
-        .setFooter(client.getFooter(es))
-        .setTitle(client.la[ls].common.disabled.title)
-        .setDescription(handlemsg(client.la[ls].common.disabled.description, {prefix: prefix}))
-      ]});
-    }
-    try {
+    let es = client.settings.get(message.guild.id, "embed")
+        if(!client.settings.get(message.guild.id, "MUSIC")){
+          return message.channel.send(new MessageEmbed()
+            .setColor(es.wrongcolor)
+            .setFooter(es.footertext, es.footericon)
+            .setTitle(`<:cross:899255798142750770>  THIS COMMAND IS CURRENTLY DISABLED`)
+            .setDescription(`An Admin can enable it with: \`${prefix}setup-commands\``)
+          );
+        }
+    try{
       //Check if there is a Dj Setup
       if (client.settings.get(message.guild.id, `djroles`).toString() !== ``) {
         let channelmembersize = channel.members.size;
@@ -39,45 +33,44 @@ const { handlemsg } = require(`${process.cwd()}/handlers/functions`);
         if (player.get(`vote-${message.author.id}`)) {
           player.set(`vote-${message.author.id}`, false)
           player.set(`votes`, String(Number(player.get(`votes`)) - 1));
-          return message.reply({embeds : [new MessageEmbed()
-            .setColor(es.color)
-
-            .setTitle(eval(client.la[ls]["cmds"]["music"]["removevoteskip"]["variable1"]))
-            .setDescription(eval(client.la[ls]["cmds"]["music"]["removevoteskip"]["variable2"]))
-          ]});
+          return message.channel.send(new MessageEmbed()
+            .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+            .setFooter(es.footertext, es.footericon)
+            .setTitle(`<:tick:899255869185855529> Removed your Vote!`)
+            .setDescription(`There are now: \`${player.get(`votes`)}\` of \`${voteamount}\` needed Votes`)
+          );
         } else {
-          return message.reply({embeds : [new MessageEmbed()
+          return message.channel.send(new MessageEmbed()
             .setColor(es.wrongcolor)
-
-            .setTitle(eval(client.la[ls]["cmds"]["music"]["removevoteskip"]["variable3"]))
-            .setDescription(eval(client.la[ls]["cmds"]["music"]["removevoteskip"]["variable4"]))
-          ]});
+            .setFooter(es.footertext, es.footericon)
+            .setTitle(`<:cross:899255798142750770>  You havn't voted yet!!`)
+            .setDescription(`There are: \`${player.get(`votes`)}\` of \`${voteamount}\` needed Votes`)
+          );
         }
       } else
-        return message.reply({embeds :[new MessageEmbed()
+        return message.channel.send(new MessageEmbed()
           .setColor(es.wrongcolor)
-
-          .setTitle(eval(client.la[ls]["cmds"]["music"]["removevoteskip"]["variable5"]))
-          .setDescription(eval(client.la[ls]["cmds"]["music"]["removevoteskip"]["variable6"]))
-        ]});
+          .setFooter(es.footertext, es.footericon)
+          .setTitle(`<:cross:899255798142750770>  Cannot remove your Vote!`)
+          .setDescription(`Because ther is no DJ-Role Setup created yet, create it by typing \`${prefix}adddj @DJ-Setup\``)
+        );
     } catch (e) {
-      console.log(String(e.stack).dim.bgRed)
-      return message.reply({embeds : [new MessageEmbed()
-        .setColor(es.wrongcolor)
-
-        .setTitle(client.la[ls].common.erroroccur)
-        .setDescription(eval(client.la[ls]["cmds"]["music"]["removevoteskip"]["variable7"]))
-      ]});
+      console.log(String(e.stack).bgRed)
+      return message.channel.send(new MessageEmbed()
+          .setColor(es.wrongcolor)
+          .setFooter(es.footertext, es.footericon)
+          .setTitle(`<:cross:899255798142750770>  An error occurred`)
+          .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``)
+      );
     }
   }
 };
-*/
 /**
  * @INFO
- * Bot Coded by Tomato#6966 | https://github?.com/Tomato6966/discord-js-lavalink-Music-Bot-erela-js
+ * Bot Coded by S409™#9685 | https://github.com/S409™#9685/discord-js-lavalink-Music-Bot-erela-js
  * @INFO
- * Work for S409 support | https://s409.xyz
+ * Work for s409 Development | https://s409.xyz
  * @INFO
- * Please mention Him / S409 support, when using this Code!
+ * Please mention Him / s409 Development, when using this Code!
  * @INFO
  */

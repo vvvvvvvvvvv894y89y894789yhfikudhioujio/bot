@@ -1,23 +1,20 @@
-
-require('dotenv').config();
 var {
     Manager
   } = require("erela.js"),
   
     Spotify = require("erela.js-spotify"),
     Deezer = require("erela.js-deezer"),
-    Facebook = require("erela.js-facebook"),
-    config = require(`${process.cwd()}/botconfig/config.json`),
   
-    clientID = process.env.clientID || config.spotify.clientID,
-    clientSecret = process.env.clientSecret || config.spotify.clientSecret;
+    config = require("../../botconfig/config.json"),
+  
+    clientID = config.spotify.clientID,
+    clientSecret = config.spotify.clientSecret;
   module.exports = (client) => {
       if (!clientID || !clientSecret) {
         client.manager = new Manager({
           nodes: config.clientsettings.nodes,
           plugins: [
-            new Deezer(),
-            new Facebook(),
+            new Deezer()
           ],
           send(id, payload) {
             var guild = client.guilds.cache.get(id);
@@ -32,8 +29,7 @@ var {
               clientID, //get a clientid from there: https://developer.spotify.com/dashboard
               clientSecret
             }),
-            new Deezer(),
-            new Facebook(),
+            new Deezer()
           ],
           send(id, payload) {
             var guild = client.guilds.cache.get(id);
@@ -45,16 +41,15 @@ var {
       require("./node_events")(client)
       require("./client_events")(client)
       require("./events")(client)
-      require("./musicsystem")(client)
       
   };
   /**
    * @INFO
-   * Bot Coded by s409 | https://github?.com/Tomato6966/discord-js-lavalink-Music-Bot-erela-js
+   * Bot Coded by S409™#9685 | https://github.com/S409™#9685/discord-js-lavalink-Music-Bot-erela-js
    * @INFO
-   * Work for S409 support | https://s409.xyz
+   * Work for s409 Development | https://s409.xyz
    * @INFO
-   * Please mention Him / S409 support, when using this Code!
+   * Please mention Him / s409 Development, when using this Code!
    * @INFO
    */
   

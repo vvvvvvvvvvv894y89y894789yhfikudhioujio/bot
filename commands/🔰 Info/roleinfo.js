@@ -1,70 +1,58 @@
 const Discord = require("discord.js");
 const {MessageEmbed} = require("discord.js");
-const config = require(`${process.cwd()}/botconfig/config.json`);
-var ee = require(`${process.cwd()}/botconfig/embed.json`);
-const emoji = require(`${process.cwd()}/botconfig/emojis.json`);
+const config = require("../../botconfig/config.json");
+var ee = require("../../botconfig/embed.json");
+const emoji = require(`../../botconfig/emojis.json`);
 const moment = require('moment');
-const { GetRole } = require(`${process.cwd()}/handlers/functions`)
-const { swap_pages, handlemsg } = require(`${process.cwd()}/handlers/functions`)
+const { GetRole } = require("../../handlers/functions")
 module.exports = {
   name: "roleinfo",
   aliases: ["rinfo"],
   category: "🔰 Info",
   description: "Get information about a role",
   usage: "roleinfo [@Role/Id/Name]",
-  type: "server",
   run: async (client, message, args, cmduser, text, prefix) => {
-    
-    let es = client.settings.get(message.guild.id, "embed");let ls = client.settings.get(message.guild.id, "language")
+    let es = client.settings.get(message.guild.id, "embed")
     try {   
       var role;
       if(args[0]){
         try{
           role = await GetRole(message, args)
         }catch (e){
-          if(!e) return message.reply(client.la[ls].common.rolenotfound)
-          return message.reply({content: String('```' + e.message ? String(e.message).substr(0, 1900) : String(e) + '```')})
+          if(!e) return message.reply("UNABLE TO FIND THE ROLE")
+          return message.reply(e)
         }
       }else{
-        role = message.member.roles.highest;
+        return message.reply("<:cross:899255798142750770>  Please retry but add a Role/Rolename/Roleid");
       }
-      if(!role || role == null || role.id == null || !role.id) return message.reply(client.la[ls].common.rolenotfound)
+      if(!role || role == null || role.id == null || !role.id) message.reply("<:cross:899255798142750770>  Could not find the ROLE")
         //create the EMBED
         const embeduserinfo = new MessageEmbed()
         embeduserinfo.setThumbnail(message.guild.iconURL({ dynamic: true, size: 512 }))
-        embeduserinfo.setAuthor(client.la[ls].cmds.info.roleinfo.author + " " + role.name, message.guild.iconURL({ dynamic: true }), "https://discord.gg/milrato")
-        embeduserinfo.addField(client.la[ls].cmds.info.roleinfo.field1,`\`${role.name}\``,true)
-        embeduserinfo.addField(client.la[ls].cmds.info.roleinfo.field2,`\`${role.id}\``,true)
-        embeduserinfo.addField(client.la[ls].cmds.info.roleinfo.field3,`\`${role.hexColor}\``,true)
-        embeduserinfo.addField(client.la[ls].cmds.info.roleinfo.field4, "\`"+moment(role.createdAt).format("DD/MM/YYYY") + "\`\n" + "`"+ moment(role.createdAt).format("hh:mm:ss") + "\`",true)
-        embeduserinfo.addField(client.la[ls].cmds.info.roleinfo.field5,`\`${role.rawPosition}\` / \`${message.guild.roles.highest.rawPosition}\``,true)
-        embeduserinfo.addField(client.la[ls].cmds.info.roleinfo.field6,`\`${role.members.size} Members have it\``,true)
-        embeduserinfo.addField(client.la[ls].cmds.info.roleinfo.field7,`\`${role.hoist ? "✔️" : "❌"}\``,true)
-        embeduserinfo.addField(client.la[ls].cmds.info.roleinfo.field8,`\`${role.mentionable ? "✔️" : "❌"}\``,true)
-        embeduserinfo.addField(client.la[ls].cmds.info.roleinfo.field9,`${role.permissions.toArray().map(p=>`\`${p}\``).join(", ")}`)
+        embeduserinfo.setAuthor("Information about:   " + role.name, message.guild.iconURL({ dynamic: true }), "https://discord.gg/ve7z9K4QXV")
+        embeduserinfo.addField('**<a:arrow:865655067348303943> Name:**',`\`${role.name}\``,true)
+        embeduserinfo.addField('**<a:arrow:865655067348303943> ID:**',`\`${role.id}\``,true)
+        embeduserinfo.addField('**<a:arrow:865655067348303943> Color:**',`\`${role.hexColor}\``,true)
+        embeduserinfo.addField('**<a:arrow:865655067348303943> Date Created:**', "\`"+moment(role.createdAt).format("DD/MM/YYYY") + "\`\n" + "`"+ moment(role.createdAt).format("hh:mm:ss") + "\`",true)
+        embeduserinfo.addField('**<a:arrow:865655067348303943> Position:**',`\`${role.rawPosition}\``,true)
+        embeduserinfo.addField('**<a:arrow:865655067348303943> MemberCount:**',`\`${role.members.size} Members have it\``,true)
+        embeduserinfo.addField('**<a:arrow:865655067348303943> Hoisted:**',`\`${role.hoist ? "✔️" : "❌"}\``,true)
+        embeduserinfo.addField('**<a:arrow:865655067348303943> Mentionable:**',`\`${role.mentionable ? "✔️" : "❌"}\``,true)
+        embeduserinfo.addField('**<a:arrow:865655067348303943> Permissions:**',`${role.permissions.toArray().map(p=>`\`${p}\``).join(", ")}`)
         embeduserinfo.setColor(role.hexColor)
-        embeduserinfo.setFooter(client.getFooter(es))
+        embeduserinfo.setFooter(es.footertext, es.footericon)
         //send the EMBED
-        message.reply({embeds: [embeduserinfo]})
+        message.channel.send(embeduserinfo)
 
       
     } catch (e) {
-      console.log(String(e.stack).grey.bgRed)
-      return message.reply({embeds: [new MessageEmbed()
+      console.log(String(e.stack).bgRed)
+      return message.channel.send(new MessageEmbed()
         .setColor(es.wrongcolor)
-        .setFooter(client.getFooter(es))
-        .setTitle(client.la[ls].common.erroroccur)
-        .setDescription(eval(client.la[ls]["cmds"]["info"]["color"]["variable2"]))
-      ]});
+        .setFooter(es.footertext, es.footericon)
+        .setTitle(`<:cross:899255798142750770>  ERROR | An error occurred`)
+        .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``)
+      );
     }
   }
 }
-/**
- * @INFO
- * Bot Coded by Tomato#6966 | https://discord.gg/milrato
- * @INFO
- * Work for S409 support | https://s409.xyz
- * @INFO
- * Please mention him / S409 support, when using this Code!
- * @INFO
- */

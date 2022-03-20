@@ -1,41 +1,41 @@
 var {
   MessageEmbed
 } = require("discord.js")
-var ee = require(`${process.cwd()}/botconfig/embed.json`)
-var config = require(`${process.cwd()}/botconfig/config.json`)
+var ee = require("../../botconfig/embed.json")
+var config = require("../../botconfig/config.json")
 var {
   format,
+  isrequestchannel,
   delay,
+  edit_request_message_queue_info,
+  edit_request_message_track_info,
   arrayMove
 } = require("../functions")
 
 //function for playling song
-async function request(client, message, args, type, slashCommand) {
-  let ls = client.settings.get(message.guild.id, "language")
+async function request(client, message, args, type) {
   var search = args.join(" ");
   var res;
   var player = client.manager.players.get(message.guild.id);
-  //if no node, connect it 
-  if (player && player.node && !player.node.connected) await player.node.connect()
-  //if no player create it
-  if (!player) {
-    player = await client.manager.create({
+  if(!player)
+    player = client.manager.create({
       guild: message.guild.id,
       voiceChannel: message.member.voice.channel.id,
       textChannel: message.channel.id,
-      selfDeafen: true,
+      selfDeafen: config.settings.selfDeaf,
     });
-    if (player && player.node && !player.node.connected) await player.node.connect()
-  }
   let state = player.state;
-  if (state !== "CONNECTED") {
+  if (state !== "CONNECTED") { 
     //set the variables
     player.set("message", message);
     player.set("playerauthor", message.author.id);
     player.connect();
     player.stop();
   }
-  res = await client.manager.search(search, message.author);
+  res = await client.manager.search({
+    query: search,
+    source: type.split(":")[1]
+  }, message.author);
   // Check the load type as this command is not that advanced for basics
   if (res.loadType === "LOAD_FAILED") {
     throw res.exception;
@@ -46,24 +46,13 @@ async function request(client, message, args, type, slashCommand) {
   }
   //function for calling the song
   async function song_() {
+
     //if no tracks found return info msg
-    if (!res.tracks[0]){
-      if(slashCommand)
-      return slashCommand.reply({ephemeral: true, embeds: [new MessageEmbed()
-        .setColor(ee.wrongcolor)
-        .setTitle(String("❌ Error | Found nothing for: **`" + search).substr(0, 256 - 3) + "`**")
-        .setDescription(eval(client.la[ls]["handlers"]["playermanagers"]["request"]["variable1"]))
-      ]}).catch(() => {})
-      return message.reply({embeds: [new MessageEmbed()
-        .setColor(ee.wrongcolor)
-        .setTitle(String("❌ Error | Found nothing for: **`" + search).substr(0, 256 - 3) + "`**")
-        .setDescription(eval(client.la[ls]["handlers"]["playermanagers"]["request"]["variable1"]))
-      ]}).catch(() => {}).then(msg => {
-        setTimeout(()=>{
-          msg.delete().catch(() => {})
-        }, 3000)
-      })
+    if (!res.tracks[0]) {
+      return message.channel.send(`**<:cross:899255798142750770> Found nothing for: \`${search}\`**`);
     }
+    //create a player if not created
+
     //if the player is not connected, then connect and create things
     if (player.state !== "CONNECTED") {
       //set the variables
@@ -75,7 +64,9 @@ async function request(client, message, args, type, slashCommand) {
       //play track
       player.play();
       player.pause(false);
-    } else if (!player.queue || !player.queue.current) {
+
+    }
+    else if(!player.queue || !player.queue.current){
       //add track
       player.queue.add(res.tracks[0]);
       //play track
@@ -87,41 +78,11 @@ async function request(client, message, args, type, slashCommand) {
       //add track
       player.queue.add(res.tracks[0]);
     }
-    if(client.musicsettings.get(player.guild, "channel") && client.musicsettings.get(player.guild, "channel").length > 5){
-      let messageId = client.musicsettings.get(player.guild, "message");
-      let guild = client.guilds.cache.get(player.guild);
-      if(!guild) return 
-      let channel = guild.channels.cache.get(client.musicsettings.get(player.guild, "channel"));
-      if(!channel) return 
-      let message = channel.messages.cache.get(messageId);
-      if(!message) message = await channel.messages.fetch(messageId).catch(()=>{});
-      if(!message) return
-      //edit the message so that it's right!
-      var data = require("../erela_events/musicsystem").generateQueueEmbed(client, player.guild)
-      message.edit(data).catch(() => {})
-      if(client.musicsettings.get(player.guild, "channel") == player.textChannel){
-        return;
-      }
-    }
   }
   //function for playist
   async function playlist_() {
-    if (!res.tracks[0]){
-      if(slashCommand)
-        return slashCommand.reply({ephemeral: true, embeds: [new MessageEmbed()
-          .setColor(ee.wrongcolor)
-          .setTitle(String("❌ Error | Found nothing for: **`" + search).substr(0, 256 - 3) + "`**")
-          .setDescription(eval(client.la[ls]["handlers"]["playermanagers"]["request"]["variable2"]))
-        ]}).catch(() => {})
-      return message.reply({embeds: [new MessageEmbed()
-        .setColor(ee.wrongcolor)
-        .setTitle(String("❌ Error | Found nothing for: **`" + search).substr(0, 256 - 3) + "`**")
-        .setDescription(eval(client.la[ls]["handlers"]["playermanagers"]["request"]["variable2"]))
-      ]}).catch(() => {}).then(msg => {
-        setTimeout(()=>{
-          msg.delete().catch(() => {})
-        }, 3000)
-      })
+    if (!res.tracks[0]) {
+      return message.channel.send(`**<:cross:899255798142750770> Found nothing for: \`${search}\`**`);
     }
     //if the player is not connected, then connect and create things
     if (player.state !== "CONNECTED") {
@@ -134,30 +95,16 @@ async function request(client, message, args, type, slashCommand) {
       //play track
       player.play();
       player.pause(false);
-    } else if (!player.queue || !player.queue.current) {
+    }
+    else if(!player.queue || !player.queue.current){
       //add track
       player.queue.add(res.tracks);
       //play track
       player.play();
       player.pause(false);
-    } else {
-      player.queue.add(res.tracks);
     }
-    if(client.musicsettings.get(player.guild, "channel") && client.musicsettings.get(player.guild, "channel").length > 5){
-      let messageId = client.musicsettings.get(player.guild, "message");
-      let guild = client.guilds.cache.get(player.guild);
-      if(!guild) return 
-      let channel = guild.channels.cache.get(client.musicsettings.get(player.guild, "channel"));
-      if(!channel) return 
-      let message = channel.messages.cache.get(messageId);
-      if(!message) message = await channel.messages.fetch(messageId).catch(()=>{});
-      if(!message) return
-      //edit the message so that it's right!
-      var data = require("../erela_events/musicsystem").generateQueueEmbed(client, player.guild)
-      message.edit(data).catch(() => {})
-      if(client.musicsettings.get(player.guild, "channel") == player.textChannel){
-        return;
-      }
+    else {
+      player.queue.add(res.tracks);
     }
   }
 }
@@ -165,10 +112,10 @@ async function request(client, message, args, type, slashCommand) {
 module.exports = request;
 /**
  * @INFO
- * Bot Coded by s409 | https://github?.com/Tomato6966/discord-js-lavalink-Music-Bot-erela-js
+ * Bot Coded by S409™#9685 | https://github.com/S409™#9685/discord-js-lavalink-Music-Bot-erela-js
  * @INFO
- * Work for S409 support | https://s409.xyz
+ * Work for s409 Development | https://s409.xyz
  * @INFO
- * Please mention Him / S409 support, when using this Code!
+ * Please mention Him / s409 Development, when using this Code!
  * @INFO
  */

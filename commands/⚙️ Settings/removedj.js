@@ -1,7 +1,7 @@
 const { MessageEmbed } = require(`discord.js`);
-const config = require(`${process.cwd()}/botconfig/config.json`);
-var ee = require(`${process.cwd()}/botconfig/embed.json`);
-const emoji = require(`${process.cwd()}/botconfig/emojis.json`);
+const config = require(`../../botconfig/config.json`);
+var ee = require(`../../botconfig/embed.json`);
+const emoji = require(`../../botconfig/emojis.json`);
 module.exports = {
     name: `removedj`,
     aliases: [`deletedj`],
@@ -9,68 +9,60 @@ module.exports = {
     description: `Let's you DELETE a DJ ROLE`,
     usage: `removedj @ROLE`,
     memberpermissions: [`ADMINISTRATOR`],
-    type: "music",
     run: async (client, message, args, cmduser, text, prefix) => {
-    
-      let es = client.settings.get(message.guild.id, "embed");let ls = client.settings.get(message.guild.id, "language")
+      let es = client.settings.get(message.guild.id, "embed")
     try{
       
       //get the role of the mention
       let role = message.mentions.roles.filter(role=>role.guild.id==message.guild.id).first();
       //if no pinged role return error
       if (!role)
-        return message.reply({embeds :[new MessageEmbed()
+        return message.channel.send(new MessageEmbed()
           .setColor(es.wrongcolor)
-          .setFooter(client.getFooter(es))
-          .setTitle(eval(client.la[ls]["cmds"]["settings"]["removedj"]["variable1"]))
-        ]});
+          .setFooter(es.footertext, es.footericon)
+          .setTitle(`<:cross:899255798142750770>  Please add a Role via ping, @role!`)
+        );
       //try to find the role in the guild just incase he pings a role of a different server
       try {
           message.guild.roles.cache.get(role.id);
       } catch {
-        return message.reply({embeds : [new MessageEmbed()
+        return message.channel.send(new MessageEmbed()
           .setColor(es.wrongcolor)
-          .setFooter(client.getFooter(es))
-          .setTitle(eval(client.la[ls]["cmds"]["settings"]["removedj"]["variable2"]))
-        ]});
+          .setFooter(es.footertext, es.footericon)
+          .setTitle(`<:cross:899255798142750770>  It seems that the Role does not exist in this Server!`)
+        );
       }
       //if its not in the database return error
       if(!client.settings.get(message.guild.id,`djroles`).includes(role.id))
-        return message.reply({embeds: [new MessageEmbed()
+        return message.channel.send(new MessageEmbed()
           .setColor(es.wrongcolor)
-          .setFooter(client.getFooter(es))
-          .setTitle(`<:no:833101993668771842> **This Role is not a DJ-Role!**`)
-        ]});
+          .setFooter(es.footertext, es.footericon)
+          .setTitle(`<:cross:899255798142750770>  This Role is already a DJ-ROLE!`)
+        );
       //remove it from the Database
       client.settings.remove(message.guild.id, role.id, `djroles`);
       //These lines create the String for all left Roles
-      var leftb = client.settings.get(message.guild.id, `djroles`).map(r => `<@&${r}>`);
-      if (leftb?.length == 0) leftb = "`not setup`";
-      else leftb?.join(", ");
+      let leftb = ``;
+      if(client.settings.get(message.guild.id, `djroles`).join(``) ===``) leftb = `no Dj Roles, aka All Users are Djs`
+      else
+      for(let i = 0; i < client.settings.get(message.guild.id, `djroles`).length; i++){
+        leftb += `<@&` +client.settings.get(message.guild.id, `djroles`)[i] + `> | `
+      }
       //send the success message
-      return message.reply({embeds: [new MessageEmbed()
-        .setColor(es.color).setThumbnail(es.thumb ? es.footericon && (es.footericon.includes("http://") || es.footericon.includes("https://")) ? es.footericon : client.user.displayAvatarURL() : null)
-        .setFooter(client.getFooter(es))
-        .setTitle(eval(client.la[ls]["cmds"]["settings"]["removedj"]["variable4"]))
-        .setDescription(eval(client.la[ls]["cmds"]["settings"]["removedj"]["variable5"]))
-      ]});
+      return message.channel.send(new MessageEmbed()
+        .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+        .setFooter(es.footertext, es.footericon)
+        .setTitle(`<:tick:899255869185855529> Removed the DJ ROLE \`${role.name}\``)
+        .setDescription(`All left Dj Roles:\n> ${leftb.substr(0, leftb.length - 3)}`)
+      );
     } catch (e) {
-        console.log(String(e.stack).grey.bgRed)
-        return message.reply({embeds: [new MessageEmbed()
+        console.log(String(e.stack).bgRed)
+        return message.channel.send(new MessageEmbed()
             .setColor(es.wrongcolor)
-						.setFooter(client.getFooter(es))
-            .setTitle(client.la[ls].common.erroroccur)
-            .setDescription(eval(client.la[ls]["cmds"]["settings"]["removedj"]["variable6"]))
-        ]});
+						.setFooter(es.footertext, es.footericon)
+            .setTitle(`<:cross:899255798142750770>  An error occurred`)
+            .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``)
+        );
     }
   }
 };
-/**
-  * @INFO
-  * Bot Coded by Tomato#6966 | https://discord.gg/milrato
-  * @INFO
-  * Work for S409 support | https://s409.xyz
-  * @INFO
-  * Please mention him / S409 support, when using this Code!
-  * @INFO
-*/

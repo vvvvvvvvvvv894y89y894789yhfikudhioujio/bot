@@ -1,38 +1,47 @@
 {
-   "token": "ODgyODE5NjM2NzYzMTg5Mjc4.YTA72w.a3T6-zccMOjw5il4fXvT9VGQH2M",
+  "google" : "AIzaSyDExCZ2UhM3i5WGs5hNYQmIiwswkxbD-Cs",
    "prefix": "-",
+   "prefixes": ["-", "-", "-", "-"],
    "ownerIDS": [
-      "544245657230245888"
+      "679688840625127531"
    ],
-   "memer_api": "g5SOlSadRiK",
    "status": {
-      "text": "//help | Made by S409™#0001",
-      "text2": "//help | Made by S409™#0001",
-      "type": "LISTENING",
-      "url": "https://twitch.tv/"
+      "text": "-help",
+      "type": "STREAMING",
+      "COMMENT:": "TYPES ARE: PLAYING, STREAMING, WATCHING, LISTENING",
+      "url": "https://www.twitch.tv/"
    },
    "clientsettings": {
       "nodes": [
          {
-            "host": "node01.lavalink.eu",
+            "host": "https://Mil-rato-v2-4.s409.repl.co",
             "port": 2333,
-            "password": "Raccoon"
+            "password": "230177LENNOX230177@"
          }
       ]
    },
    "spotify": {
-      "clientSecret": "b429ddd1b43a4d278267b5ada5157443",
-      "clientID": "eb2e848ee68248159263b6967b74c98e"
+      "clientSecret": "5ee0de83bdb446f1b2c1c07f8c208ee2",
+      "clientID": "6e94ebe06af64df1a6f619b40c675f19"
    },
    "settings": {
+      "COMMENT": "time_delay 0 === insta leave",
       "leaveOnEmpty_Channel": {
          "enabled": true,
-         "time_delay": 30000
+         "time_delay": 60000
       },
       "LeaveOnEmpty_Queue": {
          "enabled": true,
-         "time_delay": 30000
+         "time_delay": 10000
       },
       "selfDeaf": true
+   },
+   "lyricssettings": {
+      "lyrics_finder": true,
+      "COMMENT": "my suggestion is to use ksoft_api on true and paste in the api key u can sign up, until u get the key use lyrics_finder which is way weaker but better the nothing",
+      "ksoft_api": {
+         "use_this_instead": true,
+         "api_key": "AIzaSyAVph-V_duKCbh-yOqPvvfmeRGqVQ8SkkY"
+      }
    }
 }

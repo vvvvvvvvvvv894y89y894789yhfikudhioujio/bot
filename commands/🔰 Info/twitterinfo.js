@@ -2,24 +2,20 @@ const Discord = require("discord.js");
 const {
   MessageEmbed
 } = require("discord.js");
-const config = require(`${process.cwd()}/botconfig/config.json`);
-var ee = require(`${process.cwd()}/botconfig/embed.json`);
-const emoji = require(`${process.cwd()}/botconfig/emojis.json`);
+const config = require("../../botconfig/config.json");
+var ee = require("../../botconfig/embed.json");
+const emoji = require(`../../botconfig/emojis.json`);
 const moment = require('moment');
 const twitconfig = require("../../social_log/twitter.json");
 const Twit = require('twit');
-const { handlemsg } = require(`${process.cwd()}/handlers/functions`);
 module.exports = {
   name: "twitterinfo",
   aliases: ["twitterinfo", "twitteruserinfo", "tuserinfo", "uinfo", "tuser", "twitteruser"],
   category: "🔰 Info",
-  cooldown: 60,
   description: "Get information about a Twitter User",
   usage: "twitterinfo <TWITTERUSER>",
-  type: "util",
   run: async (client, message, args, cmduser, text, prefix) => {
-    
-    let es = client.settings.get(message.guild.id, "embed");let ls = client.settings.get(message.guild.id, "language")
+    let es = client.settings.get(message.guild.id, "embed")
     try {
       var T = new Twit({
         consumer_key: twitconfig.consumer_key,
@@ -33,43 +29,34 @@ module.exports = {
         q: `${args[0]}`,
         count: 1
       }, function (err, data, response) {
-        //handlemsg(client.la[ls].cmds.info.translate.to, { to: args[1] })
-        if (err) return message.reply(client.la[ls].common.usernotfound)
+        if (err) return message.reply("UNABLE TO FIND USER")
         var user = data[0];
-        if(!user) message.reply(client.la[ls].common.usernotfound)
+        if(!user) return message.reply("UNABLE TO FIND USER")
         var embed = new Discord.MessageEmbed()
         .setColor(`#${user.profile_background_color}`)
         .setThumbnail(user.profile_image_url_https ? user.profile_image_url_https : user.profile_image_url)
-        .setFooter(client.getFooter(`ID: ${user.id_str}`, user.profile_image_url_https ? user.profile_image_url_https : user.profile_image_url))
-        .addField(client.la[ls].cmds.info.twitterinfo.field1.title, `\`${user.name}\``, true)
-        .addField(client.la[ls].cmds.info.twitterinfo.field2.title, `\`${moment(user.created_at).format("DD/MM/YYYY")}\`\n\`${moment(user.created_at).format("hh:mm:ss")}\``, true)
-        .addField(client.la[ls].cmds.info.twitterinfo.field3.title, handlemsg(client.la[ls].cmds.info.twitterinfo.field3.value, {followers : user.followers_count}), true)
-        .addField(client.la[ls].cmds.info.twitterinfo.field4.title, handlemsg(client.la[ls].cmds.info.twitterinfo.field4.value, {friends : user.friends_count}), true)
-        .addField(client.la[ls].cmds.info.twitterinfo.field5.title, handlemsg(client.la[ls].cmds.info.twitterinfo.field5.value, {statuses : user.statuses_count}), true)
-        if(user.location) embed.addField(client.la[ls].cmds.info.twitterinfo.field6.title, `\`${user.location}\``, true)
-        .setTitle(handlemsg(client.la[ls].cmds.info.twitterinfo.title, {name: user.screen_name}))
+        .setFooter(`ID: ${user.id_str}`, user.profile_image_url_https ? user.profile_image_url_https : user.profile_image_url)
+        .addField("Name", `\`${user.name}\``, true)
+        .addField("Created at:", `\`${moment(user.created_at).format("DD/MM/YYYY")}\`\n\`${moment(user.created_at).format("hh:mm:ss")}\``, true)
+        .addField("Followers", `\`${user.followers_count} Followers\``, true)
+        .addField("Friends", `\`${user.friends_count} Friends\``, true)
+        .addField("Tweets", `\`${user.statuses_count} Tweets\``, true)
+        if(user.location) embed.addField("Location", `\`${user.location}\``, true)
+        .setTitle(`Twitterinformation about: \`${user.screen_name}\``)
         .setURL(`https://twitter.com/${user.screen_name}`)
-        if(user.description) embed.setDescription(eval(client.la[ls]["cmds"]["info"]["twitterinfo"]["variable1"]))
-        message.reply({embeds: [embed]})
+        if(user.description) embed.setDescription(`\`\`\`${user.description}\`\`\``)
+        message.channel.send(embed)
       })
     } catch (e) {
-      console.log(String(e.stack).grey.bgRed)
-      return message.reply({embeds: [new MessageEmbed()
+      console.log(String(e.stack).bgRed)
+      return message.channel.send(new MessageEmbed()
         .setColor(es.wrongcolor)
-        .setFooter(client.getFooter(es))
-        .setTitle(client.la[ls].common.erroroccur)
-        .setDescription(eval(client.la[ls]["cmds"]["info"]["color"]["variable2"]))
-      ]});
+        .setFooter(es.footertext, es.footericon)
+        .setTitle(`<:cross:899255798142750770>  ERROR | An error occurred`)
+        .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``)
+      );
     }
     return;
   }
 }
-/**
- * @INFO
- * Bot Coded by Tomato#6966 | https://discord.gg/milrato
- * @INFO
- * Work for S409 support | https://s409.xyz
- * @INFO
- * Please mention him / S409 support, when using this Code!
- * @INFO
- */
+

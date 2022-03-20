@@ -1,9 +1,9 @@
 const {
   MessageEmbed
 } = require(`discord.js`);
-const config = require(`${process.cwd()}/botconfig/config.json`);
-var ee = require(`${process.cwd()}/botconfig/embed.json`);
-const emoji = require(`${process.cwd()}/botconfig/emojis.json`);
+const config = require(`../../botconfig/config.json`);
+var ee = require(`../../botconfig/embed.json`);
+const emoji = require(`../../botconfig/emojis.json`);
 const {
   TrackUtils
 } = require("erela.js");
@@ -13,120 +13,118 @@ const {
   swap_pages,
   swap_pages2,
   shuffle
-} = require(`${process.cwd()}/handlers/functions`);
+} = require(`../../handlers/functions`);
 module.exports = {
   name: `savedqueue`,
   category: `⚜️ Custom Queue(s)`,
   aliases: [`savequeue`, `customqueue`, `savedqueue`],
   description: `Saves the Current Queue onto a Name`,
-  extracustomdesc: "\`savedqueue create\`, \`savedqueue addcurrenttrack\`, \`savedqueue addcurrentqueue\`, \`savedqueue removetrack\`, \`savedqueue removedupes\`, \`savedqueueshowall\`, \`savedqueue showdetails\`, \`savedqueue createsave\`, \`savedqueue delete\`, \`savedqueue play\`, \`savedqueue shuffle\`",
-  usage: `\`savedqueue <Type> <Name> [Options]\`\n
+  usage: `savedqueue <Type> <Name> [Options]\`\n
 **Types**:
 > \`create\`, \`addcurrenttrack\`, \`addcurrentqueue\`, \`removetrack\`, \`removedupes\`, \`showall\`, \`showdetails\`, \`createsave\`, \`delete\`, \`play\`, \`shuffle\`
 **Name**:
 > \`Can be anything with maximum of 10 Letters\`
 **Options**:
-> \`pick the track which you want to remove\``,
+> \`pick the track which you want to remove`,
 
   run: async (client, message, args, cmduser, text, prefix) => {
-    
-    let es = client.settings.get(message.guild.id, "embed");let ls = client.settings.get(message.guild.id, "language")
+    let es = client.settings.get(message.guild.id, "embed")
         if(!client.settings.get(message.guild.id, "MUSIC")){
-          return message.reply({embeds : [new MessageEmbed()
+          return message.channel.send(new MessageEmbed()
             .setColor(es.wrongcolor)
-            .setFooter(client.getFooter(es))
-            .setTitle(client.la[ls].common.disabled.title)
-            .setDescription(require(`${process.cwd()}/handlers/functions`).handlemsg(client.la[ls].common.disabled.description, {prefix: prefix}))
-          ]});
+            .setFooter(es.footertext, es.footericon)
+            .setTitle(`<:cross:899255798142750770>  THIS COMMAND IS CURRENTLY DISABLED`)
+            .setDescription(`An Admin can enable it with: \`${prefix}setup-commands\``)
+          );
         }
     try {
       let Type = args[0];
       let Name = args[1];
       let Options = args.slice(2).join(` `);
       if (!Type)
-        return message.reply({embeds : [new MessageEmbed()
+        return message.channel.send(new MessageEmbed()
           .setColor(es.wrongcolor)
-          .setFooter(client.getFooter(es))
-          .setTitle(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable1"]))
-          .setDescription(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable2"]))
-        ]});
+          .setFooter(es.footertext, es.footericon)
+          .setTitle(`<:cross:899255798142750770>  You didn't entered a TYPE`)
+          .setDescription(`Usage: \`${prefix}savedqueue <Type> <Name> [Options]\`\nAvailable Types:\n\`create\`, \`addcurrenttrack\`, \`addcurrentqueue\`, \`removetrack\`, \`removedupes\`, \`showall\`, \`createsave\`, \`delete\`, \`showdetails\`, \`play\`, \`shuffle\``)
+        );
       switch (Type.toLowerCase()) {
         case `create`: {
           if (!Name)
-            return message.reply({embeds :[new MessageEmbed()
+            return message.channel.send(new MessageEmbed()
               .setColor(es.wrongcolor)
-              .setFooter(client.getFooter(es))
-              .setTitle(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable3"]))
-              .setDescription(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable4"]))
-            ]});
+              .setFooter(es.footertext, es.footericon)
+              .setTitle(`<:cross:899255798142750770>  You didn't entered a Saved-Queue-Name`)
+              .setDescription(`Usage: \`${prefix}savedqueue <Type> <Name>\`\nName Information:\n\`Can be anything with maximum of 10 Letters\``)
+            );
           if (Name.length > 10)
-            return message.reply({embeds : [new MessageEmbed()
+            return message.channel.send(new MessageEmbed()
               .setColor(es.wrongcolor)
               .setFooter(client.user.username, ee.footericon)
-              .setTitle(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable5"]))
-              .setDescription(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable6"]))
-            ]});
+              .setTitle(`<:cross:899255798142750770>  Your Saved-Queue-Name is too long!`)
+              .setDescription(`Maximum Length is \`10\``)
+            );
           //if the queue does not exist yet, error
           if (client.queuesaves.get(message.author.id, `${Name}`))
-            return message.reply({embeds :[new MessageEmbed()
-              .setFooter(client.getFooter(es))
+            return message.channel.send(new MessageEmbed()
+              .setFooter(es.footertext, es.footericon)
               .setColor(es.wrongcolor)
-              .setTitle(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable7"]))
-              .setDescription(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable8"]))
-            ]});
+              .setTitle(`<:cross:899255798142750770>  Your Queue already exists!`)
+              .setDescription(`Delete it: \`${prefix}savedqueue delete ${Name}\`\nShow its content: \`${prefix}savedqueue showdetails ${Name}`)
+            );
           client.queuesaves.set(message.author.id, {
             "TEMPLATEQUEUEINFORMATION": [`queue`, `sadasd`]
           }, `${Name}`)
           //return susccess message
-          return message.reply({embeds :[new MessageEmbed()
-            .setTitle(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable9"]))
-            .setDescription(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable10"]))
-            .setColor(es.color).setThumbnail(es.thumb ? es.footericon && (es.footericon.includes("http://") || es.footericon.includes("https://")) ? es.footericon : client.user.displayAvatarURL() : null)
-            .setFooter(client.getFooter(es))
-          ]} )
+          return message.channel.send(new MessageEmbed()
+            .setTitle(`<:tick:899255869185855529> Created ${Name}`)
+            .setDescription(`Add the current **Queue** onto it: \`${prefix}savedqueue addcurrentqueue ${Name}\`\nAdd the current **Track** onto it: \`${prefix}savedqueue addcurrenttrack ${Name}\``)
+            .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+            .setFooter(es.footertext, es.footericon)
+          )
         }
         break;
       case `addcurrenttrack`: {
         if (!Name)
-          return message.reply({embeds : [new MessageEmbed()
+          return message.channel.send(new MessageEmbed()
             .setColor(es.wrongcolor)
-            .setFooter(client.getFooter(es))
-            .setTitle(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable11"]))
-            .setDescription(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable12"]))
-          ]});
+            .setFooter(es.footertext, es.footericon)
+            .setTitle(`<:cross:899255798142750770>  You didn't entered a Saved-Queue-Name`)
+            .setDescription(`Usage: \`${prefix}savedqueue <Type> <Name>\`\nName Information:\n\`Can be anything with maximum of 10 Letters\``)
+          );
         if (Name.length > 10)
-          return message.reply({embeds :[new MessageEmbed()
+          return message.channel.send(new MessageEmbed()
             .setColor(es.wrongcolor)
             .setFooter(client.user.username, ee.footericon)
-            .setTitle(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable13"]))
-            .setDescription(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable14"]))
-          ]});
+            .setTitle(`<:cross:899255798142750770>  Your Saved-Queue-Name is too long!`)
+            .setDescription(`Maximum Length is \`10\``)
+          );
         //if the queue does not exist yet, error
         if (!client.queuesaves.get(message.author.id, `${Name}`))
-          return message.reply({embeds : [new MessageEmbed()
-            .setFooter(client.getFooter(es))
+          return message.channel.send(new MessageEmbed()
+            .setFooter(es.footertext, es.footericon)
             .setColor(es.wrongcolor)
-            .setTitle(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable15"]))
-            .setDescription(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable16"]))
-          ]});
+            .setTitle(`<:cross:899255798142750770>  Your Queue does not exists yet!`)
+            .setDescription(`Create it with: \`${prefix}savedqueue create ${Name}\``)
+          );
         //get the player instance
-        var player = client.manager.players.get(message.guild.id);
+        const player = client.manager.players.get(message.guild.id);
         //if no player available return error | aka not playing anything
         if (!player)
-          return message.reply({embeds : [new MessageEmbed()
+          return message.channel.send(new MessageEmbed()
             .setColor(es.wrongcolor)
             .setFooter(client.user.username, ee.footericon)
-            .setTitle(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable17"]))
-          ]});
+            .setTitle(`<:cross:899255798142750770>  There is nothing playing`)
+          );
         //get the current track
         const track = player.queue.current;
         //if there are no other tracks, information
         if (!track)
-          return message.reply({embeds : [new MessageEmbed()
-            .setFooter(client.getFooter(es))
+          return message.channel.send(new MessageEmbed()
+            .setFooter(es.footertext, es.footericon)
             .setColor(es.wrongcolor)
-            .setTitle(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable18"]))
-          ]});
+            .setTitle(`<:cross:899255798142750770>  There is nothing playing!`)
+          );
         let oldtracks = client.queuesaves.get(message.author.id, `${Name}`);
         if (!Array.isArray(oldtracks)) oldtracks = [];
         //add the track
@@ -137,53 +135,54 @@ module.exports = {
         //save it in the db
         client.queuesaves.set(message.author.id, oldtracks, `${Name}`);
         //return susccess message
-        return message.reply({embeds : [new MessageEmbed()
-          .setTitle(`<a:yes:833101995723194437> Added ${track.title} onto the Queue \`${Name}\``.substr(0, 256))
-          .setDescription(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable19"]))
-          .setColor(es.color).setThumbnail(es.thumb ? es.footericon && (es.footericon.includes("http://") || es.footericon.includes("https://")) ? es.footericon : client.user.displayAvatarURL() : null)
-          .setFooter(client.getFooter(es))]})  }
+        return message.channel.send(new MessageEmbed()
+          .setTitle(`<:tick:899255869185855529> Added ${track.title} onto the Queue \`${Name}\``.substr(0, 256))
+          .setDescription(`There are now: \`${client.queuesaves.get(message.author.id, `${Name}`).length} Tracks\`\n\nPlay it with: \`${prefix}savedqueue play ${Name}\``)
+          .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+          .setFooter(es.footertext, es.footericon))
+      }
       break;
       case `addcurrentqueue`: {
         if (!Name)
-          return message.reply({embeds : [new MessageEmbed()
+          return message.channel.send(new MessageEmbed()
             .setColor(es.wrongcolor)
-            .setFooter(client.getFooter(es))
-            .setTitle(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable20"]))
-            .setDescription(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable21"]))
-          ]});
+            .setFooter(es.footertext, es.footericon)
+            .setTitle(`<:cross:899255798142750770>  You didn't entered a Saved-Queue-Name`)
+            .setDescription(`Usage: \`${prefix}savedqueue <Type> <Name>\`\nName Information:\n\`Can be anything with maximum of 10 Letters\``)
+          );
         if (Name.length > 10)
-          return message.reply({embeds :[new MessageEmbed()
+          return message.channel.send(new MessageEmbed()
             .setColor(es.wrongcolor)
             .setFooter(client.user.username, ee.footericon)
-            .setTitle(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable22"]))
-            .setDescription(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable23"]))
-          ]});
+            .setTitle(`<:cross:899255798142750770>  Your Saved-Queue-Name is too long!`)
+            .setDescription(`Maximum Length is \`10\``)
+          );
         //if the queue does not exist yet, error
         if (!client.queuesaves.get(message.author.id, `${Name}`))
-          return message.reply({embeds :[new MessageEmbed()
-            .setFooter(client.getFooter(es))
+          return message.channel.send(new MessageEmbed()
+            .setFooter(es.footertext, es.footericon)
             .setColor(es.wrongcolor)
-            .setTitle(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable24"]))
-            .setDescription(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable25"]))
-          ]});
+            .setTitle(`<:cross:899255798142750770>  Your Queue does not exists yet!`)
+            .setDescription(`Create it with: \`${prefix}savedqueue create ${Name}\``)
+          );
         //get the player instance
-        var player = client.manager.players.get(message.guild.id);
+        const player = client.manager.players.get(message.guild.id);
         //if no player available return error | aka not playing anything
         if (!player)
-          return message.reply({embeds : [new MessageEmbed()
+          return message.channel.send(new MessageEmbed()
             .setColor(es.wrongcolor)
             .setFooter(client.user.username, ee.footericon)
-            .setTitle(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable26"]))
-          ]});
+            .setTitle(`<:cross:899255798142750770>  There is nothing playing`)
+          );
         //get all tracks
         const tracks = player.queue;
         //if there are no other tracks, information
         if (!tracks.length)
-          return message.reply({embeds : [new MessageEmbed()
-            .setFooter(client.getFooter(es))
+          return message.channel.send(new MessageEmbed()
+            .setFooter(es.footertext, es.footericon)
             .setColor(es.wrongcolor)
-            .setTitle(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable27"]))
-          ]});
+            .setTitle(`<:cross:899255798142750770>  The Queue is Empty!`)
+          );
         //get the old tracks from the Name
         let oldtracks = client.queuesaves.get(message.author.id, `${Name}`);
         if (!Array.isArray(oldtracks)) oldtracks = [];
@@ -204,53 +203,53 @@ module.exports = {
         //save the newcustomqueue into the db
         client.queuesaves.set(message.author.id, newqueue, `${Name}`);
         //return susccess message
-        return message.reply({embeds : [new MessageEmbed()
-          .setTitle(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable28"]))
-          .setDescription(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable29"]))
-          .setColor(es.color).setThumbnail(es.thumb ? es.footericon && (es.footericon.includes("http://") || es.footericon.includes("https://")) ? es.footericon : client.user.displayAvatarURL() : null)
-          .setFooter(client.getFooter(es))
-        ]})
+        return message.channel.send(new MessageEmbed()
+          .setTitle(`<:tick:899255869185855529> Added ${tracks.length} Tracks onto the Queue \`${Name}\``)
+          .setDescription(`There are now: \`${newqueue.length} Tracks\`\n\nPlay it with: \`${prefix}savedqueue play ${Name}\``)
+          .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+          .setFooter(es.footertext, es.footericon)
+        )
       }
       break;
       case `removetrack`:
       case `removesong`: {
         if (!Name)
-          return message.reply({embeds : [new MessageEmbed()
+          return message.channel.send(new MessageEmbed()
             .setColor(es.wrongcolor)
-            .setFooter(client.getFooter(es))
-            .setTitle(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable30"]))
-            .setDescription(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable31"]))
-          ]});
+            .setFooter(es.footertext, es.footericon)
+            .setTitle(`<:cross:899255798142750770>  You didn't entered a Saved-Queue-Name`)
+            .setDescription(`Usage: \`${prefix}savedqueue removetrack <Name> [Options]\`\nName Information:\n\`Can be anything with maximum of 10 Letters\``)
+          );
         if (Name.length > 10)
-          return message.reply({embeds :[new MessageEmbed()
+          return message.channel.send(new MessageEmbed()
             .setColor(es.wrongcolor)
             .setFooter(client.user.username, ee.footericon)
-            .setTitle(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable32"]))
-            .setDescription(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable33"]))
-          ]});
+            .setTitle(`<:cross:899255798142750770>  Your Saved-Queue-Name is too long!`)
+            .setDescription(`Maximum Length is \`10\``)
+          );
         if (!Options)
-          return message.reply({embeds :[new MessageEmbed()
+          return message.channel.send(new MessageEmbed()
             .setColor(es.wrongcolor)
-            .setFooter(client.getFooter(es))
-            .setTitle(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable34"]))
-            .setDescription(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable35"]))
-          ]});
+            .setFooter(es.footertext, es.footericon)
+            .setTitle(`<:cross:899255798142750770>  You didn't entered an Option (the Track you want to remove (ID OF IT))`)
+            .setDescription(`See all your Tracks: \`${prefix}savedqueue showdetails ${Name}\`Usage: \`${prefix}savedqueue removetrack ${Name} <Song number>\``)
+          );
         //if the queue already exists, then errors
         if (!client.queuesaves.get(message.author.id, `${Name}`))
-          return message.reply({embeds : [new MessageEmbed()
-            .setFooter(client.getFooter(es))
+          return message.channel.send(new MessageEmbed()
+            .setFooter(es.footertext, es.footericon)
             .setColor(es.wrongcolor)
-            .setTitle(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable36"]))
-            .setDescription(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable37"]))
-          ]});
+            .setTitle(`<:cross:899255798142750770>  Your Queue is not existing!`)
+            .setDescription(`Create it with: \`${prefix}savedqueue create ${Name}\``)
+          );
         let tracks = client.queuesaves.get(message.author.id, `${Name}`);
         if (Number(Options) >= tracks.length || Number(Options) < 0)
-          return message.reply({embeds :[new MessageEmbed()
+          return message.channel.send(new MessageEmbed()
             .setColor(es.wrongcolor)
-            .setFooter(client.getFooter(es))
-            .setTitle(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable38"]))
-            .setDescription(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable39"]))
-          ]})
+            .setFooter(es.footertext, es.footericon)
+            .setTitle(`<:cross:899255798142750770>  Your provided Option is out of Range (\`0\` - \`${tracks.length-1}\`)`)
+            .setDescription(`See all your Tracks: \`${prefix}savedqueue showdetails ${Name}\`Usage: \`${prefix}savedqueue removetrack ${Name} <Song number>\``)
+          )
         let deletetrack = tracks[Number(Options)];
         //delete it
         delete tracks[Number(Options)]
@@ -261,89 +260,89 @@ module.exports = {
         //save it on the db again
         client.queuesaves.set(message.author.id, tracks, `${Name}`)
         //return susccess message
-        return message.reply({embeds :[new MessageEmbed()
-          .setTitle(`<a:yes:833101995723194437> Deleted ${deletetrack.title} of the Queue \`${Name}\``.substr(0, 256))
-          .setDescription(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable40"]))
-          .setColor(es.color).setThumbnail(es.thumb ? es.footericon && (es.footericon.includes("http://") || es.footericon.includes("https://")) ? es.footericon : client.user.displayAvatarURL() : null)
-          .setFooter(client.getFooter(es))
-        ]});
+        return message.channel.send(new MessageEmbed()
+          .setTitle(`<:tick:899255869185855529> Deleted ${deletetrack.title} of the Queue \`${Name}\``.substr(0, 256))
+          .setDescription(`There are now: \`${client.queuesaves.get(message.author.id, `${Name}`).length} Tracks\`\n\nPlay it with: \`${prefix}savedqueue play ${Name}\``)
+          .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+          .setFooter(es.footertext, es.footericon)
+        );
       }
       break;
       case `shuffle`:
       case `mix`: {
         if (!Name)
-          return message.reply({embeds : [new MessageEmbed()
+          return message.channel.send(new MessageEmbed()
             .setColor(es.wrongcolor)
-            .setFooter(client.getFooter(es))
-            .setTitle(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable41"]))
-            .setDescription(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable42"]))
-          ]});
+            .setFooter(es.footertext, es.footericon)
+            .setTitle(`<:cross:899255798142750770>  You didn't entered a Saved-Queue-Name`)
+            .setDescription(`Usage: \`${prefix}savedqueue <Type> <Name>\`\nName Information:\n\`Can be anything with maximum of 10 Letters\``)
+          );
         if (Name.length > 10)
-          return message.reply({embeds : [new MessageEmbed()
+          return message.channel.send(new MessageEmbed()
             .setColor(es.wrongcolor)
             .setFooter(client.user.username, ee.footericon)
-            .setTitle(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable43"]))
-            .setDescription(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable44"]))
-          ]});
+            .setTitle(`<:cross:899255798142750770>  Your Saved-Queue-Name is too long!`)
+            .setDescription(`Maximum Length is \`10\``)
+          );
         //if the queue already exists, then errors
         if (!client.queuesaves.get(message.author.id, `${Name}`))
-          return message.reply({embeds : [new MessageEmbed()
-            .setFooter(client.getFooter(es))
+          return message.channel.send(new MessageEmbed()
+            .setFooter(es.footertext, es.footericon)
             .setColor(es.wrongcolor)
-            .setTitle(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable45"]))
-            .setDescription(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable46"]))
-          ]} );
+            .setTitle(`<:cross:899255798142750770>  Your Queue is not existing!`)
+            .setDescription(`Create it with: \`${prefix}savedqueue create ${Name}\``)
+          );
         let oldtracks = client.queuesaves.get(message.author.id, `${Name}`);
         if (!Array.isArray(oldtracks))
-          return message.reply({embeds: [new MessageEmbed()
-            .setFooter(client.getFooter(es))
+          return message.channel.send(new MessageEmbed()
+            .setFooter(es.footertext, es.footericon)
             .setColor(es.wrongcolor)
-            .setTitle(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable47"]))
-            .setDescription(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable48"]))
-          ]});
+            .setTitle(`<:cross:899255798142750770>  Your Saved-Queue ${Name} is Empty!`)
+            .setDescription(`Add the current **Queue** onto it: \`${prefix}savedqueue addcurrentqueue ${Name}\`\nAdd the current **Track** onto it: \`${prefix}savedqueue addcurrenttrack ${Name}\``)
+          );
         const newtracks = shuffle(oldtracks);
         //save it in the db
         client.queuesaves.set(message.author.id, newtracks, `${Name}`);
         //return susccess message
-        return message.reply({embeds : [new MessageEmbed()
-          .setTitle(`<a:yes:833101995723194437> Shuffled ${newtracks.length} Tracks of the Queue \`${Name}\``.substr(0, 256))
-          .setDescription(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable49"]))
-          .setColor(es.color).setThumbnail(es.thumb ? es.footericon && (es.footericon.includes("http://") || es.footericon.includes("https://")) ? es.footericon : client.user.displayAvatarURL() : null)
-          .setFooter(client.getFooter(es))]})
+        return message.channel.send(new MessageEmbed()
+          .setTitle(`<:tick:899255869185855529> Shuffled ${newtracks.length} Tracks of the Queue \`${Name}\``.substr(0, 256))
+          .setDescription(`There are now: \`${client.queuesaves.get(message.author.id, `${Name}`).length} Tracks\`\n\nPlay it with: \`${prefix}savedqueue play ${Name}\``)
+          .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+          .setFooter(es.footertext, es.footericon))
       }
       break;
       case `removedupes`:
       case `removeduplicates`: {
         if (!Name)
-          return message.reply({embeds : [new MessageEmbed()
+          return message.channel.send(new MessageEmbed()
             .setColor(es.wrongcolor)
-            .setFooter(client.getFooter(es))
-            .setTitle(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable50"]))
-            .setDescription(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable51"]))
-          ]});
+            .setFooter(es.footertext, es.footericon)
+            .setTitle(`<:cross:899255798142750770>  You didn't entered a Saved-Queue-Name`)
+            .setDescription(`Usage: \`${prefix}savedqueue <Type> <Name>\`\nName Information:\n\`Can be anything with maximum of 10 Letters\``)
+          );
         if (Name.length > 10)
-          return message.reply({embeds : [new MessageEmbed()
+          return message.channel.send(new MessageEmbed()
             .setColor(es.wrongcolor)
             .setFooter(client.user.username, ee.footericon)
-            .setTitle(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable52"]))
-            .setDescription(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable53"]))
-          ]});
+            .setTitle(`<:cross:899255798142750770>  Your Saved-Queue-Name is too long!`)
+            .setDescription(`Maximum Length is \`10\``)
+          );
         //if the queue already exists, then errors
         if (!client.queuesaves.get(message.author.id, `${Name}`))
-          return message.reply({embeds : [new MessageEmbed()
-            .setFooter(client.getFooter(es))
+          return message.channel.send(new MessageEmbed()
+            .setFooter(es.footertext, es.footericon)
             .setColor(es.wrongcolor)
-            .setTitle(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable54"]))
-            .setDescription(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable55"]))
-          ]});
+            .setTitle(`<:cross:899255798142750770>  Your Queue is not existing!`)
+            .setDescription(`Create it with: \`${prefix}savedqueue create ${Name}\``)
+          );
         let oldtracks = client.queuesaves.get(message.author.id, `${Name}`);
         if (!Array.isArray(oldtracks))
-          return message.reply({embeds : [new MessageEmbed()
-            .setFooter(client.getFooter(es))
+          return message.channel.send(new MessageEmbed()
+            .setFooter(es.footertext, es.footericon)
             .setColor(es.wrongcolor)
-            .setTitle(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable56"]))
-            .setDescription(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable57"]))
-          ]});
+            .setTitle(`<:cross:899255798142750770>  Your Saved-Queue ${Name} is Empty!`)
+            .setDescription(`Add the current **Queue** onto it: \`${prefix}savedqueue addcurrentqueue ${Name}\`\nAdd the current **Track** onto it: \`${prefix}savedqueue addcurrenttrack ${Name}\``)
+          );
         //make a new array of each single song which is not a dupe
         let counter = 0;
         const newtracks = [];
@@ -363,11 +362,11 @@ module.exports = {
         //save it in the db
         client.queuesaves.set(message.author.id, newtracks, `${Name}`);
         //return susccess message
-        return message.reply({embeds : [new MessageEmbed()
-          .setTitle(`<a:yes:833101995723194437> Removed ${counter} Tracks from the Queue \`${Name}\``.substr(0, 256))
-          .setDescription(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable58"]))
-          .setColor(es.color).setThumbnail(es.thumb ? es.footericon && (es.footericon.includes("http://") || es.footericon.includes("https://")) ? es.footericon : client.user.displayAvatarURL() : null)
-          .setFooter(client.getFooter(es))]})
+        return message.channel.send(new MessageEmbed()
+          .setTitle(`<:tick:899255869185855529> Removed ${counter} Tracks from the Queue \`${Name}\``.substr(0, 256))
+          .setDescription(`There are now: \`${client.queuesaves.get(message.author.id, `${Name}`).length} Tracks\`\n\nPlay it with: \`${prefix}savedqueue play ${Name}\``)
+          .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+          .setFooter(es.footertext, es.footericon))
       }
       break;
       case `showall`:
@@ -377,12 +376,12 @@ module.exports = {
       case `list`: {
         let queues = client.queuesaves.get(message.author.id);
         if (Object.size(queues) <= 1)
-          return message.reply({embeds : [new MessageEmbed()
+          return message.channel.send(new MessageEmbed()
             .setColor(es.wrongcolor)
-            .setFooter(client.getFooter(es))
-            .setTitle(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable59"]))
-            .setDescription(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable60"]))
-          ]});
+            .setFooter(es.footertext, es.footericon)
+            .setTitle(`<:cross:899255798142750770>  You don't have any Queues saved yet`)
+            .setDescription(`Create one with: \`${prefix}savedqueue create <SavedQueueName>\``)
+          );
         let description = ``;
         for (const item in queues) {
           if (item === `TEMPLATEQUEUEINFORMATION`) continue;
@@ -396,44 +395,44 @@ module.exports = {
       case `cs`:
       case `save`: {
         if (!Name)
-          return message.reply({embeds :[new MessageEmbed()
+          return message.channel.send(new MessageEmbed()
             .setColor(es.wrongcolor)
-            .setFooter(client.getFooter(es))
-            .setTitle(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable61"]))
-            .setDescription(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable62"]))
-          ]});
+            .setFooter(es.footertext, es.footericon)
+            .setTitle(`<:cross:899255798142750770>  You didn't entered a Saved-Queue-Name`)
+            .setDescription(`Usage: \`${prefix}savedqueue <Type> <Name>\`\nName Information:\n\`Can be anything with maximum of 10 Letters\``)
+          );
         if (Name.length > 10)
-          return message.reply({embeds : [new MessageEmbed()
+          return message.channel.send(new MessageEmbed()
             .setColor(es.wrongcolor)
             .setFooter(client.user.username, ee.footericon)
-            .setTitle(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable63"]))
-            .setDescription(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable64"]))
-          ]});
+            .setTitle(`<:cross:899255798142750770>  Your Saved-Queue-Name is too long!`)
+            .setDescription(`Maximum Length is \`10\``)
+          );
         if (client.queuesaves.get(message.author.id, `${Name}`))
-          return message.reply({embeds : [new MessageEmbed()
-            .setFooter(client.getFooter(es))
+          return message.channel.send(new MessageEmbed()
+            .setFooter(es.footertext, es.footericon)
             .setColor(es.wrongcolor)
-            .setTitle(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable65"]))
-            .setDescription(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable66"]))
-          ]});
+            .setTitle(`<:cross:899255798142750770>  Your Queue already exists!`)
+            .setDescription(`Delete it: \`${prefix}savedqueue delete ${Name}\`\nShow its content: \`${prefix}savedqueue showdetails ${Name}`)
+          );
         //get the player instance
-        var player = client.manager.players.get(message.guild.id);
+        const player = client.manager.players.get(message.guild.id);
         //if no player available return error | aka not playing anything
         if (!player)
-          return message.reply({embeds : [new MessageEmbed()
+          return message.channel.send(new MessageEmbed()
             .setColor(es.wrongcolor)
             .setFooter(client.user.username, ee.footericon)
-            .setTitle(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable67"]))
-          ]});
+            .setTitle(`<:cross:899255798142750770>  There is nothing playing`)
+          );
         //get all tracks
         const tracks = player.queue;
         //if there are no other tracks, information
         if (!tracks.length)
-          return message.reply({embeds : [new MessageEmbed()
-            .setFooter(client.getFooter(es))
+          return message.channel.send(new MessageEmbed()
+            .setFooter(es.footertext, es.footericon)
             .setColor(es.wrongcolor)
-            .setTitle(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable68"]))
-          ]});
+            .setTitle(`<:cross:899255798142750770>  The Queue is Empty!`)
+          );
         //get the old tracks from the Name
         let oldtracks = client.queuesaves.get(message.author.id, `${Name}`);
         if (!Array.isArray(oldtracks)) oldtracks = [];
@@ -455,47 +454,47 @@ module.exports = {
         //save the newcustomqueue into the db
         client.queuesaves.set(message.author.id, newqueue, `${Name}`);
         //return susccess message
-        return message.reply({embeds : [new MessageEmbed()
-          .setTitle(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable69"]))
-          .setDescription(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable70"]))
-          .setColor(es.color).setThumbnail(es.thumb ? es.footericon && (es.footericon.includes("http://") || es.footericon.includes("https://")) ? es.footericon : client.user.displayAvatarURL() : null)
-          .setFooter(client.getFooter(es))
-        ]})
+        return message.channel.send(new MessageEmbed()
+          .setTitle(`<:tick:899255869185855529> Created ${Name} and Added ${tracks.length} Tracks to it`)
+          .setDescription(`Play it with: \`${prefix}savedqueue play ${Name}\`\nAdd the current **Queue** onto it: \`${prefix}savedqueue addcurrentqueue ${Name}\`\nAdd the current **Track** onto it: \`${prefix}savedqueue addcurrenttrack ${Name}\``)
+          .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+          .setFooter(es.footertext, es.footericon)
+        )
       }
       break;
       case `delete`:
       case `remove`:
       case `del`: {
         if (!Name)
-          return message.reply({embeds : [new MessageEmbed()
+          return message.channel.send(new MessageEmbed()
             .setColor(es.wrongcolor)
-            .setFooter(client.getFooter(es))
-            .setTitle(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable71"]))
-            .setDescription(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable72"]))
-          ]});
+            .setFooter(es.footertext, es.footericon)
+            .setTitle(`<:cross:899255798142750770>  You didn't entered a Saved-Queue-Name`)
+            .setDescription(`Usage: \`${prefix}savedqueue <Type> <Name>\`\nName Information:\n\`Can be anything with maximum of 10 Letters\``)
+          );
         if (Name.length > 10)
-          return message.reply({embeds  : [new MessageEmbed()
+          return message.channel.send(new MessageEmbed()
             .setColor(es.wrongcolor)
             .setFooter(client.user.username, ee.footericon)
-            .setTitle(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable73"]))
-            .setDescription(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable74"]))
-          ]});
+            .setTitle(`<:cross:899255798142750770>  Your Saved-Queue-Name is too long!`)
+            .setDescription(`Maximum Length is \`10\``)
+          );
         //if the queue does not exist yet, error
         if (!client.queuesaves.get(message.author.id, `${Name}`))
-          return message.reply({embeds : [new MessageEmbed()
-            .setFooter(client.getFooter(es))
+          return message.channel.send(new MessageEmbed()
+            .setFooter(es.footertext, es.footericon)
             .setColor(es.wrongcolor)
-            .setTitle(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable75"]))
-            .setDescription(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable76"]))
-          ]});
+            .setTitle(`<:cross:899255798142750770>  Your Queue does not exists yet!`)
+            .setDescription(`Create it with: \`${prefix}savedqueue create ${Name}\``)
+          );
         //delete it
         client.queuesaves.delete(message.author.id, `${Name}`);
         //return susccess message
-        return message.reply({embeds : [new MessageEmbed()
-          .setTitle(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable77"]))
-          .setColor(es.color).setThumbnail(es.thumb ? es.footericon && (es.footericon.includes("http://") || es.footericon.includes("https://")) ? es.footericon : client.user.displayAvatarURL() : null)
-          .setFooter(client.getFooter(es))
-        ]})
+        return message.channel.send(new MessageEmbed()
+          .setTitle(`<:tick:899255869185855529> Deleted the Queue \`${Name}\``)
+          .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+          .setFooter(es.footertext, es.footericon)
+        )
       }
       break;
       case `play`:
@@ -504,40 +503,40 @@ module.exports = {
       case `add`:
       case `paly`: {
         if (!Name)
-          return message.reply({embeds : [new MessageEmbed()
+          return message.channel.send(new MessageEmbed()
             .setColor(es.wrongcolor)
-            .setFooter(client.getFooter(es))
-            .setTitle(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable78"]))
-            .setDescription(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable79"]))
-          ]} );
+            .setFooter(es.footertext, es.footericon)
+            .setTitle(`<:cross:899255798142750770>  You didn't entered a Saved-Queue-Name`)
+            .setDescription(`Usage: \`${prefix}savedqueue <Type> <Name>\`\nName Information:\n\`Can be anything with maximum of 10 Letters\``)
+          );
         if (Name.length > 10)
-          return message.reply({embeds :[new MessageEmbed()
+          return message.channel.send(new MessageEmbed()
             .setColor(es.wrongcolor)
             .setFooter(client.user.username, ee.footericon)
-            .setTitle(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable80"]))
-            .setDescription(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable81"]))
-          ]});
+            .setTitle(`<:cross:899255798142750770>  Your Saved-Queue-Name is too long!`)
+            .setDescription(`Maximum Length is \`10\``)
+          );
         //get the channel instance from the Member
         const {
           channel
         } = message.member.voice;
         //if the member is not in a channel, return
         if (!channel)
-          return message.reply({embeds: [new MessageEmbed()
+          return message.channel.send(new MessageEmbed()
             .setColor(es.wrongcolor)
             .setFooter(client.user.username, ee.footericon)
-            .setTitle(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable82"]))
-          ]});
+            .setTitle(`<:cross:899255798142750770>  You need to join a voice channel.`)
+          );
         const mechannel = message.guild.me.voice.channel;
         //get the player instance
-        var player = client.manager.players.get(message.guild.id);
+        const player = client.manager.players.get(message.guild.id);
         let playercreate = false;
         if (!player) {
           player = client.manager.create({
             guild: message.guild.id,
             voiceChannel: message.member.voice.channel.id,
             textChannel: message.channel.id,
-            selfDeafen: true,
+            selfDeafen: config.settings.selfDeaf,
           });
           player.connect();
           player.set("message", message);
@@ -546,38 +545,38 @@ module.exports = {
         }
         //if not in the same channel as the player, return Error
         if (player && channel.id !== player.voiceChannel)
-          return message.reply({embeds :[new MessageEmbed()
-            .setFooter(client.getFooter(es))
+          return message.channel.send(new MessageEmbed()
+            .setFooter(es.footertext, es.footericon)
             .setColor(es.wrongcolor)
-            .setTitle(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable83"]))
-            .setDescription(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable84"]))
-          ]});
+            .setTitle(`<:cross:899255798142750770>  You need to be in my voice channel to use this command!`)
+            .setDescription(`Channelname: \`${message.guild.channels.cache.get(player.voiceChannel).name}\``)
+          );
         //If there is no player, then kick the bot out of the channel, if connected to
         if(!player && mechannel) {
-          message.guild.me.voice.disconnect().catch(e=>console.log("This prevents a Bug"));
+          message.guild.me.voice.kick().catch(e=>console.log("This prevents a Bug"));
         }
         //if not in the same channel --> return
         if (mechannel && channel.id !== mechannel.id)
-        return message.reply({embeds : [new MessageEmbed()
+        return message.channel.send(new MessageEmbed()
           .setColor(es.wrongcolor)
-          .setFooter(client.getFooter(es))
-          .setTitle(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable85"]))
-          .setDescription(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable86"]))
-        ]});
+          .setFooter(es.footertext, es.footericon)
+          .setTitle(`<:cross:899255798142750770>  You need to be in my voice channel to use this command!`)
+          .setDescription(`Channelname: \`🔈 ${mechannel.name}\``)
+        );
         //if the queue does not exist yet, error
         if (!client.queuesaves.get(message.author.id, `${Name}`))
-          return message.reply({embeds : [new MessageEmbed()
-            .setFooter(client.getFooter(es))
+          return message.channel.send(new MessageEmbed()
+            .setFooter(es.footertext, es.footericon)
             .setColor(es.wrongcolor)
-            .setTitle(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable87"]))
-            .setDescription(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable88"]))
-          ]});
+            .setTitle(`<:cross:899255798142750770>  Your Queue does not exists Yet!`)
+            .setDescription(`Create it with: \`${prefix}savedqueue create ${Name}\``)
+          );
         //now add every track of the tracks
-        let tempmsg = await message.reply({embeds : [new MessageEmbed()
-          .setColor(es.color).setThumbnail(es.thumb ? es.footericon && (es.footericon.includes("http://") || es.footericon.includes("https://")) ? es.footericon : client.user.displayAvatarURL() : null)
-          .setFooter(client.getFooter(es))
-          .setAuthor(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable89"]), "https://cdn.discordapp.com/emojis/763781458417549352.gif")
-          .setDescription(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable90"]))]})
+        let tempmsg = await message.channel.send(new MessageEmbed()
+          .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+          .setFooter(es.footertext, es.footericon)
+          .setAuthor(`Attempting to Load ${client.queuesaves.get(message.author.id, `${Name}`).length} Tracks`, "https://cdn.discordapp.com/emojis/763781458417549352.gif")
+          .setDescription(`It might take around about \`${Math.ceil(client.queuesaves.get(message.author.id, `${Name}`).length / 2)} Seconds\``))
         for (const track of client.queuesaves.get(message.author.id, `${Name}`)) {
           try {
             // Advanced way using the title, author, and duration for a precise search.
@@ -587,7 +586,7 @@ module.exports = {
             }, message.author);
             player.queue.add(unresolvedTrack);
           } catch (e) {
-            console.log(e.stack ? String(e.stack).grey : String(e).grey)
+            console.log(String(e.stack).red)
             continue;
           }
           let res;
@@ -608,18 +607,18 @@ module.exports = {
 
               player.queue.add(res.tracks[0]);
           } catch (e) {
-              console.log(e.stack ? String(e.stack).grey : String(e).grey)
+              console.log(String(e.stack).red)
               continue;
           }
 
           */
         }
         //return susccess message - by editing the old temp msg
-        tempmsg.edit({embeds : [new MessageEmbed()
-          .setTitle(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable91"]))
-          .setColor(es.color).setThumbnail(es.thumb ? es.footericon && (es.footericon.includes("http://") || es.footericon.includes("https://")) ? es.footericon : client.user.displayAvatarURL() : null)
-          .setFooter(client.getFooter(es))
-        ]})
+        tempmsg.edit(new MessageEmbed()
+          .setTitle(`<:tick:899255869185855529> Loaded ${client.queuesaves.get(message.author.id, `${Name}`).length} Tracks onto the current Queue`)
+          .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+          .setFooter(es.footertext, es.footericon)
+        )
         if (playercreate) player.play();
       }
       break;
@@ -627,27 +626,27 @@ module.exports = {
       case `showdetail`:
       case `details`: {
         if (!Name)
-          return message.reply({embeds : [new MessageEmbed()
+          return message.channel.send(new MessageEmbed()
             .setColor(es.wrongcolor)
-            .setFooter(client.getFooter(es))
-            .setTitle(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable92"]))
-            .setDescription(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable93"]))
-          ]});
+            .setFooter(es.footertext, es.footericon)
+            .setTitle(`<:cross:899255798142750770>  You didn't entered a Saved-Queue-Name`)
+            .setDescription(`Usage: \`${prefix}savedqueue <Type> <Name>\`\nName Information:\n\`Can be anything with maximum of 10 Letters\``)
+          );
         if (Name.length > 10)
-          return message.reply({embeds :[new MessageEmbed()
+          return message.channel.send(new MessageEmbed()
             .setColor(es.wrongcolor)
             .setFooter(client.user.username, ee.footericon)
-            .setTitle(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable94"]))
-            .setDescription(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable95"]))
-          ]});
+            .setTitle(`<:cross:899255798142750770>  Your Saved-Queue-Name is too long!`)
+            .setDescription(`Maximum Length is \`10\``)
+          );
         //if the queue already exists, then errors
         if (!client.queuesaves.get(message.author.id, `${Name}`))
-          return message.reply({embeds : [new MessageEmbed()
-            .setFooter(client.getFooter(es))
+          return message.channel.send(new MessageEmbed()
+            .setFooter(es.footertext, es.footericon)
             .setColor(es.wrongcolor)
-            .setTitle(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable96"]))
-            .setDescription(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable97"]))
-          ]});
+            .setTitle(`<:cross:899255798142750770>  Your Queue is not existing!`)
+            .setDescription(`Create it with: \`${prefix}savedqueue create ${Name}\``)
+          );
         //get all tracks
         const tracks = client.queuesaves.get(message.author.id, `${Name}`);
         //return susccess message
@@ -657,23 +656,23 @@ module.exports = {
       }
       break;
       default:
-        return message.reply({embeds : [new MessageEmbed()
+        return message.channel.send(new MessageEmbed()
           .setColor(es.wrongcolor)
-          .setFooter(client.getFooter(es))
-          .setTitle(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable98"]))
-          .setDescription(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable99"]))
-        ]});
+          .setFooter(es.footertext, es.footericon)
+          .setTitle(`<:cross:899255798142750770>  You didn't entered a **valid** TYPE`)
+          .setDescription(`Usage: \`${prefix}savedqueue <Type> <Name>\`\nValid Types:\n\`create\`, \`addcurrenttrack\`, \`addcurrentqueue\`, \`removetrack\`, \`removedupes\`, \`showall\`, \`createsave\`, \`delete\`, \`showdetails\`, \`play\`, \`shuffle\``)
+        );
         break;
 
       }
 
     } catch (e) {
-      console.log(String(e.stack).grey.bgRed)
-      return message.reply({embeds :[new MessageEmbed()
-        .setColor(es.wrongcolor).setFooter(client.getFooter(es))
-        .setTitle(client.la[ls].common.erroroccur)
-        .setDescription(eval(client.la[ls]["cmds"]["customqueues"]["savedqueue"]["variable100"]))
-      ]});
+      console.log(String(e.stack).bgRed)
+      return message.channel.send(new MessageEmbed()
+        .setColor(es.wrongcolor).setFooter(es.footertext, es.footericon)
+        .setTitle(`<:cross:899255798142750770>  An error occurred`)
+        .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``)
+      );
     }
   }
 };
@@ -685,12 +684,3 @@ Object.size = function (obj) {
   }
   return size;
 };
-/**
- * @INFO
- * Bot Coded by Tomato#6966 | https://discord.gg/milrato
- * @INFO
- * Work for S409 support | https://s409.xyz
- * @INFO
- * Please mention him / S409 support, when using this Code!
- * @INFO
- */

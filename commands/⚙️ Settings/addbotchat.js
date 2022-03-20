@@ -1,7 +1,7 @@
 const { MessageEmbed } = require(`discord.js`);
-const config = require(`${process.cwd()}/botconfig/config.json`);
-var ee = require(`${process.cwd()}/botconfig/embed.json`);
-const emoji = require(`${process.cwd()}/botconfig/emojis.json`);
+const config = require(`../../botconfig/config.json`);
+var ee = require(`../../botconfig/embed.json`);
+const emoji = require(`../../botconfig/emojis.json`);
 module.exports = {
     name: `addbotchat`,
     aliases: [`addbotchannel`],
@@ -9,36 +9,35 @@ module.exports = {
     description: `Let's you enable a bot only chat where the community is allowed to use commands`,
     usage: `addbotchat <#chat>`,
     memberpermissions: [`ADMINISTRATOR`],
-    type: "bot",
     run: async (client, message, args, cmduser, text, prefix) => {
-    let es = client.settings.get(message.guild.id, "embed");let ls = client.settings.get(message.guild.id, "language")
+      let es = client.settings.get(message.guild.id, "embed")
     try{
       
       //get the channel from the Ping
-      let channel = message.mentions.channels.filter(ch=>ch.guild.id==message.guild.id).first() || message.guild.channels.cache.get(message.content.trim().split(" ")[0]);
+      let channel = message.mentions.channels.filter(ch=>ch.guild.id==message.guild.id).first();
       //if no channel pinged return error
       if (!channel)
-      return message.reply({embeds : [new MessageEmbed()
-        .setColor(es.wrongcolor).setFooter(client.getFooter(es))
-        .setTitle(eval(client.la[ls]["cmds"]["settings"]["addbotchat"]["variable1"]))
-      ]});
+      return message.channel.send(new MessageEmbed()
+        .setColor(es.wrongcolor).setFooter(es.footertext, es.footericon)
+        .setTitle(`<:cross:899255798142750770>  Please add a Channel via ping, for example: #channel!`)
+      );
       //try to find it, just incase user pings channel from different server
       try {
           message.guild.channels.cache.get(channel.id)
       } catch {
-        return message.reply({embeds :[new MessageEmbed()
+        return message.channel.send(new MessageEmbed()
           .setColor(es.wrongcolor)
-          .setFooter(client.getFooter(es))
-          .setTitle(eval(client.la[ls]["cmds"]["settings"]["addbotchat"]["variable2"]))
-        ]});
+          .setFooter(es.footertext, es.footericon)
+          .setTitle(`<:cross:899255798142750770>  It seems that the Channel does not exist in this Server!`)
+        );
       }
       //if its already in the database return error
       if(client.settings.get(message.guild.id,`botchannel`).includes(channel.id))
-        return message.reply({embeds : [new MessageEmbed()
+        return message.channel.send(new MessageEmbed()
           .setColor(es.wrongcolor)
-          .setFooter(client.getFooter(es))
-          .setTitle(eval(client.la[ls]["cmds"]["settings"]["addbotchat"]["variable3"]))
-        ]});
+          .setFooter(es.footertext, es.footericon)
+          .setTitle(`<:cross:899255798142750770>  This Channel is alerady in the List!`)
+        );
       //push it into the database
       client.settings.push(message.guild.id, channel.id, `botchannel`);
       //these lines create the string of the Bot Channels
@@ -49,29 +48,20 @@ module.exports = {
         leftb += `<#` +client.settings.get(message.guild.id, `botchannel`)[i] + `> | `
       }
       //send informational message
-      return message.reply({embeds : [new MessageEmbed()
-        .setColor(es.color).setThumbnail(es.thumb ? es.footericon && (es.footericon.includes("http://") || es.footericon.includes("https://")) ? es.footericon : client.user.displayAvatarURL() : null)
-        .setFooter(client.getFooter(es))
-        .setTitle(eval(client.la[ls]["cmds"]["settings"]["addbotchat"]["variable4"]))
-        .setDescription(eval(client.la[ls]["cmds"]["settings"]["addbotchat"]["variable5"]))
-      ]});
+      return message.channel.send(new MessageEmbed()
+        .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+        .setFooter(es.footertext, es.footericon)
+        .setTitle(`<:tick:899255869185855529> Added the Bot-Chat \`${channel.name}\``)
+        .setDescription(`All Bot Chats:\n> ${leftb.substr(0, leftb.length - 3)}`)
+      );
     } catch (e) {
-        console.log(String(e.stack).grey.bgRed)
-        return message.reply({embeds : [new MessageEmbed()
+        console.log(String(e.stack).bgRed)
+        return message.channel.send(new MessageEmbed()
             .setColor(es.wrongcolor)
-						.setFooter(client.getFooter(es))
-            .setTitle(client.la[ls].common.erroroccur)
-            .setDescription(eval(client.la[ls]["cmds"]["settings"]["addbotchat"]["variable6"]))
-        ]});
+						.setFooter(es.footertext, es.footericon)
+            .setTitle(`<:cross:899255798142750770>  An error occurred`)
+            .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``)
+        );
     }
   }
 };
-/**
-  * @INFO
-  * Bot Coded by Tomato#6966 | https://discord.gg/milrato
-  * @INFO
-  * Work for S409 support | https://s409.xyz
-  * @INFO
-  * Please mention him / S409 support, when using this Code!
-  * @INFO
-*/

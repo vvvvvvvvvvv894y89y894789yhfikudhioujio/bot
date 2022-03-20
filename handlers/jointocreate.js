@@ -1,16 +1,16 @@
 const {
   MessageEmbed,
-  Collection, Permissions
+  Collection
 } = require("discord.js")
-const config = require(`${process.cwd()}/botconfig/config.json`);
-const kernelsettings = require(`${process.cwd()}/botconfig/settings.json`);
-const ee = require(`${process.cwd()}/botconfig/embed.json`);
+const config = require("../botconfig/config.json");
+const kernelsettings = require("../botconfig/settings.json");
+const ee = require("../botconfig/embed.json");
 const {
   databasing,
   check_voice_channels,
   check_created_voice_channels,
   create_join_to_create_Channel
-} = require(`${process.cwd()}/handlers/functions`);
+} = require("../handlers/functions");
 var CronJob = require('cron').CronJob;
 
 
@@ -28,23 +28,52 @@ module.exports = function (client) {
     check_created_voice_channels(client)
     client.JobJointocreate.start();
     client.JobJointocreate2.start();
+    console.log("JOBS STARTED etc.")
   })
+
   //voice state update event to check joining/leaving channels
   client.on("voiceStateUpdate", (oldState, newState) => {
+    //LOGS FOR EVERYTHING EXCEPT JOINING / LEAVING / SWITCHING
+    if (kernelsettings.voice_log_console) {
+      if (!oldState.streaming && newState.streaming) return //console.log(`${newState.member.user.tag} Is now ${newState.streaming ? "streaming" : "not streaming"}`.gray);
+      if (oldState.streaming && !newState.streaming) return //console.log(`${newState.member.user.tag} Is now ${newState.streaming ? "streaming)" : "not streaming)"}`.gray);
+      if (!oldState.serverDeaf && newState.serverDeaf) return //console.log(`${newState.member.user.tag} Is now ${newState.serverDeaf ? "deafed (Server)" : "undeafed (Server)"}`.gray);
+      if (oldState.serverDeaf && !newState.serverDeaf) return //console.log(`${newState.member.user.tag} Is now ${newState.serverDeaf ? "deafed (Server)" : "undeafed (Server)"}`.gray);
+      if (!oldState.serverMute && newState.serverMute) return //console.log(`${newState.member.user.tag} Is now ${newState.serverMute ? "muted (Server)" : "unmuted (Server)"}`.gray);
+      if (oldState.serverMute && !newState.serverMute) return //console.log(`${newState.member.user.tag} Is now ${newState.serverMute ? "muted (Server)" : "unmuted (Server)"}`.gray);
+      if (!oldState.selfDeaf && newState.selfDeaf) return //console.log(`${newState.member.user.tag} Is now ${newState.selfDeaf ? "deafed (self)" : "undeafed (self)"}`.gray);
+      if (oldState.selfDeaf && !newState.selfDeaf) return //console.log(`${newState.member.user.tag} Is now ${newState.selfDeaf ? "deafed (self)" : "undeafed (self)"}`.gray);
+      if (!oldState.selfMute && newState.selfMute) return //console.log(`${newState.member.user.tag} Is now ${newState.selfMute ? "muted (self)" : "unmuted (self)"}`.gray);
+      if (oldState.selfMute && !newState.selfMute) return //console.log(`${newState.member.user.tag} Is now ${newState.selfMute ? "muted (self)" : "unmuted (self)"}`.gray);
+      if (oldState.sessionID != newState.sessionID) //console.log(`${newState.member.user.tag} sessionID Is now on: ${newState.sessionID}`.gray);
+      if (!oldState.selfVideo && newState.selfVideo) return //console.log(`${newState.member.user.tag} Is now ${newState.selfVideo ? "self Video Sharing" : "not self Video Sharing"}`.gray);
+      if (oldState.selfVideo && !newState.selfVideo) return //console.log(`${newState.member.user.tag} Is now ${newState.selfVideo ? "self Video Sharing" : "not self Video Sharing"}`.gray);
+    }
+
     // JOINED A CHANNEL
-    if (!oldState.channelId && newState.channelId) {
+    if (!oldState.channelID && newState.channelID) {
+      client.jtcsettings.ensure(newState.guild.id, {
+        channel: "",
+        channelname: "{user}' Room",
+        guild: newState.guild.id,
+      });
+      client.jtcsettings2.ensure(newState.guild.id, {
+        channel: "",
+        channelname: "{user}' Channel",
+        guild: newState.guild.id,
+      });
+      client.jtcsettings3.ensure(newState.guild.id, {
+        channel: "",
+        channelname: "{user}' Lounge",
+        guild: newState.guild.id,
+      });
       let channels = [];
-      for(let i = 1; i <= 25; i++){
-        client[`jtcsettings${i && i != 1 ? i : ""}`].ensure(newState.guild.id, {
-          channel: "",
-          channelname: "{user}' Lounge",
-          guild: newState.guild.id,
-        });
-        let thechannel = client[`jtcsettings${i && i != 1 ? i : ""}`].get(newState.guild.id)
-        channels.push(thechannel.channel)
-      }
+      channels.push(client.jtcsettings.get(newState.guild.id, `channel`))
+      channels.push(client.jtcsettings2.get(newState.guild.id, `channel`))
+      channels.push(client.jtcsettings3.get(newState.guild.id, `channel`))
+
       for (let i = 0; i < channels.length; i++) {
-        if (channels[i].length > 0 && channels[i] == newState.channelId) {
+        if (channels[i].length > 0 && channels[i] == newState.channelID) {
           create_join_to_create_Channel(client, newState, i + 1);
           break;
         }
@@ -52,54 +81,64 @@ module.exports = function (client) {
       return;
     }
     // LEFT A CHANNEL
-    if (oldState.channelId && !newState.channelId) {
-      let channels = [];
-      for(let i = 1; i <= 25; i++){
-        let thedb = client[`jtcsettings${i && i != 1 ? i : ""}`];
-        thedb?.ensure(oldState.guild.id, {
-          channel: "",
-          channelname: "{user}' Lounge",
-          guild: oldState.guild.id,
-        });
-        channels.push(thedb?.get(oldState.guild.id, `channel`))
-      }
-      client.jointocreatemap.ensure(`tempvoicechannel_${oldState.guild.id}_${oldState.channelId}`, false)
-      if (client.jointocreatemap.get(`tempvoicechannel_${oldState.guild.id}_${oldState.channelId}`)) {
+    if (oldState.channelID && !newState.channelID) {
+      
+      client.jtcsettings.ensure(oldState.guild.id, {
+        channel: "",
+        channelname: "{user}' Room",
+        guild: oldState.guild.id,
+      });
+      client.jtcsettings2.ensure(oldState.guild.id, {
+        channel: "",
+        channelname: "{user}' Channel",
+        guild: oldState.guild.id,
+      });
+      client.jtcsettings3.ensure(oldState.guild.id, {
+        channel: "",
+        channelname: "{user}' Lounge",
+        guild: oldState.guild.id,
+      });
+      client.jointocreatemap.ensure(`tempvoicechannel_${oldState.guild.id}_${oldState.channelID}`, false)
+      if (client.jointocreatemap.get(`tempvoicechannel_${oldState.guild.id}_${oldState.channelID}`)) {
         //CHANNEL DELETE CHECK
-        var vc = oldState.guild.channels.cache.get(client.jointocreatemap.get(`tempvoicechannel_${oldState.guild.id}_${oldState.channelId}`));
+        var vc = oldState.guild.channels.cache.get(client.jointocreatemap.get(`tempvoicechannel_${oldState.guild.id}_${oldState.channelID}`));
         if (vc.members.size < 1) {
-          client.jointocreatemap.delete(`tempvoicechannel_${oldState.guild.id}_${oldState.channelId}`);
+          client.jointocreatemap.delete(`tempvoicechannel_${oldState.guild.id}_${oldState.channelID}`);
           client.jointocreatemap.delete(`owner_${vc.guild.id}_${vc.id}`);
-          console.log(`Deleted the Channel: ${vc.name} in: ${vc.guild ? vc.guild.name : "undefined"} DUE TO EMPTYNESS`.strikethrough.brightRed)
           return vc.delete().catch(e => console.log("Couldn't delete room"));
         } else {
-          let ownerId = client.jointocreatemap.get(`owner_${vc.guild.id}_${vc.id}`);
+          let perms = vc.permissionOverwrites.map(c => c)
+          let owner = false;
+          for (let i = 0; i < perms.length; i++) {
+            if (perms[i].allow.toArray().includes("MANAGE_CHANNELS") && perms[i].id == oldState.member.user.id) owner = true;
+          }
           //if owner left, then pick a random user
-          if (ownerId == oldState.id) {
-            let members = vc.members.map(m => m.id);
+          if (owner) {
+            let members = vc.members.map(member => member.id);
             let randommemberid = members[Math.floor(Math.random() * members.length)];
-            //set the new owner + perms
-            client.jointocreatemap.set(`owner_${vc.guild.id}_${vc.id}`, randommemberid);
-            if(vc.permissionsFor(vc.guild.me).has(Permissions.FLAGS.MANAGE_CHANNELS)){
-              vc.permissionOverwrites.edit(randommemberid, {
-                CONNECT: true,
-                VIEW_CHANNEL: true,
-                MANAGE_CHANNELS: true,
-                MANAGE_ROLES: true
-              }).catch(() => {})
-            }
-            //delete the old owner
-            vc.permissionOverwrites.delete(oldState.id).catch(() => {})
+            
+            vc.updateOverwrite(randommemberid, {
+              CONNECT: true,
+              VIEW_CHANNEL: true,
+              MANAGE_CHANNELS: true,
+              MANAGE_ROLES: true
+            }).catch(e => console.log(e.message))
+
+            vc.updateOverwrite(oldState.member.user.id, {
+              CONNECT: true,
+              VIEW_CHANNEL: true,
+              MANAGE_CHANNELS: false,
+              MANAGE_ROLES: false
+            }).catch(e => console.log(e.message))
             try {
               let es = client.settings.get(vc.guild.id, "embed")
               client.users.fetch(randommemberid).then(user => {
-                user.send({embeds: [new MessageEmbed()
-                  .setColor(es.color).setThumbnail(oldState.member.displayAvatarURL({dynamic:true}))
-                  .setFooter(client.getFooter(es))
-                  .setTitle(`The VC-OWNER \`${oldState.member.user.tag}\` left the VC! A new Random Owner got picked!`)
-                  .addField(`You now have access to all \`voice Commands\``, `> ${client.commands.filter((cmd) => cmd.category === "🎤 Voice").first().extracustomdesc.split(",").map(i => i?.trim()).join("︲")}`)
-                ]}).catch(() => {})
-              }).catch(() => {})
+                user.send(new MessageEmbed()
+                  .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+                  .setFooter(es.footertext, es.footericon)
+                  .setTitle(`The Owner of \`${vc.name}\` left, you are now the new one!`)
+                  .setDescription(`You now have access to all \`${client.settings.get(vc.guild.id, "prefix")}voice\` Commands!`))
+              })
             } catch {
               /* */
             }
@@ -107,64 +146,46 @@ module.exports = function (client) {
         }
       }
     }
+
     // Switch A CHANNEL
-    if (oldState.channelId && newState.channelId) {
-      if (oldState.channelId !== newState.channelId) {
+    if (oldState.channelID && newState.channelID) {
+      client.jtcsettings.ensure(newState.guild.id, {
+        channel: "",
+        channelname: "{user}' Room",
+        guild: newState.guild.id,
+      });
+      client.jtcsettings2.ensure(newState.guild.id, {
+        channel: "",
+        channelname: "{user}' Channel",
+        guild: newState.guild.id,
+      });
+      client.jtcsettings3.ensure(newState.guild.id, {
+        channel: "",
+        channelname: "{user}' Lounge",
+        guild: newState.guild.id,
+      });
+      if (oldState.channelID !== newState.channelID) {
         let channels = [];
-        for(let i = 1; i <= 25; i++){
-          let thedb = client[`jtcsettings${i && i != 1 ? i : ""}`];
-          thedb?.ensure(newState.guild.id, {
-            channel: "",
-            channelname: "{user}' Lounge",
-            guild: newState.guild.id,
-          });
-          channels.push(thedb?.get(newState.guild.id, `channel`))
-        }
+        channels.push(client.jtcsettings.get(newState.guild.id, `channel`))
+        channels.push(client.jtcsettings2.get(newState.guild.id, `channel`))
+        channels.push(client.jtcsettings3.get(newState.guild.id, `channel`))
         for (let i = 0; i < channels.length; i++) {
-          if (channels[i].length > 2 && channels[i] == newState.channelId) {
+          if (channels[i].length > 2 && channels[i] == newState.channelID) {
             create_join_to_create_Channel(client, newState, i + 1);
             break;
           }
         }
         //ENSURE THE DB
-        client.jointocreatemap.ensure(`tempvoicechannel_${oldState.guild.id}_${oldState.channelId}`, false)
+        client.jointocreatemap.ensure(`tempvoicechannel_${oldState.guild.id}_${oldState.channelID}`, false)
         //IF STATEMENT
-        if (client.jointocreatemap.get(`tempvoicechannel_${oldState.guild.id}_${oldState.channelId}`)) {
-          var vc = oldState.guild.channels.cache.get(client.jointocreatemap.get(`tempvoicechannel_${oldState.guild.id}_${oldState.channelId}`));
+        if (client.jointocreatemap.get(`tempvoicechannel_${oldState.guild.id}_${oldState.channelID}`)) {
+          var vc = oldState.guild.channels.cache.get(client.jointocreatemap.get(`tempvoicechannel_${oldState.guild.id}_${oldState.channelID}`));
           if (vc.members.size < 1) {
-            client.jointocreatemap.delete(`tempvoicechannel_${oldState.guild.id}_${oldState.channelId}`);
+            client.jointocreatemap.delete(`tempvoicechannel_${oldState.guild.id}_${oldState.channelID}`);
             client.jointocreatemap.delete(`owner_${vc.guild.id}_${vc.id}`);
             return vc.delete().catch(e => console.log("Couldn't delete room"));
-          } let ownerId = client.jointocreatemap.get(`owner_${vc.guild.id}_${vc.id}`);
-          //if owner left, then pick a random user
-          if (ownerId == oldState.id) {
-            let members = vc.members.map(m => m.id);
-            let randommemberid = members[Math.floor(Math.random() * members.length)];
-            //set the new owner + perms
-            client.jointocreatemap.set(`owner_${vc.guild.id}_${vc.id}`, randommemberid);
-            if(vc.permissionsFor(vc.guild.me).has(Permissions.FLAGS.MANAGE_CHANNELS)){
-              vc.permissionOverwrites.edit(randommemberid, {
-                CONNECT: true,
-                VIEW_CHANNEL: true,
-                MANAGE_CHANNELS: true,
-                MANAGE_ROLES: true
-              }).catch(() => {})
-            }
-            //delete the old owner
-            vc.permissionOverwrites.delete(oldState.id).catch(() => {})
-            try {
-              let es = client.settings.get(vc.guild.id, "embed")
-              client.users.fetch(randommemberid).then(user => {
-                user.send({embeds: [new MessageEmbed()
-                  .setColor(es.color).setThumbnail(oldState.member.displayAvatarURL({dynamic:true}))
-                  .setFooter(client.getFooter(es))
-                  .setTitle(`The VC-OWNER \`${oldState.member.user.tag}\` left the VC! A new Random Owner got picked!`)
-                  .addField(`You now have access to all \`voice Commands\``, `> ${client.commands.filter((cmd) => cmd.category === "🎤 Voice").first().extracustomdesc.split(",").map(i => i?.trim()).join("︲")}`)
-                ]}).catch(() => {})
-              }).catch(() => {})
-            } catch {
-              /* */
-            }
+          } else {
+            /* */
           }
         }
       }
@@ -178,10 +199,10 @@ module.exports = function (client) {
 
 /**
  * @INFO
- * Bot Coded by s409 | https://discord.gg/milrato
+ * Bot Coded by S409™#9685 | https://github.com/S409™#9685/discord-js-lavalink-Music-Bot-erela-js
  * @INFO
- * Work for S409 support | https://s409.xyz
+ * Work for s409 Development | https://s409.xyz
  * @INFO
- * Please mention him / S409 support, when using this Code!
+ * Please mention Him / s409 Development, when using this Code!
  * @INFO
  */

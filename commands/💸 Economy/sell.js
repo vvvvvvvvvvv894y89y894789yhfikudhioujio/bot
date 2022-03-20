@@ -1,31 +1,29 @@
 const {MessageEmbed} = require("discord.js");
-const config = require(`${process.cwd()}/botconfig/config.json`);
-var ee = require(`${process.cwd()}/botconfig/embed.json`);
-const emoji = require(`${process.cwd()}/botconfig/emojis.json`);
-const { parseMilliseconds, duration, GetUser, nFormatter, ensure_economy_user } = require(`${process.cwd()}/handlers/functions`)
+const config = require(`../../botconfig/config.json`);
+var ee = require(`../../botconfig/embed.json`);
+const emoji = require(`../../botconfig/emojis.json`);
+const { parseMilliseconds, duration, GetUser, nFormatter, ensure_economy_user } = require("../../handlers/functions")
 module.exports = {
   name: "sell",
   category: "💸 Economy",
   aliases: ["ecosell"],
   description: "Allows you to sell an item with 10% Zins.",
   usage: "sell [Item]",
-  type: "info",
   run: async (client, message, args, cmduser, text, prefix) => {
-    
-    let es = client.settings.get(message.guild.id, "embed");let ls = client.settings.get(message.guild.id, "language")
+    let es = client.settings.get(message.guild.id, "embed")
     if(!client.settings.get(message.guild.id, "ECONOMY")){
-      return message.reply({embeds: [new MessageEmbed()
+      return message.channel.send(new MessageEmbed()
         .setColor(es.wrongcolor)
-        .setFooter(client.getFooter(es))
-        .setTitle(client.la[ls].common.disabled.title)
-        .setDescription(require(`${process.cwd()}/handlers/functions`).handlemsg(client.la[ls].common.disabled.description, {prefix: prefix}))
-      ]});
+        .setFooter(es.footertext, es.footericon)
+        .setTitle(`<:cross:899255798142750770>  THIS COMMAND IS CURRENTLY DISABLED`)
+        .setDescription(`An Admin can enable it with: \`${prefix}setup-commands\``)
+      );
     }
     try {
     //command
     var user = message.author;
       
-    if(user.bot) return message.reply(eval(client.la[ls]["cmds"]["economy"]["sell"]["variable1"]))
+    if(user.bot) return message.reply("<:cross:899255798142750770>  **A Discord Bot can not have Economy!**")
       
     //ensure the economy data
     ensure_economy_user(client, message.guild.id, user.id)
@@ -92,22 +90,22 @@ module.exports = {
     }
     //return some message!
     if (!args[0])
-      return message.reply({embeds: [new MessageEmbed()
-        .setColor(es.color).setThumbnail(es.thumb ? es.footericon && (es.footericon.includes("http://") || es.footericon.includes("https://")) ? es.footericon : client.user.displayAvatarURL() : null)
+      return message.reply(new MessageEmbed()
+        .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
         .setFooter(user.tag, user.displayAvatarURL({dynamic: true}))
-        .setTitle(eval(client.la[ls]["cmds"]["economy"]["sell"]["variable2"]))
-        .setDescription(eval(client.la[ls]["cmds"]["economy"]["sell"]["variable3"]))
+        .setTitle(`🧸 **${user == message.author ? "You": user.username}** ${user == message.author ? "have": "has"} \`${nFormatter(items)} Items\` with a value of: \`${nFormatter(itemsvalue)} 💸\`, those can you sell:`)
+        .setDescription(`${theitems.length != 0 ? ">>> "+theitems.join("\n\n") : `${nFormatter(Math.floor(data.balance))} 💸\` in ${user == message.author ? "You ": "He/She"} ${user == message.author ? "have": "has"} no Items yet!`}`)
         .addField("To sell items:", `\`${prefix}sell Pen 2\``)
-      ]});
+      );
 
     let amountofbuy = Number(args[1]) || 1;
       if (amountofbuy == 0)
-        return message.reply({embeds: [new MessageEmbed()
+        return message.channel.send(new MessageEmbed()
           .setColor(es.wrongcolor)
           .setFooter(user.tag, user.displayAvatarURL({ dynamic: true }))
-          .setTitle(eval(client.la[ls]["cmds"]["economy"]["sell"]["variable4"]))
-          .setDescription(eval(client.la[ls]["cmds"]["economy"]["sell"]["variable5"]))
-        ]});
+          .setTitle(`<:cross:899255798142750770>  You cannot sell 0 Items`)
+          .setDescription(`Usage: \`${prefix}sell <Item> <Amount>\`\n\n\Example: \`${prefix}sell Pen 2\``)
+        );
       
       var prize = 0;
       switch (args[0].toLowerCase()) {
@@ -137,27 +135,27 @@ module.exports = {
       }
 
       if (!prize)
-        return message.reply({embeds: [new MessageEmbed()
-          .setColor(es.color).setThumbnail(es.thumb ? es.footericon && (es.footericon.includes("http://") || es.footericon.includes("https://")) ? es.footericon : client.user.displayAvatarURL() : null)
+        return message.reply(new MessageEmbed()
+          .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
           .setFooter(user.tag, user.displayAvatarURL({dynamic: true}))
-          .setTitle(eval(client.la[ls]["cmds"]["economy"]["sell"]["variable6"]))
-          .setDescription(eval(client.la[ls]["cmds"]["economy"]["sell"]["variable7"]))
+          .setTitle(`🧸 **${user == message.author ? "You": user.username}** ${user == message.author ? "have": "has"} \`${nFormatter(items)} Items\` with a value of: \`${nFormatter(itemsvalue)} 💸\`, those can you sell:`)
+          .setDescription(`${theitems.length != 0 ? ">>> "+theitems.join("\n\n") : `${nFormatter(Math.floor(data.balance))} 💸\` in ${user == message.author ? "You ": "He/She"} ${user == message.author ? "have": "has"} no Items yet!`}`)
           .addField("To sell items:", `\`${prefix}sell Pen 2\``)
-        ]});
+        );
       if(data.items[`${args[0].toLowerCase()}`] == 0)
-        return message.reply({embeds: [new MessageEmbed()
+        return message.channel.send(new MessageEmbed()
           .setColor(es.wrongcolor)
           .setFooter(user.tag, user.displayAvatarURL({ dynamic: true }))
-          .setTitle(eval(client.la[ls]["cmds"]["economy"]["sell"]["variable8"]))
-          .setDescription(eval(client.la[ls]["cmds"]["economy"]["sell"]["variable9"]))
-        ]});
+          .setTitle(`<:cross:899255798142750770>  You cannot sell an Item which you don't have`)
+          .setDescription(`Buy it with: \`${prefix}buy <Item> <Amount>\`\n\n\Example: \`${prefix}buy ${args[0].toLowerCase()} 1\``)
+        );
       if (amountofbuy > data.items[`${args[0].toLowerCase()}`])
-        return message.reply({embeds: [new MessageEmbed()
+        return message.channel.send(new MessageEmbed()
           .setColor(es.wrongcolor)
           .setFooter(user.tag, user.displayAvatarURL({ dynamic: true }))
-          .setTitle(eval(client.la[ls]["cmds"]["economy"]["sell"]["variable10"]))
-          .setDescription(eval(client.la[ls]["cmds"]["economy"]["sell"]["variable11"]))
-        ]});
+          .setTitle(`<:cross:899255798142750770>  You cannot sell More ${args[0]} then you have (\`${ data.items[`${args[0].toLowerCase()}`]}\`)`)
+          .setDescription(`Usage: \`${prefix}sell <Item> <Amount>\`\n\n\Example: \`${prefix}sell ${args[0].toLowerCase()} ${data.items[`${args[0].toLowerCase()}`]}\``)
+        );
 
       var endprize = (prize * amountofbuy) * 0.9;
       
@@ -165,29 +163,29 @@ module.exports = {
       client.economy.math(`${message.guild.id}-${user.id}`, "+", endprize, `balance`)
       data = client.economy.get(`${message.guild.id}-${user.id}`)
 
-      return message.reply({embeds: [new MessageEmbed()
-        .setColor(es.color).setThumbnail(es.thumb ? es.footericon && (es.footericon.includes("http://") || es.footericon.includes("https://")) ? es.footericon : client.user.displayAvatarURL() : null)
+      return message.channel.send(new MessageEmbed()
+        .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
         .setFooter(user.tag, user.displayAvatarURL({ dynamic: true }))
-        .setTitle(eval(client.la[ls]["cmds"]["economy"]["sell"]["variable12"]))
-        .setDescription(eval(client.la[ls]["cmds"]["economy"]["sell"]["variable13"]))
-      ]});
+        .setTitle(`<:tick:899255869185855529> **Successfully sold ${nFormatter(amountofbuy)} ${args[0]} for \`${nFormatter(endprize)} 💸\`**`)
+        .setDescription(`👛 You have (\`${nFormatter(data.balance)} 💸\`) in your Pocket \n\n🧸 **You have \`${nFormatter(items)} Items\` with a value of: \`${nFormatter(itemsvalue)} 💸\`**\n\n**To see your Items, type:**\n\`${prefix}items\``)
+      );
   } catch (e) {
-    console.log(String(e.stack).grey.bgRed)
-    return message.reply({embeds: [new MessageEmbed()
+    console.log(String(e.stack).bgRed)
+    return message.channel.send(new MessageEmbed()
       .setColor(es.wrongcolor)
-      .setFooter(client.getFooter(es))
-      .setTitle(client.la[ls].common.erroroccur)
-      .setDescription(eval(client.la[ls]["cmds"]["economy"]["sell"]["variable14"]))
-    ]});
+      .setFooter(es.footertext, es.footericon)
+      .setTitle(`<:cross:899255798142750770>  An error occurred`)
+      .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``)
+    );
   }
 }
 };
 /**
 * @INFO
-* Bot Coded by Tomato#6966 | https://discord.gg/milrato
+* Bot Coded by S409™#9685 | https://github.com/S409™#9685/discord-js-lavalink-Music-Bot-erela-js
 * @INFO
-* Work for S409 support | https://s409.xyz
+* Work for s409 Development | https://s409.xyz
 * @INFO
-* Please mention him / S409 support, when using this Code!
+* Please mention Him / s409 Development, when using this Code!
 * @INFO
 */

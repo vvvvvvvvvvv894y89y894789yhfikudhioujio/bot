@@ -1,56 +1,45 @@
-const { Permissions } = require("discord.js")
+
+const Quick = require('quick.db-plus');
+const db7 = new Quick.db('CounterBotChannel'); 
 module.exports = function (client, options) {
-    client.on("messageCreate", message => {
-        if(!message.guild || message.guild.available === false || message.author.bot) return;
-        client.settings.ensure(message.guild.id, {
-          counter: "no",
-          counternum: 0,
-          counterauthor: ""
-        })
-        if(message.channel.id == client.settings.get(message.guild.id, `counter`)){
-        if(!client.settings.has(message.guild.id, "language")) client.settings.ensure(message.guild.id, { language: "en" });
-        let ls = client.settings.get(message.guild.id, "language")
-        let count = client.settings.get(message.guild.id, `counternum`);
-        let counterauthor = client.settings.get(message.guild.id, `counterauthor`);
-        if(isNaN(count)) {
-          client.settings.set(message.guild.id, 0, `counternum`)
-          count = 0
-        };
-        if (!message.author.bot && message.author.id === counterauthor) {
-          if(message.channel.permissionsFor(message.channel.guild.me).has(Permissions.FLAGS.MANAGE_MESSAGES)){
-            message.delete().catch(() => {})
-          } else {
-            message.reply(":x: **I am missing the MANAGE_MESSAGES Permission!**").then(m => {
-                setTimeout(()=>{m.delete().catch(()=>{})}, 3500)
-            })
-          }
-          message.reply(eval(client.la[ls]["handlers"]["counterjs"]["counter"]["variable1"])).then(m =>  setTimeout(()=>{m.delete()},3000));
+    const description = {
+        name: "chatbot",
+        filename: "chatbot.js",
+        version: "3.2"
+    }
+
+    console.log(` :: ⬜️ Module: ${description.name} | Loaded version ${description.version} from ("${description.filename}")`)
+
+    client.on("message", message => {
+        if(message.author.bot) return;
+        if(message.channel.id == db7.get(`counterchat_${message.guild.id}`)){
+   
+        let count = db7.get(`counter_${message.guild.id}`);
+        if(!count) db7.set(`counter_${message.guild.id}`, {
+          number: 0,
+          author: client.user.id
+        });
+        if (count === null) count = db7.set(`counter_${message.guild.id}`, {
+          number: 0,
+          author: client.user.id
+        });
+        
+        if (!message.author.bot && message.author.id === count.author) {
+          message.delete();
+          message.reply("Please wait for your turn").then(m => m.delete({timeout: 3000}));
           return;
         }
         if (!message.author.bot && isNaN(message.content)) {
-          if(message.channel.permissionsFor(message.channel.guild.me).has(Permissions.FLAGS.MANAGE_MESSAGES)){
-            message.delete().catch(() => {})
-          } else {
-            message.reply(":x: **I am missing the MANAGE_MESSAGES Permission!**").then(m => {
-                setTimeout(()=>{m.delete().catch(()=>{})}, 3500)
-            })
-          }
-          message.reply(eval(client.la[ls]["handlers"]["counterjs"]["counter"]["variable2"])).then(m =>  setTimeout(()=>{m.delete()},3000));
+          message.delete();
+          message.reply("Messages in this channel must be a number").then(m => m.delete({timeout: 3000}));
           return;
         }
-        if (!message.author.bot && parseInt(message.content) !== count + 1) {
-          if(message.channel.permissionsFor(message.channel.guild.me).has(Permissions.FLAGS.MANAGE_MESSAGES)){
-            message.delete().catch(() => {})
-          } else {
-            message.reply(":x: **I am missing the MANAGE_MESSAGES Permission!**").then(m => {
-                setTimeout(()=>{m.delete().catch(()=>{})}, 3500)
-            })
-          }
-          message.reply(eval(client.la[ls]["handlers"]["counterjs"]["counter"]["variable3"])).then(m => setTimeout(()=>{m.delete()},3000));
+        if (!message.author.bot && parseInt(message.content) !== count.number + 1) {
+          message.delete();
+          message.reply(`Next number must be ${count.number + 1}`).then(m => m.delete({timeout: 3000}));
           return;
         }
-        client.settings.inc(message.guild.id, `counternum`);
-        client.settings.set(message.guild.id, message.author.id, `counterauthor`);
+        count = db7.set(`counter_${message.guild.id}`, { number: count.number + 1, author: message.author.id });
       }
   })
 }

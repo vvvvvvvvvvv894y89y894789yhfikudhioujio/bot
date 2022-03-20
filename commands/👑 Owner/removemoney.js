@@ -1,48 +1,52 @@
 const {MessageEmbed} = require("discord.js");
-const config = require(`${process.cwd()}/botconfig/config.json`);
-var ee = require(`${process.cwd()}/botconfig/embed.json`);
-const emoji = require(`${process.cwd()}/botconfig/emojis.json`);
-const { parseMilliseconds, duration, GetUser } = require(`${process.cwd()}/handlers/functions`)
+const config = require(`../../botconfig/config.json`);
+var ee = require(`../../botconfig/embed.json`);
+const emoji = require(`../../botconfig/emojis.json`);
+const { parseMilliseconds, duration, GetUser } = require("../../handlers/functions")
 module.exports = {
   name: "removemoney",
-  category: "⚙️ Settings",
+  category: "💸 Economy",
   aliases: ["ecoremovemoney"],
   description: "removes Money to someone else!",
   usage: "removemoney <@USER> <Amount>",
-  memberpermissions: [`ADMINISTRATOR`],
-  type: "user",
   run: async (client, message, args, cmduser, text, prefix) => {
-    
-    let es = client.settings.get(message.guild.id, "embed");let ls = client.settings.get(message.guild.id, "language")
-    if(!client.settings.get(message.guild.id, "ECONOMY")){
-      return message.channel.send({embeds : [new MessageEmbed()
+    let es = client.settings.get(message.guild.id, "embed")
+    if (!config.ownerIDS.some(r => r.includes(message.author.id)))
+      return message.channel.send(new MessageEmbed()
         .setColor(es.wrongcolor)
-        .setFooter(client.getFooter(es))
-        .setTitle(client.la[ls].common.disabled.title)
-        .setDescription(require(`${process.cwd()}/handlers/functions`).handlemsg(client.la[ls].common.disabled.description, {prefix: prefix}))
-      ]});
+        .setFooter(es.footertext, es.footericon)
+        .setTitle(`<:cross:899255798142750770>  You are not allowed to run this Command`)
+        .setDescription(`You need to be one of those guys: ${config.ownerIDS.map(id => `<@${id}>`)}`)
+      );
+    if(!client.settings.get(message.guild.id, "ECONOMY")){
+      return message.channel.send(new MessageEmbed()
+        .setColor(es.wrongcolor)
+        .setFooter(es.footertext, es.footericon)
+        .setTitle(`<:cross:899255798142750770>  THIS COMMAND IS CURRENTLY DISABLED`)
+        .setDescription(`An Admin can enable it with: \`${prefix}setup-commands\``)
+      );
     }
     try {
     //command
     var user  = message.author;
     var topay = message.mentions.members.filter(member=>member.guild.id == message.guild.id).first();
     if(!topay) 
-    return message.channel.send({embeds : [new MessageEmbed()
+    return message.channel.send(new MessageEmbed()
         .setColor(es.wrongcolor)
         .setFooter(user.tag, user.displayAvatarURL({dynamic: true}))
-        .setTitle(eval(client.la[ls]["cmds"]["owner"]["removemoney"]["variable3"]))
-        .setDescription(eval(client.la[ls]["cmds"]["owner"]["removemoney"]["variable4"]))
-    ]});
+        .setTitle(`<:cross:899255798142750770>  You didn't pinged to whom you want to pay`)
+        .setDescription(`Usage: \`${prefix}removemoney <@USER> <Amount>\`\n\n\Example: \`${prefix}removemoney <@544245657230245888> 42069\``)
+      );
     topay = topay.user;
     let payamount = Number(args[1]);
     if(!payamount)
-      return message.channel.send({embeds : [new MessageEmbed()
+      return message.channel.send(new MessageEmbed()
         .setColor(es.wrongcolor)
         .setFooter(user.tag, user.displayAvatarURL({dynamic: true}))
-        .setTitle(eval(client.la[ls]["cmds"]["owner"]["removemoney"]["variable5"]))
-        .setDescription(eval(client.la[ls]["cmds"]["owner"]["removemoney"]["variable6"]))
-      ]});
-    if(user.bot || topay.bot) return message.reply({content : eval(client.la[ls]["cmds"]["owner"]["removemoney"]["variable7"])})
+        .setTitle(`<:cross:899255798142750770>  You didn't remove the payamount`)
+        .setDescription(`Usage: \`${prefix}removemoney <@USER> <Amount>\`\n\n\Example: \`${prefix}removemoney <@544245657230245888> 42069\``)
+      );
+    if(user.bot || topay.bot) return message.reply("<:cross:899255798142750770>  **A Discord Bot can not have Economy!**")
     client.economy.ensure(`${message.guild.id}-${user.id}`, {
       user: user.id,
       work: 0,
@@ -77,52 +81,49 @@ module.exports = {
         fish: 0, hamster: 0, dog: 0, cat: 0,          
       }
     })
-    
-    if(!client.economy.has(`${message.guild.id}-${topay.id}`, "balance"))
-      client.economy.set(`${message.guild.id}-${topay.id}`, 0, "balance")
     //get the economy data 
     let data2 = client.economy.get(`${message.guild.id}-${topay.id}`)
 
     if(payamount <= 0)
-    return message.channel.send({embeds : [new MessageEmbed()
+    return message.channel.send(new MessageEmbed()
         .setColor(es.wrongcolor)
         .setFooter(user.tag, user.displayAvatarURL({dynamic: true}))
-        .setTitle(eval(client.la[ls]["cmds"]["owner"]["removemoney"]["variable8"]))
-    ]});
+        .setTitle(`<:cross:899255798142750770>  You can't remove a negative Amount of Money or no Money, to ${topay}`)
+      );
     
     if(payamount > data2.balance)
-      return message.channel.send({embeds :[new MessageEmbed()
+      return message.channel.send(new MessageEmbed()
         .setColor(es.wrongcolor)
         .setFooter(user.tag, user.displayAvatarURL({dynamic: true}))
-        .setTitle(eval(client.la[ls]["cmds"]["owner"]["removemoney"]["variable9"]))
-      ]});
+        .setTitle(`<:cross:899255798142750770>  You can't remove more Money than you he has in his/her **👛 Pocket (\`${data2.balance} 💸\`)**`)
+      );
   
-    client.economy.math(`${message.guild.id}-${topay.id}`, "-", payamount, "balance")
+    client.economy.math(`${message.guild.id}-${topay.id}`, "+", payamount, "balance")
     data2 = client.economy.get(`${message.guild.id}-${topay.id}`)
     //return some message!
-    return message.reply({embeds :[new MessageEmbed()
+    return message.reply(new MessageEmbed()
       .setColor(es.color)
       .setFooter(user.tag, user.displayAvatarURL({dynamic: true}))
-      .setTitle(eval(client.la[ls]["cmds"]["owner"]["removemoney"]["variable10"]))
-      .setDescription(eval(client.la[ls]["cmds"]["owner"]["removemoney"]["variable11"]))
-    ]});
+      .setTitle(`<:tick:899255869185855529> **You removeed \`${payamount} 💸\` to \`${topay.tag}\`**`)
+      .setDescription(`👛 **${topay.username}** now has \`${Math.floor(data2.balance)} 💸\` in his/her Pocket`)
+    );
   } catch (e) {
-    console.log(String(e.stack).dim.bgRed)
-    return message.channel.send({embeds : [new MessageEmbed()
+    console.log(String(e.stack).bgRed)
+    return message.channel.send(new MessageEmbed()
       .setColor(es.wrongcolor)
-      .setFooter(client.getFooter(es))
-      .setTitle(client.la[ls].common.erroroccur)
-      .setDescription(eval(client.la[ls]["cmds"]["owner"]["removemoney"]["variable12"]))
-    ]});
+      .setFooter(es.footertext, es.footericon)
+      .setTitle(`<:cross:899255798142750770>  An error occurred`)
+      .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``)
+    );
   }
 }
 };
 /**
 * @INFO
-* Bot Coded by Tomato#6966 | https://discord.gg/milrato
+* Bot Coded by S409™#9685 | https://github.com/S409™#9685/discord-js-lavalink-Music-Bot-erela-js
 * @INFO
-* Work for S409 support | https://s409.xyz
+* Work for s409 Development | https://s409.xyz
 * @INFO
-* Please mention him / S409 support, when using this Code!
+* Please mention Him / s409 Development, when using this Code!
 * @INFO
 */

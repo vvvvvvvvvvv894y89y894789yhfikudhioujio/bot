@@ -2,186 +2,164 @@ var {
   MessageEmbed
 } = require(`discord.js`);
 var Discord = require(`discord.js`);
-var config = require(`${process.cwd()}/botconfig/config.json`);
-var ee = require(`${process.cwd()}/botconfig/embed.json`);
-var emoji = require(`${process.cwd()}/botconfig/emojis.json`);
+var config = require(`../../botconfig/config.json`);
+var ee = require(`../../botconfig/embed.json`);
+var emoji = require(`../../botconfig/emojis.json`);
 var {
   databasing
-} = require(`${process.cwd()}/handlers/functions`);
-const { MessageButton, MessageActionRow, MessageSelectMenu } = require('discord.js')
+} = require(`../../handlers/functions`);
 module.exports = {
   name: "setup-counter",
   category: "💪 Setup",
-  aliases: ["setupcounter",  "counter-setup", "countersetup", "setup-numbercounter", "setupnumbercounter", "numbercounter-setup", "numbercountersetup"],
+  aliases: ["setupcounter",  "counter-setup", "countersetup"],
   cooldown: 5,
   usage: "setup-counter  -->  Follow the Steps",
   description: "This Setup allows you to send logs into a specific Channel, when someone enters a the Command: report",
   memberpermissions: ["ADMINISTRATOR"],
-  type: "fun",
   run: async (client, message, args, cmduser, text, prefix) => {
-    
-    let es = client.settings.get(message.guild.id, "embed");let ls = client.settings.get(message.guild.id, "language")
+    var es = client.settings.get(message.guild.id, "embed")
     try {
+      var adminroles = client.settings.get(message.guild.id, "adminroles")
 
+      var timeouterror = false;
+      var filter = (reaction, user) => {
+        return user.id === message.author.id;
+      };
+      var temptype = ""
+      var tempmsg;
 
-      first_layer()
-      async function first_layer(){
-        let menuoptions = [{
-            value: "Enable Counter",
-            description: `Set a Channel to the Counter Channel`,
-            emoji: "✅"
-          },
-          {
-            value: "Disable Counter",
-            description: `Disables the Counter System`,
-            emoji: "❌"
-          },
-          {
-            value: "Reset Current Number",
-            description: `Resets the current, counted Number back to 0`,
-            emoji: "🗑️"
-          },
-          {
-            value: "Show Settings",
-            description: `Show the current Settings!`,
-            emoji: "📑"
-          }
-        ]
-        //define the selection
-        let Selection = new MessageSelectMenu()
-          .setCustomId('MenuSelection') 
-          .setMaxValues(1) //OPTIONAL, this is how many values you can have at each selection
-          .setMinValues(1) //OPTIONAL , this is how many values you need to have at each selection
-          .setPlaceholder('Click me to setup the Number Counter System!') 
-          .addOptions(
-          menuoptions.map(option => {
-            let Obj = {
-              label: option.label ? option.label.substr(0, 50) : option.value.substr(0, 50),
-              value: option.value.substr(0, 50),
-              description: option.description.substr(0, 50),
-            }
-          if(option.emoji) Obj.emoji = option.emoji;
-          return Obj;
-         }))
-        
-        //define the embed
-        let MenuEmbed = new Discord.MessageEmbed()
-        .setColor(es.color)
-        .setAuthor('Number Counter Setup', 'https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/120/emojidex/112/input-symbol-for-numbers_1f522.png', 'https://discord.gg/milrato')
-        .setDescription(eval(client.la[ls]["cmds"]["setup"]["setup-ticket"]["variable2"]))
-        let used1 = false;
-        //send the menu msg
-        let menumsg = await message.reply({embeds: [MenuEmbed], components: [new MessageActionRow().addComponents(Selection)]})
+      tempmsg = await message.channel.send(new Discord.MessageEmbed()
+        .setTitle("What do you want to do? | REPORT LOG")
+        .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+        .setDescription(`1️⃣ **== \`✔️ Enable\` / Set** Poster-Channel\n\n2️⃣ **== \`❌ Disable\`** counter\n\n3️⃣ **== Reset the __current__ Number to 0**\n\n📑 ** == Show Settings**\n\n**Note:**\n> *It will post only 1 Message every Minute*\n\n\n\n*React with the Right Emoji according to the Right action*`).setFooter(es.footertext, es.footericon)
+      )
 
-        //Create the collector
-        const collector = menumsg.createMessageComponentCollector({ 
-          filter: i => i?.isSelectMenu() && i?.message.author.id == client.user.id && i?.user,
-          time: 90000
-        })
-        //Menu Collections
-        collector.on('collect', menu => {
-          if (menu?.user.id === cmduser.id) {
-            collector.stop();
-            let menuoptiondata = menuoptions.find(v=>v.value == menu?.values[0])
-            if(menu?.values[0] == "Cancel") return menu?.reply(eval(client.la[ls]["cmds"]["setup"]["setup-ticket"]["variable3"]))
-            menu?.deferUpdate();
-            used1 = true;
-            handle_the_picks(menu?.values[0], menuoptiondata)
-          }
-          else menu?.reply({content: `<:no:833101993668771842> You are not allowed to do that! Only: <@${cmduser.id}>`, ephemeral: true});
-        });
-        //Once the Collections ended edit the menu message
-        collector.on('end', collected => {
-          menumsg.edit({embeds: [menumsg.embeds[0].setDescription(`~~${menumsg.embeds[0].description}~~`)], components: [], content: `${collected && collected.first() && collected.first().values ? `<a:yes:833101995723194437> **Selected: \`${collected ? collected.first().values[0] : "Nothing"}\`**` : "❌ **NOTHING SELECTED - CANCELLED**" }`})
-        });
+      try {
+        tempmsg.react("1️⃣")
+        tempmsg.react("2️⃣")
+        tempmsg.react("3️⃣")
+        tempmsg.react("📑")
+      } catch (e) {
+        return message.reply(new Discord.MessageEmbed()
+          .setTitle("<:cross:899255798142750770>  ERROR | Missing Permissions to add Reactions")
+          .setColor(es.wrongcolor)
+          .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``.substr(0, 2000))
+          .setFooter(es.footertext, es.footericon)
+        );
       }
-      async function handle_the_picks(optionhandletype, menuoptiondata) {
-        switch (optionhandletype){ // return message.reply
-          case "Enable Counter": {
-            var tempmsg = await message.reply({embeds: [new Discord.MessageEmbed()
-              .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-counter"]["variable5"]))
-              .setColor(es.color)
-              .setDescription(eval(client.la[ls]["cmds"]["setup"]["setup-counter"]["variable6"])).setFooter(client.getFooter(es))]
-            })
-            var thecmd;
-            await tempmsg.channel.awaitMessages({filter: m => m.author.id == message.author.id, 
-                max: 1,
-                time: 90000,
-                errors: ["time"]
-              })
-              .then(async collected => {
-                var message = collected.first();
-                if(!message) return message.reply("NO MESSAGE SENT");
-                let channel = message.mentions.channels.filter(ch=>ch.guild.id==message.guild.id).first() || message.guild.channels.cache.get(message.content.trim().split(" ")[0]);
-                if(channel){
-                  client.settings.set(message.guild.id, channel.id, `counter`)
-                  return message.reply({embeds: [new Discord.MessageEmbed()
-                    .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-counter"]["variable7"]))
-                    .setColor(es.color)
-                    .setDescription(`You can now count Numbers in <#${channel.id}>`.substr(0, 2048))
-                    .setFooter(client.getFooter(es))
-                  ]});
-                }
-                else{
-                  return message.reply("NO CHANNEL PINGED");
-                }
-              })
-              .catch(e => {
-                console.log(e.stack ? String(e.stack).grey : String(e).grey)
-                return message.reply({embeds: [new Discord.MessageEmbed()
-                  .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-counter"]["variable8"]))
-                  .setColor(es.wrongcolor)
-                  .setDescription(`Cancelled the Operation!`.substr(0, 2000))
-                  .setFooter(client.getFooter(es))
-                ]});
-              })
-          }break;
-          case "Disable Counter": {
-            client.settings.set(message.guild.id, "no", `counter`)
-            return message.reply({embeds: [new Discord.MessageEmbed()
-              .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-counter"]["variable9"]))
-              .setColor(es.color)
-              .setDescription(`You can't count Numbers anymore`.substr(0, 2048))
-              .setFooter(client.getFooter(es))
-            ]});
-          }break;
-          case "Reset Current Number": {
-            client.settings.set(message.guild.id, 0, `counternum`)
-            return message.reply({embeds: [new Discord.MessageEmbed()
-              .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-counter"]["variable10"]))
-              .setColor(es.color)
-              .setDescription(`People now need to count from 1 again!`.substr(0, 2048))
-              .setFooter(client.getFooter(es))
-            ]});
-          }break;
-          case "Show Settings": {
-            let thesettings = client.settings.get(message.guild.id, `counter`)
-            return message.reply({embeds: [new Discord.MessageEmbed()
-              .setTitle(eval(client.la[ls]["cmds"]["setup"]["setup-counter"]["variable11"]))
-              .setColor(es.color)
-              .setDescription(`**Channel:** ${thesettings == "no" ? "Not Setupped" : `<#${thesettings}> | \`${thesettings}\``}\n\n**Current Number:** \`${client.settings.get(message.guild.id, "counternum")}\`\n**Nest Number:** \`${Number(client.settings.get(message.guild.id, "counternum")) + 1}\``.substr(0, 2048))
-              .setFooter(client.getFooter(es))
-            ]});
-          }break;
-        }
+      await tempmsg.awaitReactions(filter, {
+          max: 1,
+          time: 90000,
+          errors: ["time"]
+        })
+        .then(collected => {
+          var reaction = collected.first()
+          reaction.users.remove(message.author.id)
+          if (reaction.emoji.name === "1️⃣") temptype = "set"
+          else if (reaction.emoji.name === "2️⃣") temptype = "disable"
+          else if (reaction.emoji.name === "3️⃣") temptype = "resetNumber"
+          else if (reaction.emoji.name === "📑") temptype = "thesettings"
+          else throw "You reacted with a wrong emoji"
+
+        })
+        .catch(e => {
+          timeouterror = e;
+        })
+      if (timeouterror)
+        return message.reply(new Discord.MessageEmbed()
+          .setTitle("<:cross:899255798142750770>  ERROR | Your Time ran out")
+          .setColor(es.wrongcolor)
+          .setDescription(`Cancelled the Operation!`.substr(0, 2000))
+          .setFooter(es.footertext, es.footericon)
+        );
+
+      if(temptype == "set"){
+        tempmsg = await tempmsg.edit({embed: new Discord.MessageEmbed()
+        .setTitle("Which Channel do you wanna use?")
+        .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+        .setDescription(`*Just ping the channel with #channel in the Chat*`).setFooter(es.footertext, es.footericon)
+      })
+      var thecmd;
+      await tempmsg.channel.awaitMessages(m=>m.author.id == message.author.id, {
+          max: 1,
+          time: 90000,
+          errors: ["time"]
+        })
+        .then(async collected => {
+          var message = collected.first();
+          if(!message) throw "NO MESSAGE SENT";
+          let channel = message.mentions.channels.filter(ch=>ch.guild.id==message.guild.id).first();
+          if(channel){
+            client.settings.set(message.guild.id, channel.id, `counter`)
+            return message.reply(new Discord.MessageEmbed()
+              .setTitle(`<:tick:899255869185855529> The Channel: \`${channel.name}\` is now registered as the Number-Counter-Chat`)
+              .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+              .setDescription(`Posting now, every Minute`.substr(0, 2048))
+              .setFooter(es.footertext, es.footericon)
+            );
+          }
+          else{
+            throw "NO CHANNEL PINGED";
+          }
+        })
+        .catch(e => {
+          timeouterror = e;
+        })
+      if (timeouterror)
+        return message.reply(new Discord.MessageEmbed()
+          .setTitle("<:cross:899255798142750770>  ERROR | Your Time ran out")
+          .setColor(es.wrongcolor)
+          .setDescription(`Cancelled the Operation!`.substr(0, 2000))
+          .setFooter(es.footertext, es.footericon)
+        );
+      } else if (temptype == "disable") {
+          client.settings.set(message.guild.id, "no", `counter`)
+          return message.reply(new Discord.MessageEmbed()
+            .setTitle(`<:tick:899255869185855529> Disabled the Number-Counter-Chat`)
+            .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+            .setDescription(`I will not send automatic NSFW Images to a Channel anymore`.substr(0, 2048))
+            .setFooter(es.footertext, es.footericon)
+          );
+      } else if (temptype == "resetNumber") {
+          client.settings.set(message.guild.id, 0, `counternum`)
+          return message.reply(new Discord.MessageEmbed()
+            .setTitle(`<:tick:899255869185855529> Resetted the Number to 0`)
+            .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+            .setDescription(`People now need to count from 1 again!`.substr(0, 2048))
+            .setFooter(es.footertext, es.footericon)
+          );
+      } else if (temptype == "thesettings") {
+        let thesettings = client.settings.get(message.guild.id, `counter`)
+        return message.reply(new Discord.MessageEmbed()
+          .setTitle(`<:tick:899255869185855529> Settings of the Number-Counter-Chat`)
+          .setColor(es.color).setThumbnail(es.thumb ? es.footericon : null)
+          .setDescription(`**Channel:** ${thesettings == "no" ? "Not Setupped" : `<#${thesettings}> | \`${thesettings}\``}\n\n**Current Number:** \`${client.settings.get(message.guild.id, "counternum")}\`\n**Nest Number:** \`${Number(client.settings.get(message.guild.id, "counternum")) + 1}\``.substr(0, 2048))
+          .setFooter(es.footertext, es.footericon)
+        );
+    } else {
+        return message.reply(new Discord.MessageEmbed()
+          .setTitle("<:cross:899255798142750770>  ERROR | PLEASE CONTACT `S409™#9685`")
+          .setColor(es.wrongcolor)
+          .setFooter(es.footertext, es.footericon)
+        );
       }
 
     } catch (e) {
-      console.log(String(e.stack).grey.bgRed)
-      return message.reply({embeds: [new MessageEmbed()
-        .setColor(es.wrongcolor).setFooter(client.getFooter(es))
-        .setTitle(client.la[ls].common.erroroccur)
-        .setDescription(eval(client.la[ls]["cmds"]["setup"]["setup-counter"]["variable13"]))
-      ]});
+      console.log(String(e.stack).bgRed)
+      return message.channel.send(new MessageEmbed()
+        .setColor(es.wrongcolor).setFooter(es.footertext, es.footericon)
+        .setTitle(`<:cross:899255798142750770>  Something went Wrong`)
+        .setDescription(`\`\`\`${String(JSON.stringify(e)).substr(0, 2000)}\`\`\``)
+      );
     }
   },
 };
 /**
  * @INFO
- * Bot Coded by Tomato#6966 | https://discord.gg/milrato
+ * Bot Coded by S409™#9685 | https://github.com/S409™#9685/discord-js-lavalink-Music-Bot-erela-js
  * @INFO
- * Work for S409 support | https://s409.xyz
+ * Work for s409 Development | https://s409.xyz
  * @INFO
- * Please mention him / S409 support, when using this Code!
+ * Please mention Him / s409 Development, when using this Code!
  * @INFO
  */
