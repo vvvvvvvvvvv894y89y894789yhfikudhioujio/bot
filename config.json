@@ -1,9 +1,9 @@
 {
 
-    "OWNER_ID":"851945486239793187",
-    "BOT_TOKEN": "OTEyNzU4NTg0ODM4ODUyNjQ4.YZ0mrA.TU3NJcbI9cdSu2BAJlLlrP88D40",
+    "OWNER_ID":"544245657230245888",
+    "BOT_TOKEN": "ODgyODE5NjM2NzYzMTg5Mjc4.YTA72w.a3T6-zccMOjw5il4fXvT9VGQH2M",
     "tenorAPI":"",
-    "DEFAULT_PREFIX":"$",
+    "DEFAULT_PREFIX":"-",
     "mongoPass": "mongodb+srv://Abhinav:Abhinav123*@cluster0.zgneu.mongodb.net/myFirstDatabase?retryWrites=true&w=majority",
     "ERROR_LOGS_CHANNEL": "901533733834879006",
     "ALEXFLIPNOTE_API_KEY":"",
