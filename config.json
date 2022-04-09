@@ -1,13 +1,10 @@
 {
-
-    "OWNER_ID":"851945486239793187",
-    "BOT_TOKEN": "ODM4Nzc1MDQ2NTY5OTg0MDQw.YJAAIg.qjLKN1bnZ_ukvrPfaI8zDCilzP4",
-    "tenorAPI":"",
-    "DEFAULT_PREFIX":"!",
-    "mongoPass": "mongodb+srv://Abhinav:Abhinav123*@cluster0.zgneu.mongodb.net/myFirstDatabase?retryWrites=true&w=majority",
-    "ERROR_LOGS_CHANNEL": "961968237019541524",
-    "ALEXFLIPNOTE_API_KEY":"",
-    "YT_COOKIE": ""
-    
+  "sql": {
+    "host": "sql4.freemysqlhosting.net",
+    "user": "sql4484638",
+    "password": "fNU5EGh75B",
+    "database": "sql4484638"
+  },
+    "token": "ODM4Nzc1MDQ2NTY5OTg0MDQw.YJAAIg.krajBMtUF3M_rP1Jqj-qiMGHJq8",
+    "prefix": "!"
 }
-
