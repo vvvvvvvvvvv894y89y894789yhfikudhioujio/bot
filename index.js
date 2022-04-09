@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 const discord = require("discord.js"),
     fs = require('fs'), 
     mysql = require("mysql"),
@@ -6,6 +7,69 @@ const discord = require("discord.js"),
     request = require('request'),
     config = require('./config.json'),
     cooldowns = new discord.Collection()
+=======
+const mySecret = process.env['TOKEN']
+require("dotenv").config({ path: "src/.env" });
+
+const fs = require("fs");
+const chalk = require("chalk");
+
+const { Client, Collection, Intents, MessageEmbed } = require("discord.js");
+const { DEFAULT_PREFIX, BOT_TOKEN, ERROR_LOGS_CHANNEL, ALEXFLIPNOTE_API_KEY, YT_COOKIE } = require("./config.json");
+const { loadCommands } = require("./handler/loadCommands");
+const { loadEvents } = require("./handler/loadEvents");
+const { loadSlashCommands } = require("./handler/loadSlashCommands")
+const { loadPlayerEvents } = require("./handler/loadPlayerEvents");
+const { DiscordTogether } = require('discord-together')
+const { Player } = require('discord-player')
+const Enmap = require("enmap")
+
+const client = new Client({
+  allowedMentions: { parse: ["users", "roles"] },
+  intents: [
+    Intents.FLAGS.GUILDS,
+    Intents.FLAGS.GUILD_MESSAGES,
+    Intents.FLAGS.GUILD_MEMBERS,
+    Intents.FLAGS.GUILD_MESSAGE_REACTIONS,
+    Intents.FLAGS.GUILD_WEBHOOKS,
+    Intents.FLAGS.GUILD_VOICE_STATES,
+    Intents.FLAGS.GUILD_INVITES,
+    Intents.FLAGS.GUILD_BANS,
+    Intents.FLAGS.GUILD_PRESENCES,
+  ],
+});
+const Embeds = require("./functions/embeds/Embeds")
+const Logger = require("./functions/Logger/Logger")
+const Util = require("./functions/util/Util")
+
+const alexClient = require("alexflipnote.js")
+client.images = new alexClient(ALEXFLIPNOTE_API_KEY)
+client.discordTogether = new DiscordTogether(client);
+client.commands = new Collection();
+client.slash = new Collection();
+client.aliases = new Collection();
+client.categories = fs.readdirSync("./Commands/");
+client.setMaxListeners(0);
+const Cookie = YT_COOKIE;
+client.logger = Logger;
+client.utils = Util;
+client.say = Embeds;
+client.player = new Player(client, {
+  leaveOnEnd: false,
+  leaveOnStop: false,
+  leaveOnEmpty: false,
+  leaveOnEmptyCooldown: 60000,
+  autoSelfDeaf: true,
+  initialVolume: 130,
+  ytdlDownloadOptions: {
+    requestOptions: {
+      headers: {
+        cookie: Cookie,
+      }
+    }
+  },
+})
+>>>>>>> e3628553faf977216366a3efbf2c0bfa6a8a81ff
 
 const bot = new discord.Client({disableEveryone: true})
 bot.command = new discord.Collection()
